@@ -24,7 +24,7 @@ leader (Flow 2), and the leader locks the roster, recovering from "too few membe
 
 ## Run the app
 
-Requirements: Flutter **3.47.2** (Dart **3.13.2**), Android SDK, an emulator or device on Android 7.0+.
+Requirements: Flutter **3.47.4** (Dart **3.13.3**; any Flutter 3.47.x from 3.47.3 works), Android SDK, an emulator or device on Android 7.0+.
 
 ```bash
 flutter pub get
@@ -68,7 +68,7 @@ Evidence for every run (agent output, screenshot, accessibility tree, analytics 
 
 | Component | Version |
 |---|---|
-| Flutter / Dart | 3.47.2 / 3.13.2 |
+| Flutter / Dart | 3.47.4 / 3.13.3 |
 | go_router | 18.1.1 |
 | provider | 6.1.5+1 |
 | intl | 0.20.3 |
