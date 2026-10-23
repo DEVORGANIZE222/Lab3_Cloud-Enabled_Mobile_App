@@ -14,6 +14,7 @@ import '../../widgets/app_dialog.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/states.dart';
 import '../../widgets/status.dart';
+import '../shared/feedback.dart';
 
 /// SCR_06 Leader Voting (Figma `SCR_06: Leader Voting`), Flow 2.
 class LeaderVotingScreen extends StatelessWidget {
@@ -36,11 +37,8 @@ class LeaderVotingScreen extends StatelessWidget {
     }
     final result = await vm.submit();
     if (!context.mounted) return;
+    if (result.failure != null) return showFailure(context, result.failure!);
     final messenger = ScaffoldMessenger.of(context);
-    if (result.failure != null) {
-      messenger.showSnackBar(SnackBar(content: Text('${result.failure!.title}. ${result.failure!.cause}')));
-      return;
-    }
     final updated = result.team!;
     messenger.showSnackBar(
       SnackBar(
@@ -66,13 +64,7 @@ class LeaderVotingScreen extends StatelessWidget {
           ViewStateView<Team>(
             state: state,
             onRetry: vm.load,
-            empty: EmptyState(
-              icon: Icons.group_off_outlined,
-              title: "You're not in a team yet",
-              message: 'Join a team first. Then you can vote for its leader.',
-              actionLabel: 'Browse Teams',
-              onAction: () => context.go('/browse'),
-            ),
+            empty: const NoTeamState(message: 'Join a team first. Then you can vote for its leader.'),
             builder: (context, t) => _Body(team: t),
           ),
         ],

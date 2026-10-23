@@ -257,3 +257,31 @@ class SectionHeader extends StatelessWidget {
     );
   }
 }
+
+/// Key-value row with a leading icon (Team Detail facts, Random Pool status).
+class InfoRow extends StatelessWidget {
+  const InfoRow({super.key, required this.icon, required this.label, required this.value});
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: context.colors.onSurfaceVariant),
+          const SizedBox(width: AppSpacing.sm),
+          Text(label, style: context.text.bodyMedium),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(value, style: context.text.labelLarge, textAlign: TextAlign.end),
+          ),
+        ],
+      ),
+    );
+  }
+}

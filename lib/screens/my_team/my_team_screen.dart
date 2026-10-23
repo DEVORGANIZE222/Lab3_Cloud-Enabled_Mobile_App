@@ -14,6 +14,7 @@ import '../../widgets/app_top_bar.dart';
 import '../../widgets/states.dart';
 import '../../widgets/status.dart';
 import '../shared/profile_action.dart';
+import '../shared/feedback.dart';
 import '../shared/team_status.dart';
 
 /// SCR_05 My Team (Figma `SCR_05: My Group Hub` and `SCR_05 (Leader View - Ready to Lock)`).
@@ -35,9 +36,8 @@ class MyTeamScreen extends StatelessWidget {
     if (!ok || !context.mounted) return;
     final failure = await vm.leave(team);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(failure == null ? 'You left ${team.name}' : '${failure.title}. ${failure.cause}')),
-    );
+    if (failure != null) return showFailure(context, failure);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('You left ${team.name}')));
   }
 
   @override
@@ -56,13 +56,7 @@ class MyTeamScreen extends StatelessWidget {
               ViewStateView<Team>(
                 state: vm.state,
                 onRetry: vm.load,
-                empty: EmptyState(
-                  icon: Icons.group_off_outlined,
-                  title: "You're not in a team yet",
-                  message: 'Browse teams with open slots and join one before the registration deadline.',
-                  actionLabel: 'Browse Teams',
-                  onAction: () => context.go('/browse'),
-                ),
+                empty: const NoTeamState(),
                 builder: (context, team) => _Body(team: team, onLeave: () => _leave(context, team)),
               ),
             ],

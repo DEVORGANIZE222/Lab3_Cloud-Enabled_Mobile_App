@@ -77,8 +77,8 @@ class _Body extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               AppProgressBar(value: status.progress, label: '${status.stage} · ${Fmt.percent(status.progress)}'),
               const SizedBox(height: AppSpacing.lg),
-              _Row(icon: Icons.event, label: 'Expected result', value: Fmt.dateTime(status.expectedResult)),
-              _Row(icon: Icons.groups_outlined, label: 'Students in pool', value: '${status.studentsInPool}'),
+              InfoRow(icon: Icons.event, label: 'Expected result', value: Fmt.dateTime(status.expectedResult)),
+              InfoRow(icon: Icons.groups_outlined, label: 'Students in pool', value: '${status.studentsInPool}'),
             ],
           ),
         ),
@@ -133,29 +133,6 @@ class _Body extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
       ],
-    );
-  }
-}
-
-class _Row extends StatelessWidget {
-  const _Row({required this.icon, required this.label, required this.value});
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: context.colors.onSurfaceVariant),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(child: Text(label, style: context.text.bodyMedium)),
-          Text(value, style: context.text.labelLarge),
-        ],
-      ),
     );
   }
 }

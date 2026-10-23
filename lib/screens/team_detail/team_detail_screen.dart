@@ -13,6 +13,7 @@ import '../../widgets/app_dialog.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/states.dart';
 import '../../widgets/status.dart';
+import '../shared/feedback.dart';
 import '../shared/team_status.dart';
 
 /// SCR_04 Team Detail + join dialog (Figma `SCR_04: Group Detail`, `SRC4 Diaglog`).
@@ -73,7 +74,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
               '${team.name} now has ${team.memberCount} of ${team.capacity} members.',
         );
       case JoinFailed(:final failure):
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${failure.title}. ${failure.cause}')));
+        showFailure(context, failure);
     }
   }
 
@@ -180,8 +181,8 @@ class _Body extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(team.description, style: context.text.bodyLarge),
               const SizedBox(height: AppSpacing.lg),
-              _InfoRow(icon: Icons.category_outlined, label: 'Category', value: team.category),
-              _InfoRow(icon: Icons.school_outlined, label: 'Supervisor', value: team.supervisor),
+              InfoRow(icon: Icons.category_outlined, label: 'Category', value: team.category),
+              InfoRow(icon: Icons.school_outlined, label: 'Supervisor', value: team.supervisor),
               const SizedBox(height: AppSpacing.sm),
               Wrap(
                 spacing: AppSpacing.xs,
@@ -212,29 +213,6 @@ class _Body extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
         ],
       ],
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.label, required this.value});
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: context.colors.onSurfaceVariant),
-          const SizedBox(width: AppSpacing.sm),
-          Text('$label: ', style: context.text.labelLarge),
-          Expanded(child: Text(value, style: context.text.bodyMedium)),
-        ],
-      ),
     );
   }
 }

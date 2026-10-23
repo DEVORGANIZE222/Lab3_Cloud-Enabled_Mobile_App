@@ -14,6 +14,7 @@ import '../../widgets/app_dialog.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/states.dart';
 import '../../widgets/status.dart';
+import '../shared/feedback.dart';
 import '../shared/team_status.dart';
 
 /// SCR_07 Review & Lock with error recovery (Figma `SCR_07: Group Lock Review & Error Recovery`), Flow 3.
@@ -23,14 +24,9 @@ class LockReviewScreen extends StatelessWidget {
   Future<void> _invite(BuildContext context) async {
     final result = await context.read<LockReviewViewModel>().inviteFromPool();
     if (!context.mounted) return;
+    if (result.failure != null) return showFailure(context, result.failure!);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          result.failure != null
-              ? '${result.failure!.title}. ${result.failure!.cause}'
-              : 'Invites sent to ${Fmt.count(result.invited ?? 0, 'student')} in the Waiting Pool',
-        ),
-      ),
+      SnackBar(content: Text('Invites sent to ${Fmt.count(result.invited ?? 0, 'student')} in the Waiting Pool')),
     );
   }
 
@@ -57,9 +53,7 @@ class LockReviewScreen extends StatelessWidget {
     if (!ok || !context.mounted) return;
     final failure = await vm.lock();
     if (!context.mounted) return;
-    if (failure != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${failure.title}. ${failure.cause}')));
-    }
+    if (failure != null) showFailure(context, failure);
   }
 
   @override
@@ -78,13 +72,7 @@ class LockReviewScreen extends StatelessWidget {
               ViewStateView<Team>(
                 state: vm.state,
                 onRetry: vm.load,
-                empty: EmptyState(
-                  icon: Icons.group_off_outlined,
-                  title: "You're not in a team yet",
-                  message: 'Join a team first. Its leader locks the roster here.',
-                  actionLabel: 'Browse Teams',
-                  onAction: () => context.go('/browse'),
-                ),
+                empty: const NoTeamState(message: 'Join a team first. Its leader locks the roster here.'),
                 builder: (context, team) => team.locked
                     ? _Locked(team: team)
                     : _Review(
