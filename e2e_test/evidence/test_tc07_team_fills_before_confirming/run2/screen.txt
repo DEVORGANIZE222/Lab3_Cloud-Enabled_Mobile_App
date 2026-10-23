@@ -1,0 +1,34 @@
+[android:id/content]
+[] Back
+[] EduSmart Analytics
+[] Members
+5 of 5
+[card_team_topic] EDU-07
+Leader not elected
+Adaptive Learning Recommendation Engine for STEM Students
+Recommends study paths from LMS activity and quiz results, with a dashboard for lecturers.
+Category
+AI/ML
+Supervisor
+Dr. Tran Minh Chau
+Python
+React
+PostgreSQL
+[member_s_bao] BP
+Bao Pham
+SE170777 · Data Scientist
+[member_s_nhi] NH
+Nhi Ho
+SE170812 · Frontend Developer
+[member_s_tuan] TD
+Tuan Do
+SE170845 · Backend Developer
+[member_s_mai] MV
+Mai Vu
+SE170901 · QA Engineer
+[member_s_other] KP
+Khoa Pham
+SE170999 · Backend
+[btn_join_team]
+[] Join Team
+[join_blocked_reason] This team is full (5/5).

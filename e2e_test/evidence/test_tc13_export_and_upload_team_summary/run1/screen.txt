@@ -1,0 +1,20 @@
+[android:id/content]
+[] Back
+[] Profile
+[card_account] ML
+Minh Le
+minh.le@fpt.edu.vn
+SE160234 · Software Engineering · Senior '26
+[] Team summary
+[card_export] Create a PDF of your team, its status and roster, then save it to your account.
+Saved as reports/{your ID}/team-{code}-{date}.pdf
+[export_done] file:///data/user/0/com.devorganize222.exematching/app_flutter/reports/s_minh/team-ai-04-20261023-2258.pdf
+[btn_export_upload]
+[] Export Again
+[] App settings
+[card_remote_config] Values the server can change without an app update.
+[config_browse_max_results] browse_max_results: 10
+[config_show_pool_entry] show_pool_entry: true
+[config_registration_closed] registration_closed: false
+[btn_refresh_config]
+[] Check for Updates
