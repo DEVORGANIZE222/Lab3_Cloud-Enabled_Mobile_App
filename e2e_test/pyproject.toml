@@ -1,0 +1,9 @@
+[project]
+name = "exematching-e2e-tests"
+version = "0.1.0"
+description = "Google ARTEMIS E2E automated testing suite for EXEMatching"
+requires-python = ">=3.12"
+dependencies = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
