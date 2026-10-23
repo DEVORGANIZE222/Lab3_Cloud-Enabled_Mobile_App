@@ -2,4 +2,7 @@ set_user_id
 login
 set_user_id
 search
-view_team
+search
+search
+search
+search

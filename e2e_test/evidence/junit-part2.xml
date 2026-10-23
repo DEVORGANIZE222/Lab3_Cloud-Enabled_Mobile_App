@@ -1,0 +1,1004 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="25" failures="2" skipped="0" tests="27" time="359.568" timestamp="2026-10-23T23:24:55.277749+07:00" hostname="LAPTOP-GJIE9MEF"><testcase classname="test_browse" name="test_tc03_search_and_filter[run1]" time="59.376"><failure message="assert 2 == 1">device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+artemis = &lt;function artemis.&lt;locals&gt;.run at 0x00000240F0342700&gt;
+
+    @pytest.mark.flow1
+    async def test_tc03_search_and_filter(device, artemis):
+        device.sign_in(NEWCOMER)
+    
+        run = await artemis(
+            "Open the Browse tab. Turn on the 'AI/ML' filter chip and keep 'Open Slots' on. "
+            "Then search for 'drone'. Report the number of teams the list says it found and the name of each team.",
+            'Return JSON: {"result_count": int, "team_names": [string]}',
+        )
+    
+&gt;       assert run.data["result_count"] == 1
+E       assert 2 == 1
+
+test_browse.py:18: AssertionError</failure></testcase><testcase classname="test_browse" name="test_tc03_search_and_filter[run2]" time="110.517" /><testcase classname="test_browse" name="test_tc03_search_and_filter[run3]" time="188.605"><failure message="subprocess.CalledProcessError: Command '['C:/Users/LENOVO/Android/Sdk/platform-tools/adb.exe', '-s', 'emulator-5554', 'shell', 'uiautomator', 'dump', '/sdcard/ui.xml']' returned non-zero exit status 1.">device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+artemis = &lt;function artemis.&lt;locals&gt;.run at 0x00000240F0342480&gt;
+
+    @pytest.mark.flow1
+    async def test_tc03_search_and_filter(device, artemis):
+        device.sign_in(NEWCOMER)
+    
+&gt;       run = await artemis(
+            "Open the Browse tab. Turn on the 'AI/ML' filter chip and keep 'Open Slots' on. "
+            "Then search for 'drone'. Report the number of teams the list says it found and the name of each team.",
+            'Return JSON: {"result_count": int, "team_names": [string]}',
+        )
+
+test_browse.py:12: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+conftest.py:122: in run
+    screen = device.screen_text()
+             ^^^^^^^^^^^^^^^^^^^^
+device.py:113: in screen_text
+    return "\n".join(f"[{n.id}] {n.text}".strip() for n in self.nodes() if n.id or n.text)
+                                                           ^^^^^^^^^^^^
+device.py:68: in nodes
+    self.shell("uiautomator", "dump", "/sdcard/ui.xml")
+device.py:48: in shell
+    return self.adb("shell", *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+device.py:37: in adb
+    out = subprocess.run(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+input = None, capture_output = True, timeout = None, check = True
+popenargs = (['C:/Users/LENOVO/Android/Sdk/platform-tools/adb.exe', '-s', 'emulator-5554', 'shell', 'uiautomator', 'dump', ...],)
+kwargs = {'encoding': 'utf-8', 'errors': 'replace', 'stderr': -1, 'stdout': -1, ...}
+process = &lt;Popen: returncode: 1 args: ['C:/Users/LENOVO/Android/Sdk/platform-tools/adb...&gt;
+stdout = '', stderr = "adb.exe: device 'emulator-5554' not found\n", retcode = 1
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output &amp; stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+&gt;               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['C:/Users/LENOVO/Android/Sdk/platform-tools/adb.exe', '-s', 'emulator-5554', 'shell', 'uiautomator', 'dump', '/sdcard/ui.xml']' returned non-zero exit status 1.
+
+C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\subprocess.py:577: CalledProcessError</failure></testcase><testcase classname="test_browse" name="test_tc03_search_and_filter[run3]" time="0.024"><error message="failed on teardown with &quot;subprocess.CalledProcessError: Command '['C:/Users/LENOVO/Android/Sdk/platform-tools/adb.exe', '-s', 'emulator-5554', 'shell', 'svc', 'wifi', 'enable']' returned non-zero exit status 1.&quot;">client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc03_search_and_filter[run3]&gt;&gt;
+attempt = 3
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+        assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+        folder = EVIDENCE / request.node.originalname / f"run{attempt}"
+        folder.mkdir(parents=True, exist_ok=True)
+    
+        async def run(goal: str, expected_output: str, *, timeout: float = 900) -&gt; Run:
+            started = datetime.now()
+            result = await client.run(
+                f"{goal}\nWhen you finish, report the task as completed. The explanation of that final report must be "
+                f"only this JSON object with the values you observed, and no other words: "
+                f"{expected_output.removeprefix('Return JSON: ')}",
+                profile=PROFILE,
+                device_serial=SERIAL,
+                locked_app_package=PACKAGE,
+                expected_output=expected_output,
+                enable_outputter=True,
+                timeout=timeout,
+            )
+            screen = device.screen_text()
+            device.screenshot(folder / "final.png")
+            (folder / "screen.txt").write_text(screen, encoding="utf-8")
+            (folder / "analytics.txt").write_text("\n".join(device.analytics_events()), encoding="utf-8")
+            record = {
+                "test": request.node.nodeid,
+                "attempt": attempt,
+                "profile": PROFILE,
+                "trace_id": result.trace_id,
+                "status": result.status,
+                "turns": result.turns,
+                "started": started.isoformat(timespec="seconds"),
+                "seconds": round((datetime.now() - started).total_seconds(), 1),
+                "goal": goal,
+                "expected_output": expected_output,
+                "output": (output := final_report(result.trace_id, result.output)),
+                "error": result.error,
+            }
+            (folder / "result.json").write_text(json.dumps(record, indent=2, ensure_ascii=False, default=str), "utf-8")
+            assert result.succeeded, f"ARTEMIS task {result.trace_id} ended {result.status}: {result.error}"
+            return Run(result=result, data=parse_output(output), screen=screen, folder=folder)
+    
+        yield run
+&gt;       device.set_network(True)  # never leave the emulator offline after a failed test
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+
+conftest.py:145: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+device.py:63: in set_network
+    self.shell("svc", "wifi", state)
+device.py:48: in shell
+    return self.adb("shell", *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+device.py:37: in adb
+    out = subprocess.run(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+input = None, capture_output = True, timeout = None, check = True
+popenargs = (['C:/Users/LENOVO/Android/Sdk/platform-tools/adb.exe', '-s', 'emulator-5554', 'shell', 'svc', 'wifi', ...],)
+kwargs = {'encoding': 'utf-8', 'errors': 'replace', 'stderr': -1, 'stdout': -1, ...}
+process = &lt;Popen: returncode: 1 args: ['C:/Users/LENOVO/Android/Sdk/platform-tools/adb...&gt;
+stdout = '', stderr = "adb.exe: device 'emulator-5554' not found\n", retcode = 1
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output &amp; stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+&gt;               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['C:/Users/LENOVO/Android/Sdk/platform-tools/adb.exe', '-s', 'emulator-5554', 'shell', 'svc', 'wifi', 'enable']' returned non-zero exit status 1.
+
+C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\subprocess.py:577: CalledProcessError</error></testcase><testcase classname="test_browse" name="test_tc04_empty_state_and_clear_filters[run1]" time="0.025"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc04_empty_state_and_clear_filters[run1]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc04_empty_state_and_clear_filters[run1]&gt;&gt;
+attempt = 1
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_browse" name="test_tc04_empty_state_and_clear_filters[run2]" time="0.024"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc04_empty_state_and_clear_filters[run2]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc04_empty_state_and_clear_filters[run2]&gt;&gt;
+attempt = 2
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_browse" name="test_tc04_empty_state_and_clear_filters[run3]" time="0.024"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc04_empty_state_and_clear_filters[run3]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc04_empty_state_and_clear_filters[run3]&gt;&gt;
+attempt = 3
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_browse" name="test_tc05_offline_error_and_retry[run1]" time="0.023"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc05_offline_error_and_retry[run1]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc05_offline_error_and_retry[run1]&gt;&gt;
+attempt = 1
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_browse" name="test_tc05_offline_error_and_retry[run2]" time="0.025"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc05_offline_error_and_retry[run2]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc05_offline_error_and_retry[run2]&gt;&gt;
+attempt = 2
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_browse" name="test_tc05_offline_error_and_retry[run3]" time="0.026"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc05_offline_error_and_retry[run3]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc05_offline_error_and_retry[run3]&gt;&gt;
+attempt = 3
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_join" name="test_tc06_join_team_with_open_slot[run1]" time="0.024"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc06_join_team_with_open_slot[run1]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc06_join_team_with_open_slot[run1]&gt;&gt;
+attempt = 1
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_join" name="test_tc06_join_team_with_open_slot[run2]" time="0.029"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc06_join_team_with_open_slot[run2]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc06_join_team_with_open_slot[run2]&gt;&gt;
+attempt = 2
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_join" name="test_tc06_join_team_with_open_slot[run3]" time="0.027"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc06_join_team_with_open_slot[run3]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc06_join_team_with_open_slot[run3]&gt;&gt;
+attempt = 3
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_join" name="test_tc07_team_fills_before_confirming[run1]" time="0.025"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc07_team_fills_before_confirming[run1]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc07_team_fills_before_confirming[run1]&gt;&gt;
+attempt = 1
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_join" name="test_tc07_team_fills_before_confirming[run2]" time="0.026"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc07_team_fills_before_confirming[run2]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc07_team_fills_before_confirming[run2]&gt;&gt;
+attempt = 2
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_join" name="test_tc07_team_fills_before_confirming[run3]" time="0.026"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc07_team_fills_before_confirming[run3]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc07_team_fills_before_confirming[run3]&gt;&gt;
+attempt = 3
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_lock" name="test_tc10_lock_blocked_then_recovered_from_pool[run1]" time="0.025"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc10_lock_blocked_then_recovered_from_pool[run1]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc10_lock_blocked_then_recovered_from_pool[run1]&gt;&gt;
+attempt = 1
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_lock" name="test_tc10_lock_blocked_then_recovered_from_pool[run2]" time="0.026"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc10_lock_blocked_then_recovered_from_pool[run2]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc10_lock_blocked_then_recovered_from_pool[run2]&gt;&gt;
+attempt = 2
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_lock" name="test_tc10_lock_blocked_then_recovered_from_pool[run3]" time="0.025"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc10_lock_blocked_then_recovered_from_pool[run3]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc10_lock_blocked_then_recovered_from_pool[run3]&gt;&gt;
+attempt = 3
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_lock" name="test_tc11_share_team_link_opens_android_share_sheet[run1]" time="0.025"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc11_share_team_link_opens_android_share_sheet[run1]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc11_share_team_link_opens_android_share_sheet[run1]&gt;&gt;
+attempt = 1
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_lock" name="test_tc11_share_team_link_opens_android_share_sheet[run2]" time="0.025"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc11_share_team_link_opens_android_share_sheet[run2]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc11_share_team_link_opens_android_share_sheet[run2]&gt;&gt;
+attempt = 2
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_lock" name="test_tc11_share_team_link_opens_android_share_sheet[run3]" time="0.024"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc11_share_team_link_opens_android_share_sheet[run3]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc11_share_team_link_opens_android_share_sheet[run3]&gt;&gt;
+attempt = 3
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_vote" name="test_tc08_tallies_hidden_until_voting[run1]" time="0.025"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc08_tallies_hidden_until_voting[run1]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc08_tallies_hidden_until_voting[run1]&gt;&gt;
+attempt = 1
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_vote" name="test_tc08_tallies_hidden_until_voting[run2]" time="0.030"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc08_tallies_hidden_until_voting[run2]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc08_tallies_hidden_until_voting[run2]&gt;&gt;
+attempt = 2
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_vote" name="test_tc08_tallies_hidden_until_voting[run3]" time="0.023"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc08_tallies_hidden_until_voting[run3]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc08_tallies_hidden_until_voting[run3]&gt;&gt;
+attempt = 3
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_vote" name="test_tc09_vote_elects_leader[run1]" time="0.024"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc09_vote_elects_leader[run1]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc09_vote_elects_leader[run1]&gt;&gt;
+attempt = 1
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_vote" name="test_tc09_vote_elects_leader[run2]" time="0.025"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc09_vote_elects_leader[run2]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc09_vote_elects_leader[run2]&gt;&gt;
+attempt = 2
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase><testcase classname="test_vote" name="test_tc09_vote_elects_leader[run3]" time="0.027"><error message="failed on setup with &quot;AssertionError: emulator-5554 is not connected: restart the emulator before running the suite&#10;assert '' == 'device'&#10;  &#10;  - device&quot;">self = &lt;Coroutine test_tc09_vote_elects_leader[run3]&gt;
+
+    def setup(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+&gt;       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:735: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = &lt;artemis_client.client.ArtemisClient object at 0x00000240F02A3B60&gt;
+device = &lt;device.Device object at 0x00000240F02A3A10&gt;
+request = &lt;SubRequest 'artemis' for &lt;Coroutine test_tc09_vote_elects_leader[run3]&gt;&gt;
+attempt = 3
+
+    @pytest.fixture
+    def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
+        """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+        state = device.adb("get-state", check=False).strip()
+&gt;       assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
+E       AssertionError: emulator-5554 is not connected: restart the emulator before running the suite
+E       assert '' == 'device'
+E         
+E         - device
+
+conftest.py:105: AssertionError</error></testcase></testsuite></testsuites>

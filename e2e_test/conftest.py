@@ -101,6 +101,8 @@ class Run:
 @pytest.fixture
 def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureRequest, attempt: int):
     """Runs one goal, saves evidence, and returns the parsed output plus the real screen."""
+    state = device.adb("get-state", check=False).strip()
+    assert state == "device", f"{SERIAL} is {state or 'not connected'}: restart the emulator before running the suite"
     folder = EVIDENCE / request.node.originalname / f"run{attempt}"
     folder.mkdir(parents=True, exist_ok=True)
 
