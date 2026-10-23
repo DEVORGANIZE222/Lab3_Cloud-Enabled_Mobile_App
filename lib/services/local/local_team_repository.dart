@@ -46,9 +46,8 @@ class LocalTeamRepository implements TeamRepository {
     return results.take(limit).toList();
   }
 
-  @override
-  Future<Team> getTeam(String teamId) async {
-    await _db.roundTrip();
+  /// The stored team, or the same not-found failure for every operation (CR-05).
+  Team _team(String teamId) {
     final team = _db.teams[teamId];
     if (team == null) {
       throw const AppFailure(
@@ -62,6 +61,12 @@ class LocalTeamRepository implements TeamRepository {
   }
 
   @override
+  Future<Team> getTeam(String teamId) async {
+    await _db.roundTrip();
+    return _team(teamId);
+  }
+
+  @override
   Future<Team?> teamOf(String studentId) async {
     await _db.roundTrip();
     return _db.teams.values.where((t) => t.isMember(studentId)).firstOrNull;
@@ -69,6 +74,9 @@ class LocalTeamRepository implements TeamRepository {
 
   @override
   Stream<Team> watchTeam(String teamId) => _db.teamChanges.where((t) => t.id == teamId);
+
+  @override
+  Stream<void> teamsChanged() => _db.teamChanges.map((_) {});
 
   @override
   Stream<Team?> watchTeamOf(String studentId) =>
@@ -79,7 +87,7 @@ class LocalTeamRepository implements TeamRepository {
     await _db.roundTrip();
     final current = _db.teams.values.where((t) => t.isMember(student.id)).firstOrNull;
     if (current != null) throw AlreadyInTeamException(current.code);
-    var team = _db.teams[teamId]!;
+    var team = _team(teamId);
     if (_db.fillsOnNextJoin.remove(teamId)) {
       // Seeded race: another student took the last slot a moment earlier.
       team = team.copyWith(
@@ -100,7 +108,7 @@ class LocalTeamRepository implements TeamRepository {
   @override
   Future<void> leaveTeam(String teamId, String studentId) async {
     await _db.roundTrip();
-    final team = _db.teams[teamId]!;
+    final team = _team(teamId);
     if (team.locked) {
       throw const AppFailure(
         "You can't leave a locked team",
@@ -124,7 +132,7 @@ class LocalTeamRepository implements TeamRepository {
   @override
   Future<Team> castVote(String teamId, String voterId, String candidateId) async {
     await _db.roundTrip();
-    var team = _db.teams[teamId]!;
+    var team = _team(teamId);
     if (team.locked) {
       throw const AppFailure(
         "Voting is closed",
@@ -144,7 +152,7 @@ class LocalTeamRepository implements TeamRepository {
   @override
   Future<Team> lockTeam(String teamId, String leaderId) async {
     await _db.roundTrip();
-    var team = _db.teams[teamId]!;
+    var team = _team(teamId);
     if (team.leaderId != leaderId) {
       throw const AppFailure(
         'Only the team leader can lock the roster',
@@ -171,16 +179,19 @@ class LocalTeamRepository implements TeamRepository {
   @override
   Future<int> inviteFromPool(String teamId) async {
     await _db.roundTrip();
-    final team = _db.teams[teamId]!;
+    final team = _team(teamId);
     final invited = max(1, (_db.seed['pool']['studentsInPool'] as int) ~/ 8);
     _db.putTeam(team.copyWith(invitesSent: team.invitesSent + invited));
 
     // Simulated server event: the first matching pool student accepts.
-    final candidate = _db.poolStudents.isEmpty ? null : _db.poolStudents.removeAt(0);
+    // The student leaves the pool only when they actually join (CR-04), and a
+    // second invite before then cannot add them twice.
+    final candidate = _db.poolStudents.firstOrNull;
     if (candidate != null) {
       Timer(poolAcceptDelay, () {
-        final latest = _db.teams[teamId]!;
-        if (latest.locked || latest.isFull) return;
+        final latest = _db.teams[teamId];
+        if (latest == null || latest.locked || latest.isFull) return;
+        if (!_db.poolStudents.remove(candidate)) return;
         final updated = latest.copyWith(members: [...latest.members, candidate]);
         _db.putTeam(updated);
         for (final m in latest.members) {

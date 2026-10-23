@@ -67,6 +67,10 @@ abstract interface class TeamRepository {
   /// votes, pool members, lock. Firestore: teams where memberIds contains uid.
   Stream<Team?> watchTeamOf(String studentId);
 
+  /// Emits whenever any team changes (members, lock), so lists can refresh
+  /// their open-slot counts. Firestore: a snapshot listener on `teams`.
+  Stream<void> teamsChanged();
+
   /// Joins after a server-side capacity check. Throws [TeamFullException] or
   /// [AlreadyInTeamException].
   Future<Team> joinTeam(String teamId, Student student);
