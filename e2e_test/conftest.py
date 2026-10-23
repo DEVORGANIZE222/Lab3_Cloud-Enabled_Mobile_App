@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import urllib.request
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -65,6 +66,30 @@ def parse_output(output: Any) -> dict[str, Any]:
     raise AssertionError(f"ARTEMIS output has no JSON object: {text[:500]!r}")
 
 
+def _get(path: str) -> Any:
+    with urllib.request.urlopen(f"{BASE_URL}{path}", timeout=30) as response:
+        return json.load(response)
+
+
+def final_report(task_id: str, sdk_output: Any) -> Any:
+    """The agent's answer for a finished task.
+
+    Pro runs the Outputter, which saves `output.md` as a session note. Flash has no
+    Outputter (ARTEMIS ignores `expected_output` for Flash), so its answer is the
+    explanation of the final `report_task_status` step; the goal asks for JSON there.
+    """
+    if sdk_output:
+        return sdk_output
+    notes = _get(f"/api/sessions/{task_id}/notes").get("notes", {})
+    if "output.md" in notes:
+        return notes["output.md"]
+    for step in reversed(_get(f"/api/sessions/{task_id}/steps")):
+        action = step.get("action_taken") or {}
+        if action.get("action") == "report_task_status":
+            return action.get("args", {}).get("explanation")
+    return None
+
+
 @dataclass
 class Run:
     result: Any
@@ -82,7 +107,8 @@ def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureReques
     async def run(goal: str, expected_output: str, *, timeout: float = 900) -> Run:
         started = datetime.now()
         result = await client.run(
-            goal,
+            f"{goal}\nWhen you finish, make your final status explanation exactly this JSON object, "
+            f"filled with what you observed: {expected_output.removeprefix('Return JSON: ')}",
             profile=PROFILE,
             device_serial=SERIAL,
             locked_app_package=PACKAGE,
@@ -105,12 +131,12 @@ def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureReques
             "seconds": round((datetime.now() - started).total_seconds(), 1),
             "goal": goal,
             "expected_output": expected_output,
-            "output": result.output,
+            "output": (output := final_report(result.trace_id, result.output)),
             "error": result.error,
         }
         (folder / "result.json").write_text(json.dumps(record, indent=2, ensure_ascii=False, default=str), "utf-8")
         assert result.succeeded, f"ARTEMIS task {result.trace_id} ended {result.status}: {result.error}"
-        return Run(result=result, data=parse_output(result.output), screen=screen, folder=folder)
+        return Run(result=result, data=parse_output(output), screen=screen, folder=folder)
 
     yield run
     device.set_network(True)  # never leave the emulator offline after a failed test

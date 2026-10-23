@@ -148,4 +148,4 @@ class Device:
                 continue
         else:
             raise AssertionError("The account picker never opened")
-        self.wait_for(id="card_deadline", timeout=30)
+        self.wait_for(id="nav_home", timeout=30)
