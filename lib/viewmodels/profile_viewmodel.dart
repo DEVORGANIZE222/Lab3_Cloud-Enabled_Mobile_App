@@ -98,6 +98,14 @@ class ProfileViewModel extends ChangeNotifier {
         export = p.done ? ExportDone(p.downloadUrl!, name, sizeKb) : ExportUploading(p.fraction, name, sizeKb);
         notifyListeners();
       }
+      if (export is! ExportDone) {
+        // The upload ended without a download URL (cancelled or interrupted): CR-07.
+        export = const ExportFailed(
+          AppFailure("Upload didn't finish", 'Check your connection, then tap Export & Upload PDF again.'),
+        );
+        notifyListeners();
+        return;
+      }
       await _analytics.logExportReport(teamId: team.id, fileSizeKb: sizeKb);
     } catch (e, st) {
       export = ExportFailed(await toFailure(e, st, crash: _crash, reason: 'export_upload'));
