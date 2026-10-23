@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -9,6 +10,9 @@ import 'viewmodels/session_viewmodel.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Keep the semantics tree on even without TalkBack, so UI Automator and
+  // ARTEMIS always see the Semantics identifiers (Android resource-id).
+  SemanticsBinding.instance.ensureSemantics();
   final services = await AppServices.create();
   runApp(MultiProvider(providers: services.providers, child: const App()));
 }
