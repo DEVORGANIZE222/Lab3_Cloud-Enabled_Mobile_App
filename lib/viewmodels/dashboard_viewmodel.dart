@@ -14,7 +14,7 @@ class DashboardData {
     required this.student,
     required this.window,
     required this.team,
-    required this.registrationClosed,
+    required this.closedByConfig,
     required this.showPoolEntry,
     required this.now,
   });
@@ -22,9 +22,14 @@ class DashboardData {
   final Student student;
   final RegistrationWindow window;
   final Team? team;
-  final bool registrationClosed;
+
+  /// Remote Config `registration_closed` (forces the closed state for demos).
+  final bool closedByConfig;
   final bool showPoolEntry;
   final DateTime now;
+
+  /// Derived from [now], so the closed state appears when the deadline passes (CR-06).
+  bool get registrationClosed => closedByConfig || window.isClosed(now);
 
   Duration get timeLeft => window.closesAt.difference(now);
 
@@ -35,11 +40,14 @@ class DashboardData {
   bool get sizeOk => team?.meetsSizeRule ?? false;
   bool get leaderOk => team?.hasLeader ?? false;
 
-  DashboardData withTeam(Team? team) => DashboardData(
+  DashboardData withTeam(Team? team) => _copy(team, now);
+  DashboardData at(DateTime time) => _copy(team, time);
+
+  DashboardData _copy(Team? team, DateTime now) => DashboardData(
     student: student,
     window: window,
     team: team,
-    registrationClosed: registrationClosed,
+    closedByConfig: closedByConfig,
     showPoolEntry: showPoolEntry,
     now: now,
   );
@@ -50,6 +58,8 @@ class DashboardViewModel extends ChangeNotifier {
   DashboardViewModel(this._student, this._teams, this._registration, this._config, this._crash) {
     _configSub = _config.changes.listen((_) => load());
     _teamSub = _teams.watchTeamOf(_student.id).listen(_onTeam);
+    // The countdown, the Urgent badge and the closed state follow the clock (CR-06).
+    _clock = Timer.periodic(const Duration(seconds: 30), (_) => _tick());
   }
 
   final Student _student;
@@ -59,6 +69,7 @@ class DashboardViewModel extends ChangeNotifier {
   final CrashReporter _crash;
   late final StreamSubscription<void> _configSub;
   late final StreamSubscription<Team?> _teamSub;
+  late final Timer _clock;
 
   ViewState<DashboardData> state = const Loading();
 
@@ -74,7 +85,7 @@ class DashboardViewModel extends ChangeNotifier {
           student: _student,
           window: window,
           team: results[1] as Team?,
-          registrationClosed: _config.getBool(ConfigKeys.registrationClosed) || window.isClosed(now),
+          closedByConfig: _config.getBool(ConfigKeys.registrationClosed),
           showPoolEntry: _config.getBool(ConfigKeys.showPoolEntry),
           now: now,
         ),
@@ -93,8 +104,16 @@ class DashboardViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _tick() {
+    final s = state;
+    if (s is! Data<DashboardData>) return;
+    state = Data(s.value.at(DateTime.now()));
+    notifyListeners();
+  }
+
   @override
   void dispose() {
+    _clock.cancel();
     _teamSub.cancel();
     _configSub.cancel();
     super.dispose();
