@@ -33,5 +33,7 @@ async def test_tc13_export_and_upload_team_summary(device, artemis):
     assert run.data["uploaded"] is True
     assert re.fullmatch(r"team-ai-04-\d{8}-\d{4}\.pdf", run.data["file_name"])
     assert run.data["size_kb"] > 0
-    assert "[export_done] Uploaded team-ai-04-" in run.screen
+    # Ground truth: the success banner holds the uploaded file's URL, ending in the same name.
+    assert re.search(r"\[export_done\].*/reports/s_minh/team-ai-04-\d{8}-\d{4}\.pdf", run.screen, re.S)
+    assert run.data["file_name"] in run.screen
     assert "export_report" in device.analytics_events()

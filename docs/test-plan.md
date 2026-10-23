@@ -8,8 +8,10 @@ on an Android emulator. Code: [`e2e_test/`](../e2e_test).
 - **ARTEMIS performs the steps under test.** Each goal is written the way a student would describe the task,
   using the labels on screen. The agent is locked to the app package (`locked_app_package`), except TC-11,
   which checks the Android share sheet.
-- **Structured output.** Every run asks the ARTEMIS Outputter for a JSON object (`expected_output`), which the
-  test parses and asserts field by field.
+- **Structured output.** Every goal ends by asking for a JSON object. With the `flash` profile ARTEMIS has no
+  Outputter, so the JSON is the explanation of the agent's final `report_task_status` step, read from
+  `/api/sessions/{id}/steps`; with `pro` it is the Outputter's `output.md` note. The test parses it and asserts
+  field by field.
 - **Ground truth from the device.** The agent's report alone is not trusted. After each run the test reads the
   real accessibility tree over adb (`Semantics.identifier` is exposed as Android `resource-id`) and the
   `analytics_event` lines in Logcat, and asserts on those too.
@@ -26,7 +28,7 @@ on an Android emulator. Code: [`e2e_test/`](../e2e_test).
 | ARTEMIS | `google/artemis` @ `351ca8422f7b5b54e80a9c1ce03a222e02415b6b`, daemon started with `uv run artemis ui` |
 | SDK | `artemis-client` from the same commit (pinned in `e2e_test/pyproject.toml`) |
 | Profile | `flash` for the regression suite; `pro` for the exploratory session |
-| LLM | Gemini, key in `artemis/.env` (`GEMINI_API_KEY`), never in this repository |
+| LLM | `gemini-3.5-flash-lite`, fallback `gemini-3.1-flash-lite` (ARTEMIS `config/artemis.jsonc` → `default`). The ARTEMIS default `gemini-3.8-flash` has a free-tier quota of 20 requests per day, too low for 39 runs. Key in `artemis/.env` (`GEMINI_API_KEY`), never in this repository. |
 | Device | Android emulator `Pixel_API_36` (Android 16, 1080×2400, 420 dpi), serial `emulator-5554` |
 | App | debug APK from `flutter build apk --debug`, package `com.devorganize222.exematching` |
 | Test data | `assets/seed/seed.json`; accounts `minh.le@fpt.edu.vn` (Team AI-04, 3/5, no leader) and `an.tran@fpt.edu.vn` (no team) |

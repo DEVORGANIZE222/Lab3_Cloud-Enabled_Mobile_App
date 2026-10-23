@@ -107,8 +107,9 @@ def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureReques
     async def run(goal: str, expected_output: str, *, timeout: float = 900) -> Run:
         started = datetime.now()
         result = await client.run(
-            f"{goal}\nWhen you finish, make your final status explanation exactly this JSON object, "
-            f"filled with what you observed: {expected_output.removeprefix('Return JSON: ')}",
+            f"{goal}\nWhen you finish, report the task as completed. The explanation of that final report must be "
+            f"only this JSON object with the values you observed, and no other words: "
+            f"{expected_output.removeprefix('Return JSON: ')}",
             profile=PROFILE,
             device_serial=SERIAL,
             locked_app_package=PACKAGE,
