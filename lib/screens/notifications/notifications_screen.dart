@@ -12,6 +12,7 @@ import '../../widgets/app_card.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/states.dart';
 import '../../widgets/status.dart';
+import '../shared/feedback.dart';
 import '../shared/profile_action.dart';
 import '../shared/team_status.dart';
 
@@ -32,7 +33,13 @@ class NotificationsScreen extends StatelessWidget {
           if (vm.unread > 0)
             Semantics(
               identifier: 'btn_mark_all_read',
-              child: TextButton(onPressed: vm.markAllRead, child: const Text('Mark All Read')),
+              child: TextButton(
+                onPressed: () async {
+                  final failure = await vm.markAllRead();
+                  if (failure != null && context.mounted) showFailure(context, failure);
+                },
+                child: const Text('Mark All Read'),
+              ),
             ),
           const ProfileAction(),
         ],
@@ -84,11 +91,19 @@ class _NotificationCard extends StatelessWidget {
   Future<void> _decline(BuildContext context) async {
     final vm = context.read<NotificationsViewModel>();
     final messenger = ScaffoldMessenger.of(context);
-    await vm.decline(item);
+    final failure = await vm.decline(item);
+    if (!context.mounted) return;
+    if (failure != null) return showFailure(context, failure);
     messenger.showSnackBar(
       SnackBar(
         content: const Text('Invite declined'),
-        action: SnackBarAction(label: 'Undo', onPressed: () => vm.restore(item)),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () async {
+            final undoFailure = await vm.restore(item);
+            if (undoFailure != null && context.mounted) showFailure(context, undoFailure);
+          },
+        ),
       ),
     );
   }
@@ -98,10 +113,7 @@ class _NotificationCard extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     final failure = await vm.accept(item);
     if (!context.mounted) return;
-    if (failure != null) {
-      messenger.showSnackBar(SnackBar(content: Text('${failure.title}. ${failure.cause}')));
-      return;
-    }
+    if (failure != null) return showFailure(context, failure);
     messenger.showSnackBar(const SnackBar(content: Text('Invite accepted. Welcome to your new team')));
     context.go('/team');
   }

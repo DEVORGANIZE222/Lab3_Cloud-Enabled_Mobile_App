@@ -62,12 +62,22 @@ class NotificationsViewModel extends ChangeNotifier {
     _publish();
   }
 
-  Future<void> open(AppNotification n) => _repo.markRead(_student.id, n.id);
-  Future<void> markAllRead() => _repo.markAllRead(_student.id);
+  /// Every write returns a failure to show instead of throwing (CR-03).
+  Future<AppFailure?> _write(Future<void> Function() action, String reason) async {
+    try {
+      await action();
+      return null;
+    } catch (e, st) {
+      return toFailure(e, st, crash: _crash, reason: reason);
+    }
+  }
+
+  Future<AppFailure?> open(AppNotification n) => _write(() => _repo.markRead(_student.id, n.id), 'mark_read');
+  Future<AppFailure?> markAllRead() => _write(() => _repo.markAllRead(_student.id), 'mark_all_read');
 
   /// Removes the invite; the screen offers Undo via [restore].
-  Future<void> decline(AppNotification n) => _repo.remove(_student.id, n.id);
-  Future<void> restore(AppNotification n) => _repo.restore(_student.id, n);
+  Future<AppFailure?> decline(AppNotification n) => _write(() => _repo.remove(_student.id, n.id), 'decline_invite');
+  Future<AppFailure?> restore(AppNotification n) => _write(() => _repo.restore(_student.id, n), 'restore_invite');
 
   /// Accepting an invite joins the team (same server checks as Flow 1).
   Future<AppFailure?> accept(AppNotification n) async {
