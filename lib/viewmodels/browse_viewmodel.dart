@@ -11,6 +11,9 @@ import 'guard.dart';
 class BrowseViewModel extends ChangeNotifier {
   BrowseViewModel(this._teams, this._config, this._analytics, this._crash) {
     _configSub = _config.changes.listen((_) => search());
+    // Slot counts change while the list is open (joins, pool members, locks):
+    // refresh in place instead of patching each navigation path (CR-10).
+    _teamsSub = _teams.teamsChanged().listen((_) => _run(silent: true));
   }
 
   final TeamRepository _teams;
@@ -18,6 +21,7 @@ class BrowseViewModel extends ChangeNotifier {
   final AnalyticsService _analytics;
   final CrashReporter _crash;
   late final StreamSubscription<void> _configSub;
+  late final StreamSubscription<void> _teamsSub;
 
   ViewState<List<Team>> state = const Loading();
   String query = '';
@@ -27,18 +31,28 @@ class BrowseViewModel extends ChangeNotifier {
   int get maxResults => _config.getInt(ConfigKeys.browseMaxResults);
   bool get hasCriteria => query.isNotEmpty || filters.length != 1 || !filters.contains(TeamFilter.openSlots);
 
-  Future<void> search([String? newQuery]) async {
+  Future<void> search([String? newQuery]) {
     if (newQuery != null) query = newQuery.trim();
+    return _run(silent: false);
+  }
+
+  /// [silent] keeps the current list on screen while refreshing.
+  Future<void> _run({required bool silent}) async {
+    if (silent && state is! Data<List<Team>>) return;
     final id = ++_requestId;
-    state = const Loading();
-    notifyListeners();
+    if (!silent) {
+      state = const Loading();
+      notifyListeners();
+    }
     try {
       final result = await _teams.searchTeams(query: query, filters: filters, limit: maxResults);
       if (id != _requestId) return; // a newer search started
       state = result.isEmpty ? const Empty() : Data(result);
-      await _analytics.logSearch(term: query, resultCount: result.length, filters: [for (final f in filters) f.name]);
+      if (!silent) {
+        await _analytics.logSearch(term: query, resultCount: result.length, filters: [for (final f in filters) f.name]);
+      }
     } catch (e, st) {
-      if (id != _requestId) return;
+      if (id != _requestId || silent) return; // a failed background refresh keeps the last list
       state = Failure(await toFailure(e, st, crash: _crash, reason: 'browse_search'));
     }
     notifyListeners();
@@ -59,6 +73,7 @@ class BrowseViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _teamsSub.cancel();
     _configSub.cancel();
     super.dispose();
   }

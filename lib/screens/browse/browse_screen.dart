@@ -128,12 +128,7 @@ class _TeamCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final open = team.openSlots;
-    // Re-run the search on return: slots may have changed while on the detail screen.
-    Future<void> openDetail() async {
-      final vm = context.read<BrowseViewModel>();
-      await context.push('/browse/team/${team.id}');
-      await vm.search();
-    }
+    void openDetail() => context.push('/browse/team/${team.id}');
 
     return AppCard(
       semanticId: 'team_card_${team.code}',
