@@ -46,3 +46,9 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# E2E tests
+e2e_test/.venv/
+__pycache__/
+.pytest_cache/
+.env
