@@ -75,9 +75,7 @@ class TeamDetailViewModel extends ChangeNotifier {
       await _analytics.logJoinTeam(teamId: team.id, memberCount: team.memberCount);
       return Joined(team);
     } on TeamFullException {
-      final latest = await _teams.getTeam(teamId);
-      state = Data(latest);
-      return TeamWasFull(latest);
+      return _reloadAfterTeamFilled();
     } on AlreadyInTeamException catch (e) {
       return JoinFailed(
         AppFailure(
@@ -91,6 +89,18 @@ class TeamDetailViewModel extends ChangeNotifier {
     } finally {
       joining = false;
       notifyListeners();
+    }
+  }
+
+  /// The team filled up first: show its latest roster. The refetch can fail
+  /// too (CR-01), and that must end as a JoinFailed, not escape join().
+  Future<JoinOutcome> _reloadAfterTeamFilled() async {
+    try {
+      final latest = await _teams.getTeam(teamId);
+      state = Data(latest);
+      return TeamWasFull(latest);
+    } catch (e, st) {
+      return JoinFailed(await toFailure(e, st, crash: _crash, reason: 'join_team_reload'));
     }
   }
 }
