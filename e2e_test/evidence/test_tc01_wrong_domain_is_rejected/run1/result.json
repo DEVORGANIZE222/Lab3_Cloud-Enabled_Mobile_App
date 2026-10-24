@@ -1,0 +1,14 @@
+{
+  "test": "test_auth.py::test_tc01_wrong_domain_is_rejected[run1]",
+  "attempt": 1,
+  "profile": "flash",
+  "trace_id": "b332664a-3703-4acc-8bb2-51a80c95a9b5",
+  "status": "completed",
+  "turns": null,
+  "started": "2026-10-23T23:01:22",
+  "seconds": 46.6,
+  "goal": "Tap 'Continue with Google'. In the account list, choose the personal Gmail account (minh.personal@gmail.com), not an fpt.edu.vn one. Then read the message the app shows.",
+  "expected_output": "Return JSON: {\"signed_in\": bool, \"error_title\": string, \"error_mentions_fpt_domain\": bool}",
+  "output": "{\"signed_in\": false, \"error_title\": \"This is not an FPT account\", \"error_mentions_fpt_domain\": true}",
+  "error": null
+}

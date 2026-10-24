@@ -1,49 +1,43 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import 'app/providers.dart';
+import 'app/router.dart';
 import 'theme/app_theme.dart';
-import 'widgets/state_views.dart';
+import 'viewmodels/session_viewmodel.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const EXEMatchingApp());
+  // Keep the semantics tree on even without TalkBack, so UI Automator and
+  // ARTEMIS always see the Semantics identifiers (Android resource-id). Not in
+  // release builds unless built for E2E with --dart-define=E2E_SEMANTICS=true (CR-09).
+  if (kDebugMode || kProfileMode || const bool.fromEnvironment('E2E_SEMANTICS')) {
+    SemanticsBinding.instance.ensureSemantics();
+  }
+  final services = await AppServices.create();
+  runApp(MultiProvider(providers: services.providers, child: const App()));
 }
 
-class EXEMatchingApp extends StatelessWidget {
-  const EXEMatchingApp({super.key});
+class App extends StatefulWidget {
+  const App({super.key});
+
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  late final GoRouter _router = buildRouter(context.read<SessionViewModel>());
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'EXEMatching',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: const AppSkeletonHomeScreen(),
-    );
-  }
-}
-
-class AppSkeletonHomeScreen extends StatelessWidget {
-  const AppSkeletonHomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('EXEMatching')),
-      body: AppEmptyView(
-        icon: Icons.groups_outlined,
-        title: '',
-        subtitle: 'Hệ thống MVVM, Theme Tokens, Firebase config và các tài liệu chuẩn hóa đã được thiết lập.',
-        actionLabel: 'Xem Hướng Dẫn Vibe Coding',
-        onAction: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Open file VIBE_CODING_SAFETY_RULES.md để đọc các quy tắc.',
-              ),
-            ),
-          );
-        },
-      ),
+      theme: buildAppTheme(),
+      routerConfig: _router,
     );
   }
 }

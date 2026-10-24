@@ -1,134 +1,146 @@
-# Architecture Documentation — EXEMatching (PRM393 Lab 3)
+# Architecture: EXEMatching (Lab 3)
 
-## 1. Folder Structure Overview
+EXEMatching is the Lab 2 design (FPT Capstone team formation) built in Flutter. The app follows **MVVM with Provider**:
 
-```text
-lib/
-├── models/       # Immutable data models and state containers (shared across layers)
-├── services/     # Business logic abstractions and Firebase SDK wrappers
-├── firebase/     # Low-level Firebase initializations and options configuration
-├── viewmodels/   # MVVM ChangeNotifier ViewModels managing UI states and user intents
-├── screens/      # Pure presentation screens (observe ViewModels, forward user events)
-├── widgets/      # Reusable design system components, state views (Loading/Empty/Error)
-├── theme/        # Centralized design tokens (ColorScheme, TextTheme, AppSpacing, AppRadius)
-└── utils/        # Helper utilities (PDF generation, date-time formatters)
-```
+- Screens only render state and forward user intents.
+- ViewModels own the state and the business rules.
+- Services are the only code that talks to an SDK, the network or storage.
+- Dependencies point downwards only.
 
----
+## 1. Folder structure (`lib/`)
 
-## 2. Layer Diagram (Mermaid)
+| Folder | One line |
+|---|---|
+| `main.dart` | Bootstraps the app: creates the services through the composition root and runs `App`. |
+| `app/` | `App` (`MaterialApp.router`), the `go_router` route table with auth redirect, and `providers.dart` (the composition root that wires services to ViewModels). |
+| `theme/` | Every Lab 2 design token: `ColorScheme`, `AppColors` theme extension, `TextTheme`, `AppSpacing`, `AppRadius`, `AppElevation`, `AppSize`, and `buildAppTheme()`. |
+| `models/` | Immutable domain objects (`Student`, `Team`, `TeamMember`, `Vote`, `AppNotification`, `PoolStatus`, `RegistrationWindow`) and the generic `ViewState<T>` sealed class. |
+| `services/` | Abstract service interfaces: auth, teams, notifications, pool, remote config, analytics, crash reporting, report (PDF), storage. No Flutter widgets. |
+| `services/local/` | Development implementations of the interfaces, seeded from `assets/seed/*.json`. Used until the Firebase implementations replace them in `providers.dart`. |
+| `firebase/` | Firebase implementations of the same interfaces. Owned by the Firebase integration teammate. |
+| `viewmodels/` | One `ChangeNotifier` per screen (plus `SessionViewModel` for auth state). Owns the screen's `ViewState`, validation, filtering and the rules (team size 4–5, vote majority). |
+| `screens/` | One folder per Lab 2 screen. Widgets only: they read a ViewModel and call its methods. No SDK calls, no business logic in `build()`. |
+| `widgets/` | The Lab 2 component library as reusable widgets (button, text field, card, navigation, app bar, dialog, loading, empty, error, plus badge, banner, avatar, chip, progress). |
+| `utils/` | Pure helpers: countdown and date formatting, validators. |
 
-Dependencies strictly flow downwards. A layer never imports from or depends on the layer above it.
+`assets/seed/` holds the development data (teams, students, notifications, pool status) that the local services load. The submitted build switches to Firestore (see §5).
+
+## 2. Layers
 
 ```mermaid
 graph TD
-    subgraph ViewLayer["Presentation Layer (View)"]
-        Screens["Screens (screens/)"]
-        Widgets["Reusable Widgets (widgets/)"]
-    end
-
-    subgraph ViewModelLayer["ViewModel Layer (State & Logic)"]
-        VM["ViewModels (viewmodels/ with Provider)"]
-        ViewState["Explicit State Models (Loading / Empty / Error / Data)"]
-    end
-
-    subgraph ServiceLayer["Service & Repository Layer (Domain/Data)"]
-        Services["Services (services/ & firebase/)"]
-    end
-
-    subgraph ExternalLayer["External Infrastructure"]
-        Firestore[("Cloud Firestore")]
-        FirebaseAuth["Firebase Auth"]
-        Storage["Cloud Storage"]
-        RemoteConfig["Firebase Remote Config"]
-        Analytics["Firebase Analytics"]
-        Crashlytics["Firebase Crashlytics"]
-    end
-
-    subgraph ModelLayer["Shared Models"]
-        DataModels["Plain Data Models (models/)"]
-    end
-
-    Screens -->|Dispatches Events / Listens to State| VM
-    Widgets -->|Reads Theme & Callbacks| Screens
-    VM -->|Calls Async Methods| Services
-    VM -->|Emits State| ViewState
-    Services -->|Serializes / Deserializes| DataModels
-    Services -->|I/O Operations| Firestore
-    Services -->|Auth State| FirebaseAuth
-    Services -->|Upload Files| Storage
-    Services -->|Fetch Flags| RemoteConfig
-    Services -->|Log Events| Analytics
-    Services -->|Record Errors| Crashlytics
-    VM -.->|Reads| DataModels
-    Screens -.->|Renders| DataModels
+  subgraph UI
+    S[screens/] --> W[widgets/]
+    S --> T[theme/]
+    W --> T
+  end
+  subgraph Presentation logic
+    VM[viewmodels/]
+  end
+  subgraph Data
+    SI[services/ interfaces]
+    L[services/local/]
+    F[firebase/]
+  end
+  M[models/]
+  S --> VM
+  VM --> SI
+  VM --> M
+  L -. implements .-> SI
+  F -. implements .-> SI
+  L --> M
+  F --> M
+  P[app/providers.dart] --> L
+  P --> F
+  P --> VM
 ```
 
----
+Rules enforced in code review (handout §5):
 
-## 3. Sequence Diagram (Flow 1: Search & Browse Groups)
+- No file under `screens/` or `widgets/` imports `services/local/`, `firebase/`, `http`, `firebase_*` or `shared_preferences`.
+- Every external call goes through a service interface.
+- Each data-loading screen reads a `ViewState<T>` (`Loading`, `Empty`, `Error`, `Data`) owned by its ViewModel.
+- ViewModels receive services through their constructor, so a unit test can pass a fake.
+- No widget reads a global singleton. Services are injected with `Provider`, and ViewModels with `ChangeNotifierProvider`.
+
+## 3. State model
+
+```dart
+sealed class ViewState<T> {}
+final class Loading<T> extends ViewState<T> {}
+final class Empty<T> extends ViewState<T> { final String reason; }
+final class Failure<T> extends ViewState<T> { final AppFailure failure; }
+final class Data<T> extends ViewState<T> { final T value; }
+```
+
+`AppFailure` carries a plain-language `title`, `cause` and `retryable`. The texts follow the UX-writing checklist: say what happened and what to do next, and never blame the user.
+
+## 4. Sequence: Flow 1, discover and join a team
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor User as Student
-    participant View as BrowseGroupsScreen
-    participant VM as GroupListViewModel
-    participant Service as GroupService
-    participant Analytics as AnalyticsService
-    participant Firestore as Cloud Firestore
-
-    User->>View: Enters keyword "AI" in search input
-    View->>VM: onSearchQueryChanged("AI")
-    Note over VM: Debounce 300ms
-    VM->>VM: emit(LoadingState)
-    VM->>Analytics: logSearchEvent(searchTerm: "AI")
-    Analytics-->>VM: event logged
-    VM->>Service: searchTeams(query: "AI")
-    Service->>Firestore: collection("teams").where("tags", arrayContains: "AI").get()
-    alt Data returned (count > 0)
-        Firestore-->>Service: QuerySnapshot (List of Team documents)
-        Service-->>VM: List<TeamModel>
-        VM->>VM: emit(SuccessState(teams))
-        VM-->>View: notifyListeners()
-        View-->>User: Renders Group Cards with open slots
-    else No teams match keyword
-        Firestore-->>Service: QuerySnapshot (empty)
-        Service-->>VM: []
-        VM->>VM: emit(EmptyState("Không tìm thấy nhóm phù hợp"))
-        VM-->>View: notifyListeners()
-        View-->>User: Displays AppEmptyView with "Reset Filters" action
-    else Network failure
-        Firestore-->>Service: FirebaseException / NetworkError
-        Service-->>VM: throws AppException
-        VM->>VM: emit(ErrorState("Lỗi kết nối", onRetry))
-        VM-->>View: notifyListeners()
-        View-->>User: Displays AppErrorView with Retry button
-    end
+  actor U as Student
+  participant B as BrowseScreen
+  participant BVM as BrowseViewModel
+  participant TR as TeamRepository
+  participant A as AnalyticsService
+  participant D as TeamDetailScreen
+  participant DVM as TeamDetailViewModel
+  U->>B: types "drone", taps chip "Open slots"
+  B->>BVM: search("drone"), toggleFilter(openSlots)
+  BVM->>BVM: state = Loading
+  BVM->>TR: searchTeams(query, filters, limit = RemoteConfig.browse_max_results)
+  TR-->>BVM: List<Team>
+  BVM->>A: logSearch(term, resultCount)
+  BVM->>BVM: state = Data(teams) | Empty
+  B-->>U: group cards
+  U->>B: taps "View Details & Join"
+  B->>D: push /browse/team/:id
+  D->>DVM: load(id)
+  DVM->>TR: watchTeam(id)
+  U->>D: "Request to Join Team" → confirms dialog
+  D->>DVM: join()
+  DVM->>TR: joinTeam(id, uid)
+  alt slot still free
+    TR-->>DVM: Team (4/5)
+    DVM->>A: logJoinTeam(teamId)
+    D-->>U: snackbar "You joined Team AI-04", go to /team
+  else team filled meanwhile
+    TR-->>DVM: TeamFullException
+    D-->>U: "This team just filled up" + back to refreshed Browse
+  end
 ```
 
----
+## 5. ViewModels and services
 
-## 4. ViewModel to Services Dependency Table
+| ViewModel | Screen | Services used |
+|---|---|---|
+| `SessionViewModel` | app-wide (router redirect) | `AuthService`, `AnalyticsService`, `CrashReporter` |
+| `SignInViewModel` | SCR_01 Sign In | `AuthService` |
+| `DashboardViewModel` | SCR_02 Dashboard | `TeamRepository`, `RegistrationService`, `ConfigService` |
+| `BrowseViewModel` | SCR_03 Browse | `TeamRepository`, `ConfigService`, `AnalyticsService` |
+| `TeamDetailViewModel` | SCR_04 Team Detail + join dialog | `TeamRepository`, `AnalyticsService`, `CrashReporter` |
+| `MyTeamViewModel` | SCR_05 My Team | `TeamRepository`, `AuthService` |
+| `VotingViewModel` | SCR_06 Leader Voting | `TeamRepository`, `AnalyticsService` |
+| `LockReviewViewModel` | SCR_07 Lock Review | `TeamRepository`, `PoolRepository`, `AnalyticsService`, `CrashReporter` |
+| `PoolStatusViewModel` | SCR_08 Random Pool | `PoolRepository` |
+| `NotificationsViewModel` | SCR_09 Alerts | `NotificationRepository`, `TeamRepository` |
+| `ProfileViewModel` | Profile (added) | `AuthService`, `ReportService`, `StorageService`, `ConfigService`, `CrashReporter`, `AnalyticsService` |
 
-Every ViewModel receives its required services via Dependency Injection (Provider). ViewModels never construct singleton instances of services directly, making them 100% unit-testable with mock/fake services.
+### Swapping in Firebase
 
-| ViewModel Name | File Location | Services Injected & Used | Responsibilities |
-|---|---|---|---|
-| `AuthViewModel` | `lib/viewmodels/auth_viewmodel.dart` | `FirebaseAuthService`, `AnalyticsService` | Manages login state, Google SSO authentication, domain validation (`@fpt.edu.vn`), and sign-out. |
-| `DashboardViewModel` | `lib/viewmodels/dashboard_viewmodel.dart` | `GroupService`, `RemoteConfigService` | Loads student's current capstone status, urgent deadline countdowns, and quick actions. |
-| `GroupListViewModel` | `lib/viewmodels/group_list_viewmodel.dart` | `GroupService`, `AnalyticsService`, `RemoteConfigService` | Manages group search query, tag filtering, debouncing, and pagination. |
-| `GroupDetailViewModel` | `lib/viewmodels/group_detail_viewmodel.dart` | `GroupService`, `AnalyticsService` | Displays roster, validates open slots ($< 5$), and handles join requests. |
-| `MyGroupViewModel` | `lib/viewmodels/my_group_viewmodel.dart` | `GroupService`, `VotingService` | Loads user's active group details, member roles, and current election status. |
-| `VotingViewModel` | `lib/viewmodels/voting_viewmodel.dart` | `VotingService`, `AnalyticsService` | Manages leader candidate selection, records votes, and listens to real-time vote tallies. |
-| `LockReviewViewModel` | `lib/viewmodels/lock_review_viewmodel.dart` | `GroupService`, `StorageService`, `AnalyticsService` | Validates team quota ($\ge 4$ members), performs lock confirmation, triggers random pool recruitment on error path, and generates PDF. |
-| `NotificationViewModel` | `lib/viewmodels/notification_viewmodel.dart` | `NotificationService` | Subscribes to FCM pushes, displays notification list, and routes on tap. |
-| `ProfileViewModel` | `lib/viewmodels/profile_viewmodel.dart` | `FirebaseAuthService`, `StorageService`, `RemoteConfigService`, `CrashlyticsService` | Firebase demonstration hub: upload test file, trigger handled error/crash, reload Remote Config. |
+`lib/app/providers.dart` is the only file that names concrete classes. To switch a service to Firebase:
+1. Add `firebase/firebase_<x>.dart implements <X>Service`.
+2. Replace `Local<X>Service(...)` with it in `providers.dart`.
 
----
+No screen or ViewModel changes.
 
-## 5. Architectural Quality Checklist (Grading Rules Enforced)
-- [x] **No SDK Direct Call:** No UI widget calls `http`, `FirebaseAuth.instance`, `FirebaseFirestore.instance`, or `FirebaseAnalytics.instance`.
-- [x] **Zero Business Logic in UI:** All aggregation, filtering, quota validation, and string mutations reside in ViewModels or Services.
-- [x] **Explicit ViewState:** Every screen loading asynchronous data observes a sealed `ViewState` (`InitialState`, `LoadingState`, `EmptyState`, `ErrorState`, `SuccessState`).
-- [x] **Service Injection:** ViewModels receive interfaces via Provider, enabling isolated unit testing.
+| Interface | Local implementation (now) | Firebase implementation (teammate) |
+|---|---|---|
+| `AuthService` | `LocalAuthService`: test account, simulated Google picker | `FirebaseAuthService`: Google Sign-In + FirebaseAuth |
+| `TeamRepository`, `NotificationRepository`, `PoolRepository`, `RegistrationService` | `Local*`, seeded from `assets/seed/` | Cloud Firestore |
+| `ConfigService` | `LocalConfigService`: in-app defaults | Firebase Remote Config, with the same defaults |
+| `AnalyticsService` | `DebugAnalyticsService`: `debugPrint` to Logcat | Firebase Analytics |
+| `CrashReporter` | `DebugCrashReporter`: `debugPrint` | Crashlytics |
+| `StorageService` | `LocalStorageService`: copies into app documents | Cloud Storage `reports/{uid}/…` |
+| `ReportService` | `PdfReportService` (real; package `pdf`) | unchanged |
