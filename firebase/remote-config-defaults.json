@@ -2,5 +2,6 @@
   "max_team_members": 5,
   "enable_waiting_pool": true,
   "urgent_deadline_days": 3,
-  "banner_announcement": "Hạn chót chốt danh sách nhóm đồ án Capstone Học kỳ Spring 2026 đang đến gần!"
+  "banner_announcement": "Hạn chót chốt danh sách nhóm đồ án Capstone Học kỳ Spring 2026 đang đến gần!",
+  "registration_closed": false
 }

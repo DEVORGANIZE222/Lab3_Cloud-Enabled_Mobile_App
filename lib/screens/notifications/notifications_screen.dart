@@ -129,7 +129,11 @@ class _NotificationCard extends StatelessWidget {
       case NotificationKind.invite:
         context.push('/browse/team/${item.teamId}');
       case NotificationKind.system:
-        break;
+        // FCM campaign messages are persisted as `system` unless their
+        // payload explicitly supplies another kind. A teamId must still open
+        // the corresponding detail screen when the student taps the inbox
+        // item, just like a system notification opened from Android.
+        context.push('/browse/team/${item.teamId}');
     }
   }
 

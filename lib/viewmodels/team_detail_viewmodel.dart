@@ -58,6 +58,7 @@ class TeamDetailViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       final team = await _teams.getTeam(teamId);
+      await _crash.setKey('team_id', team.id);
       state = Data(team);
       await _analytics.logViewTeam(teamId: team.id, teamCode: team.code);
     } catch (e, st) {
@@ -71,6 +72,7 @@ class TeamDetailViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       final team = await _teams.joinTeam(teamId, _student);
+      await _crash.setKey('team_id', team.id);
       state = Data(team);
       await _analytics.logJoinTeam(teamId: team.id, memberCount: team.memberCount);
       return Joined(team);

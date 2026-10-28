@@ -39,7 +39,7 @@ class PdfReportService implements ReportService {
               ['Status', status],
               [
                 'Members',
-                '${team.memberCount} of ${team.capacity} (rule: ${TeamRules.minMembers}–${TeamRules.maxMembers})',
+                '${team.memberCount} of ${team.capacity} (rule: ${TeamRules.minMembers}-${TeamRules.maxMembers})',
               ],
               ['Leader', team.leader?.fullName ?? 'Not elected yet'],
               ['Supervisor', team.supervisor],

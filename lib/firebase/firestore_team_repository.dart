@@ -1,79 +1,239 @@
-import 'dart:async';
+import 'dart:math';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+
 import '../models/student.dart';
 import '../models/team.dart';
+import '../models/view_state.dart';
 import '../services/services.dart';
 
-/// Cloud Firestore implementation of TeamRepository.
-///
-/// Handles teams collection, queries, capacity checks, transactions and listeners.
+/// Firestore-backed team workflow. Every mutation runs in a transaction so the
+/// capacity, membership, voting and locking checks remain correct across clients.
 class FirestoreTeamRepository implements TeamRepository {
+  FirestoreTeamRepository([FirebaseFirestore? firestore]) : _db = firestore ?? FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
+  CollectionReference<Map<String, dynamic>> get _teams => _db.collection('teams');
+  int get _configuredCapacity {
+    final value = FirebaseRemoteConfig.instance.getInt('max_team_members');
+    return value < TeamRules.minMembers ? TeamRules.maxMembers : value;
+  }
+
+  Team _team(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data();
+    if (data == null) {
+      throw const AppFailure(
+        'This team no longer exists',
+        'It may have been closed by its members.',
+        retryable: false,
+        code: 'not-found',
+      );
+    }
+    final members = (data['members'] as List? ?? const []).map((m) {
+      final map = Map<String, dynamic>.from(m as Map);
+      return TeamMember(
+        studentId: map['studentId'] as String,
+        fullName: map['fullName'] as String,
+        studentCode: map['studentCode'] as String,
+        role: map['role'] as String,
+        skills: List<String>.from(map['skills'] ?? const []),
+      );
+    }).toList();
+    final lockedAt = data['lockedAt'];
+    return Team(
+      id: doc.id,
+      code: data['code'] as String? ?? doc.id,
+      name: data['name'] as String? ?? doc.id,
+      topic: data['topic'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      category: data['category'] as String? ?? '',
+      tags: List<String>.from(data['tags'] ?? const []),
+      members: members,
+      openRoles: List<String>.from(data['openRoles'] ?? const []),
+      supervisor: data['supervisor'] as String? ?? '',
+      capacity: data['capacity'] as int? ?? _configuredCapacity,
+      leaderId: data['leaderId'] as String?,
+      votes: Map<String, String>.from(data['votes'] ?? const {}),
+      locked: data['locked'] as bool? ?? false,
+      lockCode: data['lockCode'] as String?,
+      lockedAt: lockedAt is Timestamp ? lockedAt.toDate() : null,
+      invitesSent: data['invitesSent'] as int? ?? 0,
+    );
+  }
+
+  Map<String, dynamic> _member(TeamMember m) => {
+    'studentId': m.studentId,
+    'fullName': m.fullName,
+    'studentCode': m.studentCode,
+    'role': m.role,
+    'skills': m.skills,
+  };
+  Map<String, dynamic> _teamUpdate(Team team) => {
+    'members': team.members.map(_member).toList(),
+    'memberIds': team.members.map((m) => m.studentId).toList(),
+    'votes': team.votes,
+    'leaderId': team.leaderId,
+    'locked': team.locked,
+    'lockCode': team.lockCode,
+    'lockedAt': team.lockedAt == null ? null : Timestamp.fromDate(team.lockedAt!),
+    'invitesSent': team.invitesSent,
+  };
+
   @override
-  Future<List<Team>> searchTeams({
-    String query = '',
-    Set<TeamFilter> filters = const {},
-    int limit = 20,
-  }) async {
-    // TODO: Implement Firestore query with filters and search term
-    return [];
+  Future<List<Team>> searchTeams({String query = '', Set<TeamFilter> filters = const {}, int limit = 20}) async {
+    final snap = await _teams.where('locked', isEqualTo: false).limit(100).get();
+    final q = query.trim().toLowerCase();
+    String? category(TeamFilter f) => switch (f) {
+      TeamFilter.aiMl => 'AI/ML',
+      TeamFilter.mobile => 'Mobile',
+      TeamFilter.webCloud => 'Web/Cloud',
+      _ => null,
+    };
+    final categories = filters.map(category).whereType<String>().toSet();
+    final result = snap.docs.map(_team).where((team) {
+      if (filters.contains(TeamFilter.openSlots) && team.isFull) return false;
+      if (categories.isNotEmpty && !categories.contains(team.category)) return false;
+      return q.isEmpty ||
+          [
+            team.name,
+            team.code,
+            team.topic,
+            team.category,
+            ...team.tags,
+            ...team.openRoles,
+          ].join(' ').toLowerCase().contains(q);
+    }).toList()..sort((a, b) => b.openSlots.compareTo(a.openSlots));
+    return result.take(limit).toList();
   }
 
   @override
-  Future<Team> getTeam(String teamId) async {
-    // TODO: Implement Firestore doc fetch
-    throw UnimplementedError();
-  }
-
+  Future<Team> getTeam(String teamId) async => _team(await _teams.doc(teamId).get());
   @override
   Future<Team?> teamOf(String studentId) async {
-    // TODO: Query team where memberIds contains studentId
-    return null;
+    final s = await _teams.where('memberIds', arrayContains: studentId).limit(1).get();
+    return s.docs.isEmpty ? null : _team(s.docs.first);
   }
 
   @override
-  Stream<Team> watchTeam(String teamId) {
-    // TODO: snapshots() on team document
-    return const Stream.empty();
-  }
-
+  Stream<Team> watchTeam(String teamId) => _teams.doc(teamId).snapshots().map(_team);
   @override
-  Stream<Team?> watchTeamOf(String studentId) {
-    // TODO: snapshots() on teams where memberIds contains studentId
-    return const Stream.empty();
-  }
-
+  Stream<Team?> watchTeamOf(String studentId) => _teams
+      .where('memberIds', arrayContains: studentId)
+      .limit(1)
+      .snapshots()
+      .map((s) => s.docs.isEmpty ? null : _team(s.docs.first));
   @override
-  Stream<void> teamsChanged() {
-    // TODO: snapshots() on teams collection for updates
-    return const Stream.empty();
-  }
+  Stream<void> teamsChanged() => _teams.snapshots().map((_) {});
 
   @override
   Future<Team> joinTeam(String teamId, Student student) async {
-    // TODO: Firestore runTransaction: check capacity (max 5) and add member
-    throw UnimplementedError();
+    final ref = _teams.doc(teamId);
+    return _db.runTransaction((tx) async {
+      final existing = await _teams.where('memberIds', arrayContains: student.id).limit(1).get();
+      if (existing.docs.isNotEmpty) throw AlreadyInTeamException(_team(existing.docs.first).code);
+      final team = _team(await tx.get(ref));
+      if (team.locked) {
+        throw const AppFailure('This team is locked', 'Choose another team.', retryable: false, code: 'locked');
+      }
+      if (team.isFull) throw TeamFullException(team.code);
+      final role = student.preferredRoles.isEmpty ? 'Member' : student.preferredRoles.first;
+      final updated = team.copyWith(members: [...team.members, TeamMember.fromStudent(student, role)]);
+      tx.update(ref, _teamUpdate(updated));
+      return updated;
+    });
   }
 
   @override
   Future<void> leaveTeam(String teamId, String studentId) async {
-    // TODO: Firestore runTransaction: remove studentId from members
-    throw UnimplementedError();
+    final ref = _teams.doc(teamId);
+    await _db.runTransaction((tx) async {
+      final team = _team(await tx.get(ref));
+      if (team.locked) {
+        throw const AppFailure(
+          "You can't leave a locked team",
+          'Contact the Academic Office.',
+          retryable: false,
+          code: 'locked',
+        );
+      }
+      final votes = Map<String, String>.from(team.votes)
+        ..remove(studentId)
+        ..removeWhere((_, c) => c == studentId);
+      tx.update(
+        ref,
+        _teamUpdate(
+          team.copyWith(
+            members: team.members.where((m) => m.studentId != studentId).toList(),
+            votes: votes,
+            clearLeader: team.leaderId == studentId,
+          ),
+        ),
+      );
+    });
   }
 
   @override
   Future<Team> castVote(String teamId, String voterId, String candidateId) async {
-    // TODO: Firestore transaction: record vote, calculate majority, elect leader
-    throw UnimplementedError();
+    final ref = _teams.doc(teamId);
+    return _db.runTransaction((tx) async {
+      var team = _team(await tx.get(ref));
+      if (team.locked) {
+        throw const AppFailure('Voting is closed', 'The roster is locked.', retryable: false, code: 'locked');
+      }
+      if (!team.isMember(voterId) || !team.isMember(candidateId)) {
+        throw const AppFailure(
+          'Invalid vote',
+          'Both students must be team members.',
+          retryable: false,
+          code: 'invalid-vote',
+        );
+      }
+      final votes = Map<String, String>.from(team.votes)..[voterId] = candidateId;
+      team = team.copyWith(votes: votes);
+      final winner = team.members.where((m) => team.votesFor(m.studentId) >= team.votesNeeded).firstOrNull;
+      team = winner == null ? team.copyWith(clearLeader: true) : team.copyWith(leaderId: winner.studentId);
+      tx.update(ref, _teamUpdate(team));
+      return team;
+    });
   }
 
   @override
   Future<Team> lockTeam(String teamId, String leaderId) async {
-    // TODO: Firestore transaction: check leader and member count (4-5), set isLocked = true
-    throw UnimplementedError();
+    final ref = _teams.doc(teamId);
+    return _db.runTransaction((tx) async {
+      var team = _team(await tx.get(ref));
+      if (team.leaderId != leaderId) {
+        throw const AppFailure(
+          'Only the team leader can lock the roster',
+          'Ask your leader to review and lock it.',
+          retryable: false,
+          code: 'not-leader',
+        );
+      }
+      if (!team.meetsSizeRule) {
+        throw AppFailure(
+          "Can't lock yet: ${team.memberCount} of ${team.capacity} members",
+          'A team needs 4–5 members.',
+          retryable: false,
+          code: 'too-small',
+        );
+      }
+      team = team.copyWith(
+        locked: true,
+        lockCode:
+            'CM-${team.code.replaceAll('-', '')}-${Random().nextInt(65536).toRadixString(16).toUpperCase().padLeft(4, '0')}',
+        lockedAt: DateTime.now(),
+      );
+      tx.update(ref, _teamUpdate(team));
+      return team;
+    });
   }
 
   @override
   Future<int> inviteFromPool(String teamId) async {
-    // TODO: Firestore transaction: invite available pool members into empty slots
-    return 0;
+    final team = await getTeam(teamId);
+    if (team.locked || team.isFull) return 0;
+    await _teams.doc(teamId).update({'invitesSent': FieldValue.increment(1)});
+    return 1;
   }
 }

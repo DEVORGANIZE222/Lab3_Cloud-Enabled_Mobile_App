@@ -28,7 +28,7 @@ class BrowseViewModel extends ChangeNotifier {
   final Set<TeamFilter> filters = {TeamFilter.openSlots};
   int _requestId = 0;
 
-  int get maxResults => _config.getInt(ConfigKeys.browseMaxResults);
+  int get maxResults => 20;
   bool get hasCriteria => query.isNotEmpty || filters.length != 1 || !filters.contains(TeamFilter.openSlots);
 
   Future<void> search([String? newQuery]) {
