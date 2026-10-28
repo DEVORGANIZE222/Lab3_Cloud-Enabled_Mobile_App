@@ -31,8 +31,17 @@ class ProfileScreen extends StatelessWidget {
   Future<void> _refreshConfig(BuildContext context) async {
     final changed = await context.read<ProfileViewModel>().refreshConfig();
     if (!context.mounted) return;
+    final failure = context.read<ProfileViewModel>().configRefreshFailure;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(changed ? 'Settings updated from the server' : 'Settings are already up to date')),
+      SnackBar(
+        content: Text(
+          failure != null
+              ? 'Could not update settings. Using the saved settings instead.'
+              : changed == true
+              ? 'Settings updated from the server'
+              : 'Settings are already up to date',
+        ),
+      ),
     );
   }
 

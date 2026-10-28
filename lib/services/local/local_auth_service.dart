@@ -47,7 +47,7 @@ class LocalAuthService implements AuthService {
     ];
     final email = await _pickAccount(accounts);
     if (email == null) throw const SignInCancelled();
-    if (!email.toLowerCase().endsWith('@fpt.edu.vn')) throw WrongDomain(email);
+    if (!email.toLowerCase().endsWith('@fpt.edu.vn')) throw EmailNotAllowed(email);
     await _db.roundTrip();
     final student = _db.students.values.firstWhere((s) => s.email == email);
     await _prefs.setString(_key, student.id);

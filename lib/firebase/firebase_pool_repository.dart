@@ -1,34 +1,66 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/registration.dart';
+import '../models/view_state.dart';
 import '../services/services.dart';
 
-/// Cloud Firestore implementation of PoolRepository and RegistrationService.
 class FirebasePoolRepository implements PoolRepository {
+  FirebasePoolRepository([FirebaseFirestore? firestore]) : _db = firestore ?? FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
   @override
   Future<PoolStatus> statusOf(String studentId) async {
-    // TODO: fetch waiting pool status from Firestore
+    final d = await _db.collection('waitingPool').doc(studentId).get();
+    if (!d.exists) {
+      throw const AppFailure(
+        'No Waiting Pool record',
+        'Join the pool when registration opens.',
+        retryable: false,
+        code: 'not-found',
+      );
+    }
+    final v = d.data()!;
     return PoolStatus(
-      queueId: 'QP-$studentId',
-      progress: 0.0,
-      stage: 'Pending',
-      expectedResult: DateTime.now().add(const Duration(days: 3)),
-      preferredRoles: const ['Developer'],
-      skills: const ['Flutter'],
-      studentsInPool: 0,
-      contactEmail: '$studentId@fpt.edu.vn',
+      queueId: v['queueId'] as String,
+      progress: (v['progress'] as num).toDouble(),
+      stage: v['stage'] as String,
+      expectedResult: (v['expectedResult'] as Timestamp).toDate(),
+      preferredRoles: List<String>.from(v['preferredRoles'] ?? const []),
+      skills: List<String>.from(v['skills'] ?? const []),
+      studentsInPool: v['studentsInPool'] as int? ?? 0,
+      contactEmail: v['contactEmail'] as String? ?? '',
       lastChecked: DateTime.now(),
     );
   }
 }
 
 class FirebaseRegistrationService implements RegistrationService {
+  FirebaseRegistrationService([FirebaseFirestore? firestore]) : _db = firestore ?? FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
   @override
   Future<RegistrationWindow> currentWindow() async {
-    // TODO: fetch current registration deadline from Firestore / RemoteConfig
+    final d = await _db.collection('configuration').doc('registration').get();
+    if (!d.exists) {
+      throw const AppFailure(
+        'Registration is not configured',
+        'Please check with the Academic Office.',
+        retryable: true,
+        code: 'not-found',
+      );
+    }
+    final v = d.data()!;
+    // The configuration document is maintained in Firestore by the project
+    // administrators.  Keep the first app launch usable while that document
+    // is being populated; as soon as Timestamp values exist they take
+    // precedence over these runtime defaults.
     final now = DateTime.now();
+    final opensAt = v['opensAt'];
+    final closesAt = v['closesAt'];
     return RegistrationWindow(
-      semester: 'Spring 2026',
-      opensAt: now.subtract(const Duration(days: 7)),
-      closesAt: now.add(const Duration(days: 7)),
+      semester: v['semester'] as String? ?? 'Current semester',
+      opensAt: opensAt is Timestamp ? opensAt.toDate() : now,
+      closesAt: closesAt is Timestamp
+          ? closesAt.toDate()
+          : now.add(const Duration(days: 90)),
     );
   }
 }

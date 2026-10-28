@@ -105,8 +105,8 @@ class SignInScreen extends StatelessWidget {
                 const InfoBanner(
                   tone: Tone.neutral,
                   icon: Icons.lock_outline,
-                  title: 'Only @fpt.edu.vn accounts can sign in',
-                  message: 'Use the Google account the university gave you.',
+                  title: 'Only class-roster accounts can sign in',
+                  message: 'Use the Google email registered by the Academic Office for this class.',
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 Text(

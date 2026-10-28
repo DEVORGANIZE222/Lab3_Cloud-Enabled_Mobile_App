@@ -73,6 +73,7 @@ class LockReviewViewModel extends ChangeNotifier {
       if (team == null) {
         state = const Empty();
       } else {
+        await _crash.setKey('team_id', team.id);
         state = Data(team);
         await _watch?.cancel();
         _watch = _teams.watchTeam(team.id).listen((t) {
@@ -112,6 +113,7 @@ class LockReviewViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       final team = await _teams.lockTeam(s.value.id, _student.id);
+      await _crash.setKey('team_id', team.id);
       state = Data(team);
       await _analytics.logLockRoster(teamId: team.id, memberCount: team.memberCount);
       return null;

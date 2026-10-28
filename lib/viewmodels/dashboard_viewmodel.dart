@@ -86,7 +86,7 @@ class DashboardViewModel extends ChangeNotifier {
           window: window,
           team: results[1] as Team?,
           closedByConfig: _config.getBool(ConfigKeys.registrationClosed),
-          showPoolEntry: _config.getBool(ConfigKeys.showPoolEntry),
+          showPoolEntry: _config.getBool(ConfigKeys.enableWaitingPool),
           now: now,
         ),
       );

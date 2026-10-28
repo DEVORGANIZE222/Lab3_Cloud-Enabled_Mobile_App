@@ -20,9 +20,11 @@ class SignInCancelled implements Exception {
   const SignInCancelled();
 }
 
-/// Thrown when the chosen Google account is not an @fpt.edu.vn account.
-class WrongDomain implements Exception {
-  const WrongDomain(this.email);
+/// Thrown when a Google account is not present in the administrator's roster.
+///
+/// The roster is stored in Firestore, not bundled into the application.
+class EmailNotAllowed implements Exception {
+  const EmailNotAllowed(this.email);
   final String email;
 }
 
@@ -31,7 +33,7 @@ abstract interface class AuthService {
   Stream<Student?> authStateChanges();
   Student? get currentStudent;
 
-  /// Opens the Google account picker. Throws [SignInCancelled], [WrongDomain]
+  /// Opens the Google account picker. Throws [SignInCancelled], [EmailNotAllowed]
   /// or an `AppFailure`.
   Future<Student> signInWithGoogle();
 
@@ -108,16 +110,21 @@ abstract interface class PoolRepository {
 
 /// Remote Config keys with in-app defaults (firebase/remote-config-defaults.json).
 abstract final class ConfigKeys {
-  /// Max teams listed on Browse (int, default 10).
-  static const browseMaxResults = 'browse_max_results';
+  static const maxTeamMembers = 'max_team_members';
 
   /// Shows the Random Pool entry on Dashboard (bool, default true).
-  static const showPoolEntry = 'show_pool_entry';
+  static const enableWaitingPool = 'enable_waiting_pool';
 
   /// Forces the "registration closed" Dashboard state (bool, default false).
   static const registrationClosed = 'registration_closed';
 
-  static const defaults = <String, Object>{browseMaxResults: 10, showPoolEntry: true, registrationClosed: false};
+  static const defaults = <String, Object>{
+    maxTeamMembers: 5,
+    enableWaitingPool: true,
+    'urgent_deadline_days': 3,
+    'banner_announcement': 'Registration deadline is approaching.',
+    registrationClosed: false,
+  };
 }
 
 abstract interface class ConfigService {

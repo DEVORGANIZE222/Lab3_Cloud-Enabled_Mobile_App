@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isRosterMember() {
+      return request.auth != null
+          && exists(/databases/$(database)/documents/allowedEmails/$(request.auth.token.email));
+    }
+
+    // The app reads only its own roster entry during sign-in. Listing the
+    // class roster is deliberately denied so student emails are not exposed.
+    match /allowedEmails/{email} {
+      allow get: if request.auth != null && request.auth.token.email == email;
+      allow list, create, update, delete: if false;
+    }
+
+    match /students/{userId} {
+      allow read, create, update: if isRosterMember() && request.auth.uid == userId;
+      allow delete: if false;
+      match /notifications/{notificationId} {
+        allow read, write: if isRosterMember() && request.auth.uid == userId;
+      }
+    }
+    match /teams/{teamId} {
+      allow read: if isRosterMember();
+      // Team mutations are validated again by Firestore transactions in the app.
+      allow update: if isRosterMember();
+      allow create, delete: if false;
+    }
+    match /waitingPool/{userId} {
+      allow read: if isRosterMember() && request.auth.uid == userId;
+      allow write: if false;
+    }
+    match /configuration/{document} { allow read: if isRosterMember(); allow write: if false; }
+  }
+}

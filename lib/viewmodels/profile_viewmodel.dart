@@ -66,11 +66,12 @@ class ProfileViewModel extends ChangeNotifier {
   Student get student => _student;
   ExportState export = const ExportIdle();
   bool refreshingConfig = false;
+  AppFailure? configRefreshFailure;
   String? crashMessage;
 
   Map<String, String> get configValues => {
-    ConfigKeys.browseMaxResults: '${_config.getInt(ConfigKeys.browseMaxResults)}',
-    ConfigKeys.showPoolEntry: '${_config.getBool(ConfigKeys.showPoolEntry)}',
+    ConfigKeys.maxTeamMembers: '${_config.getInt(ConfigKeys.maxTeamMembers)}',
+    ConfigKeys.enableWaitingPool: '${_config.getBool(ConfigKeys.enableWaitingPool)}',
     ConfigKeys.registrationClosed: '${_config.getBool(ConfigKeys.registrationClosed)}',
   };
 
@@ -113,11 +114,23 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> refreshConfig() async {
+  /// Returns `null` when the server cannot be reached. The current Remote
+  /// Config values remain available because the Firebase service sets defaults
+  /// before its first fetch and retains the last activated values afterwards.
+  Future<bool?> refreshConfig() async {
     refreshingConfig = true;
+    configRefreshFailure = null;
     notifyListeners();
     try {
       return await _config.refresh();
+    } catch (error, stack) {
+      configRefreshFailure = await toFailure(
+        error,
+        stack,
+        crash: _crash,
+        reason: 'remote_config_refresh',
+      );
+      return null;
     } finally {
       refreshingConfig = false;
       notifyListeners();
