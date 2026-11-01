@@ -99,11 +99,19 @@ service cloud.firestore {
     match /waitingPool/{userId} {
       // Students can read their own pool record.
       allow read: if isRosterMember() && request.auth.uid == userId;
-      // Only team leaders can mark a pool student as assigned (via inviteFromPool).
+
+      // Only the verified leader of assignedTeamId can mark a pool student as assigned (via inviteFromPool).
       allow update: if isRosterMember()
+                    && resource.data.assigned == false
                     && request.resource.data.assigned == true
-                    && request.resource.data.keys().hasAll(['assigned', 'assignedTeamId']);
+                    && request.resource.data.keys().hasAll(['assigned', 'assignedTeamId'])
+                    && isLeaderOf(request.resource.data.assignedTeamId);
       allow create, delete: if false;
+
+      function isLeaderOf(teamId) {
+        return exists(/databases/$(database)/documents/teams/$(teamId))
+            && get(/databases/$(database)/documents/teams/$(teamId)).data.leaderId == request.auth.uid;
+      }
     }
 
     match /configuration/{document} {
