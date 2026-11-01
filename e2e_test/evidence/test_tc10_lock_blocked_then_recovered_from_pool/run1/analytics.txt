@@ -1,3 +1,0 @@
-analytics_event invite_from_pool {team_id: team_ai04, invited: 1}
-analytics_event invite_pool {team_id: team_ai04, invited_count: 1}
-analytics_event lock_roster {team_id: team_ai04, member_count: 4}

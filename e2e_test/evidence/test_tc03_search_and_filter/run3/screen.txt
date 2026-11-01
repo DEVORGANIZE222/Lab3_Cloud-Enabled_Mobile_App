@@ -1,3 +1,0 @@
-[browse_result_count] 1 team with open slots
-[team_card_AI-04] Team AI-04
-[filter_chip_aiml] Selected

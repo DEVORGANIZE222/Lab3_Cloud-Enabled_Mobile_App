@@ -1,4 +1,0 @@
-[banner_leader_elected] Minh Le elected leader
-[leader_name] Minh Le
-[votes_count] 2 votes
-[btn_review_lock] Review & Lock

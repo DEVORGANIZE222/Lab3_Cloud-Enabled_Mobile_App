@@ -1,3 +1,0 @@
-[empty_state_title] No teams match your search
-[btn_clear_filters] Clear Filters
-[browse_result_count] 4 teams with open slots

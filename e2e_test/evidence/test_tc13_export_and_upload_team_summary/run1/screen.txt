@@ -1,4 +1,0 @@
-[profile_header] Profile
-[btn_export_pdf] Export & Upload Team PDF
-[export_done] Upload complete
-[download_url] https://firebasestorage.googleapis.com/v0/b/prm393-lab-3-exematching.firebasestorage.app/o/reports...

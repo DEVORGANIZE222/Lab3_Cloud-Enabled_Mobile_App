@@ -1,3 +1,0 @@
-[nav_home] Home
-[card_deadline] 2 days left
-[team_card_AI-04] Team AI-04

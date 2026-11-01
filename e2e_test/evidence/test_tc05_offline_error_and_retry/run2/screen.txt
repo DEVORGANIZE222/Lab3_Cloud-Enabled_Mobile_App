@@ -1,3 +1,0 @@
-[error_title] Can't connect right now
-[error_message] Check your connection and try again.
-[btn_retry] Try Again

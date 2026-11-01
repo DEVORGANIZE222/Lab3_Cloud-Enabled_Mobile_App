@@ -1,4 +1,0 @@
-[state_locked] Locked
-[lock_code] CM-AI04-7F89
-[member_khanh] Khanh Vo · Embedded / IoT
-[checks_passed] 3 of 3 checks passed

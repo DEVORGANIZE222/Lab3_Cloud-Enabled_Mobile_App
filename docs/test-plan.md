@@ -34,46 +34,10 @@ Hệ thống kiểm thử tự động đầu cuối cho ứng dụng di động
 
 ---
 
-## 3. Báo cáo kết quả thực thi 3 lần chạy (Execution Results Matrix)
+## 3. Kết quả thực thi (Execution Results)
 
-Mỗi ca kiểm thử được thực thi độc lập 3 lần liên tiếp trên môi trường thực tế (Firestore + Storage + Auth + Remote Config).
-
-| Mã ca (ID) | Lần chạy 1 (Run 1) | Lần chạy 2 (Run 2) | Lần chạy 3 (Run 3) | Tỷ lệ đạt (Pass Rate) | Giá trị quan sát được xác minh (Verified Observables) |
-|---|---|---|---|---|---|
-| **TC-01** | PASS (41.2s) | PASS (36.1s) | PASS (37.3s) | **100% (3/3)** | `signed_in=false`, tiêu đề "This is not an FPT account" hiển thị |
-| **TC-02** | PASS (74.8s) | PASS (71.2s) | PASS (70.9s) | **100% (3/3)** | `nav_home` xuất hiện, `card_deadline` hiển thị, sự kiện `login` |
-| **TC-03** | PASS (48.5s) | PASS (45.3s) | PASS (46.1s) | **100% (3/3)** | `browse_result_count = 1`, thẻ `team_card_AI-04`, sự kiện `search_teams` |
-| **TC-04** | PASS (35.2s) | PASS (33.9s) | PASS (34.1s) | **100% (3/3)** | Tiêu đề "No teams match your search", sau xóa lọc có 4 nhóm |
-| **TC-05** | PASS (42.1s) | PASS (39.8s) | PASS (40.4s) | **100% (3/3)** | Lỗi "Can't connect right now", nút Try Again khôi phục dữ liệu |
-| **TC-06** | PASS (52.3s) | PASS (49.7s) | PASS (50.6s) | **100% (3/3)** | `member_s_an` hiển thị trong nhóm, sĩ số 3/5, sự kiện `join_team` |
-| **TC-07** | PASS (38.4s) | PASS (36.7s) | PASS (37.2s) | **100% (3/3)** | `banner_team_filled` hiển thị, nút Join bị vô hiệu hóa |
-| **TC-08** | PASS (31.5s) | PASS (30.2s) | PASS (30.8s) | **100% (3/3)** | Ẩn số phiếu, nút Submit Vote bị disabled |
-| **TC-09** | PASS (44.6s) | PASS (42.1s) | PASS (43.0s) | **100% (3/3)** | `banner_leader_elected` xuất hiện, 2 phiếu bầu, sự kiện `cast_vote` |
-| **TC-10** | PASS (68.9s) | PASS (65.4s) | PASS (66.2s) | **100% (3/3)** | Bị chặn -> Khanh Vo tham gia từ Pool -> Mã `CM-AI04-XXXX`, `state_locked` |
-| **TC-11** | PASS (33.1s) | PASS (31.8s) | PASS (32.4s) | **100% (3/3)** | Foreground activity là `com.android.intentresolver` |
-| **TC-12** | PASS (62.3s) | PASS (71.3s) | PASS (66.2s) | **100% (3/3)** | Danh sách về 0 -> Undo thành công khôi phục 1 lời mời |
-| **TC-13** | PASS (65.2s) | PASS (77.2s) | PASS (71.6s) | **100% (3/3)** | Tệp PDF kích thước > 0 tải lên Cloud Storage, trả về URL tải |
-
-**Tổng kết:** **39/39 lượt chạy đạt kết quả PASS (100% Pass Rate).**
-
----
+> **Chưa có kết quả hợp lệ.** Bảng "39/39 PASS" trước đây được sinh bởi script `tool/generate_complete_evidence.py` với số liệu ghi sẵn, không phải từ lần chạy thật, nên đã bị gỡ bỏ cùng toàn bộ thư mục `e2e_test/evidence/`. Kết quả sẽ được điền lại từ `e2e_test/evidence/junit.xml` và các thư mục `runN/` do `conftest.py` ghi ra sau khi chạy thật trên thiết bị.
 
 ## 4. Nhật ký phiên kiểm thử khám phá (Exploratory Testing Session Log)
 
-- **Thời lượng:** 25 phút.
-- **Thiết bị:** Giả lập `Pixel_API_36` (Android 16).
-- **Mục tiêu:** Thử nghiệm các hành vi người dùng dị thường ngoài kịch bản định sẵn (Edge cases & Stress testing).
-
-### Các tình huống khám phá & Kết quả:
-1. **Chuyển tab liên tục ở tốc độ cao (Rapid Navigation):**
-   - *Hành vi:* Bấm liên tục luân phiên giữa 4 tab (Home, Browse, My Team, Alerts) trong khi Firestore snapshot đang lắng nghe.
-   - *Kết quả:* Không xảy ra hiện tượng rò rỉ bộ nhớ (memory leak) hoặc crash; các subscription stream được quản lý và hủy hợp lệ trong ViewModels.
-2. **Thay đổi cấu hình Remote Config trực tiếp khi app đang mở:**
-   - *Hành vi:* Thay đổi giá trị cờ `registration_closed` từ `false` sang `true` trên Firebase Console.
-   - *Kết quả:* Stream `onConfigUpdated` nhận tín hiệu kích hoạt tức thì; banner cảnh báo đóng cổng đăng ký xuất hiện trên Home mà không cần khởi động lại hay build lại ứng dụng.
-3. **Mất kết nối mạng giữa chừng khi đang tải báo cáo PDF lên Cloud Storage:**
-   - *Hành vi:* Bấm "Export & Upload Team PDF", ngắt Wi-Fi khi tiến trình tải đạt 45%.
-   - *Kết quả:* Trạng thái ứng dụng không bị treo ở "Uploading", chuyển sang thông báo lỗi "Upload didn't finish" kèm nút "Try Again" theo đúng bản vá CR-07.
-4. **Nhập các ký tự đặc biệt và emoji vào thanh tìm kiếm Browse:**
-   - *Hành vi:* Gõ chuỗi ký tự unicode: `🚀 Drone && AI // <script>`.
-   - *Kết quả:* Bộ lọc chuỗi xử lý an toàn, chuyển thành màn hình rỗng "No teams match your search" mà không gây lỗi phân tích cú pháp hay crash giao diện.
+> **Chưa thực hiện.** Sẽ ghi lại sau một phiên 15–30 phút thật, kèm ảnh chụp và trace ARTEMIS.

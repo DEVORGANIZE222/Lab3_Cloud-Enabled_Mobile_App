@@ -1,2 +1,0 @@
-analytics_event search {search_term: quantum, result_count: 0}
-analytics_event search_teams {query_length: 7, result_count: 0, filter_count: 1}

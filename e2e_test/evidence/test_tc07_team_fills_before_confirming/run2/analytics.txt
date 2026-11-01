@@ -1,1 +1,0 @@
-analytics_event view_team {team_id: team_edu07, team_code: EDU-07}

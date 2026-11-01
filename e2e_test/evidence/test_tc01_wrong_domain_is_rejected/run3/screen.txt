@@ -1,3 +1,0 @@
-[sign_in_message] This is not an FPT account
-[btn_google_sign_in] Continue with Google
-[btn_account_picker]

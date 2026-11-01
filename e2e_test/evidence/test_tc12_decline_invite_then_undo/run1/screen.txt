@@ -1,4 +1,0 @@
-[nav_alerts] Alerts
-[invites_tab] Invites (1)
-[invite_team_fin02] FinTech Guard
-[undo_snackbar] Invite dismissed

@@ -1,3 +1,0 @@
-[voting_header] Leader Voting
-[helper_text] Results appear after you vote
-[btn_submit_disabled] Submit Vote
