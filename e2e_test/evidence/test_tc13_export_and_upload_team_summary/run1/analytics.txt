@@ -1,4 +1,1 @@
-set_user_id
-login
-set_user_id
-export_report
+analytics_event export_report {team_id: team_ai04, file_size_kb: 128}

@@ -1,1 +1,1 @@
-set_user_id
+analytics_event set_user_id {id: null}

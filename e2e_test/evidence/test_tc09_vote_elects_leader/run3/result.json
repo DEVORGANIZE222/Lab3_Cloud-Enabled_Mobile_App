@@ -1,0 +1,14 @@
+{
+  "test": "test_vote.py::test_tc09_vote_elects_leader[run3]",
+  "attempt": 3,
+  "profile": "flash",
+  "trace_id": "584bb392-8356-47f2-8d9a-d7af34051bec",
+  "status": "completed",
+  "turns": 7,
+  "started": "2026-11-01T18:16:43",
+  "seconds": 43.0,
+  "goal": "On Leader Voting, select 'Minh Le' and submit the vote. When the screen returns to My Team, report the elected leader and the number of votes they received.",
+  "expected_output": "Return JSON: {\"elected_leader\": string, \"votes_received\": int, \"majority_reached\": bool}",
+  "output": "{\"elected_leader\": \"Minh Le\", \"votes_received\": 2, \"majority_reached\": true}",
+  "error": null
+}

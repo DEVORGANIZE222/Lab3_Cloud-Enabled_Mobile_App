@@ -1,0 +1,14 @@
+{
+  "test": "test_vote.py::test_tc08_tallies_hidden_until_voting[run2]",
+  "attempt": 2,
+  "profile": "flash",
+  "trace_id": "b3624f62-bdc6-4203-8cfe-f29747c601ce",
+  "status": "completed",
+  "turns": 6,
+  "started": "2026-11-01T18:14:30",
+  "seconds": 30.2,
+  "goal": "Open My Team and tap 'Vote for Leader'. Before tapping any candidate, report whether the vote counts are shown and if the submit button is enabled.",
+  "expected_output": "Return JSON: {\"tallies_hidden\": bool, \"submit_enabled\": bool, \"helper_text\": string}",
+  "output": "{\"tallies_hidden\": true, \"submit_enabled\": false, \"helper_text\": \"Results appear after you vote\"}",
+  "error": null
+}

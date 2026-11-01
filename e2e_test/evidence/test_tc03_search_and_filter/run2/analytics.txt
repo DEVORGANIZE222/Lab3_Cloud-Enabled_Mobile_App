@@ -1,8 +1,2 @@
-set_user_id
-login
-set_user_id
-search
-search
-search
-search
-search
+analytics_event search {search_term: drone, result_count: 1}
+analytics_event search_teams {query_length: 5, result_count: 1, filter_count: 2}

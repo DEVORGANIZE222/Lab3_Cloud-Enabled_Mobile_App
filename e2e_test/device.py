@@ -145,7 +145,11 @@ class Device:
                 self.tap(id=f"account_{email}", timeout=6)
                 break
             except AssertionError:
-                continue
+                try:
+                    self.tap(text=email, timeout=6)
+                    break
+                except AssertionError:
+                    continue
         else:
             raise AssertionError("The account picker never opened")
         self.wait_for(id="nav_home", timeout=30)

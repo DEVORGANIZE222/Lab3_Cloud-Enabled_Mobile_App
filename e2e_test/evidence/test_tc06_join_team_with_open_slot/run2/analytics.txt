@@ -1,0 +1,2 @@
+analytics_event join_group {group_id: team_fin02, member_count: 3}
+analytics_event join_team {team_id: team_fin02, member_count: 3}

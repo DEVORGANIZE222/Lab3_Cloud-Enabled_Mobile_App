@@ -1,0 +1,3 @@
+[banner_team_filled] EduSmart Analytics just filled up
+[btn_join_disabled] Join Team
+[member_count] 5 of 5 members

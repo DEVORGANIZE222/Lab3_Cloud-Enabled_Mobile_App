@@ -1,28 +1,4 @@
-[android:id/content]
-[] Alerts
-[btn_mark_all_read]
-[] Mark All Read
-[btn_open_profile]
-[] ML
-[alert_filters]
-[] All (4)
-[] Invites (1)
-[] Updates (3)
-[alert_n1] Unread. Invite: FinTech Guard · Mobile & Frontend
-Invite: FinTech Guard · Mobile & Frontend
-Lam Pham invited you to join FinTech Guard as Mobile & Frontend developer. 2 of 5 members.
-12 min ago
-New
-[btn_decline_n1]
-[] Decline
-[btn_accept_n1]
-[] Accept
-[nav_home] Home
-Tab 1 of 4
-[nav_browse] Browse
-Tab 2 of 4
-[nav_team] My Team
-Tab 3 of 4
-[nav_alerts] 3
-Alerts
-Tab 4 of 4
+[nav_alerts] Alerts
+[invites_tab] Invites (1)
+[invite_team_fin02] FinTech Guard
+[undo_snackbar] Invite dismissed

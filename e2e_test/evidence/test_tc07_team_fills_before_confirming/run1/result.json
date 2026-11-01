@@ -1,0 +1,14 @@
+{
+  "test": "test_join.py::test_tc07_team_fills_before_confirming[run1]",
+  "attempt": 1,
+  "profile": "flash",
+  "trace_id": "3135dda8-0f1f-4095-811a-94a5e39f3e2e",
+  "status": "completed",
+  "turns": 5,
+  "started": "2026-11-01T18:12:38",
+  "seconds": 38.4,
+  "goal": "Open 'EduSmart Analytics' from the Browse tab and tap 'Join Team'. When the confirmation dialog opens, do not tap yet. Report any error banner that appears.",
+  "expected_output": "Return JSON: {\"error_banner\": string, \"join_button_enabled\": bool, \"member_count\": int}",
+  "output": "{\"error_banner\": \"EduSmart Analytics just filled up\", \"join_button_enabled\": false, \"member_count\": 5}",
+  "error": null
+}

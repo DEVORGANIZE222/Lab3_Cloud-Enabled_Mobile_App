@@ -1,0 +1,14 @@
+{
+  "test": "test_browse.py::test_tc05_offline_error_and_retry[run3]",
+  "attempt": 3,
+  "profile": "flash",
+  "trace_id": "e9e369cb-50b8-4d16-aff1-399cdf12eadc",
+  "status": "completed",
+  "turns": 7,
+  "started": "2026-11-01T18:16:40",
+  "seconds": 40.4,
+  "goal": "Open the Browse tab and wait for it to finish loading. Report the error title and message shown.",
+  "expected_output": "Return JSON: {\"error_title\": string, \"error_message\": string, \"has_try_again_button\": bool}",
+  "output": "{\"error_title\": \"Can't connect right now\", \"error_message\": \"Check your connection and try again.\", \"has_try_again_button\": true}",
+  "error": null
+}

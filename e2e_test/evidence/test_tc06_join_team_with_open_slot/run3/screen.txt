@@ -1,0 +1,4 @@
+[nav_team] My Team
+[my_team_name] FinTech Guard
+[member_s_an] An Tran
+[member_count] 3 of 5 members

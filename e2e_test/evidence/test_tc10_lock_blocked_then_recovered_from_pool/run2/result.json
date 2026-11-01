@@ -1,0 +1,14 @@
+{
+  "test": "test_lock.py::test_tc10_lock_blocked_then_recovered_from_pool[run2]",
+  "attempt": 2,
+  "profile": "flash",
+  "trace_id": "6c503fdb-2599-4c32-a8e5-c22dc8eac511",
+  "status": "completed",
+  "turns": 6,
+  "started": "2026-11-01T18:14:65",
+  "seconds": 65.4,
+  "goal": "On My Team, open 'Review & Lock'. Note the error that explains why the roster can't be locked. Recover from it: invite students from the Waiting Pool, then wait until a new member joins (it takes a few seconds). When every check is done, lock the roster and confirm. Report the error you saw first, the name of the student who joined, and the confirmation code.",
+  "expected_output": "Return JSON: {\"first_error\": string, \"joined_member\": string, \"locked\": bool, \"confirmation_code\": string}",
+  "output": "{\"first_error\": \"Can't lock yet: needs 1 more member\", \"joined_member\": \"Khanh Vo\", \"locked\": true, \"confirmation_code\": \"CM-AI04-7F89\"}",
+  "error": null
+}

@@ -1,3 +1,2 @@
-set_user_id
-login
-set_user_id
+analytics_event login {method: google}
+analytics_event set_user_id {id: s_minh}

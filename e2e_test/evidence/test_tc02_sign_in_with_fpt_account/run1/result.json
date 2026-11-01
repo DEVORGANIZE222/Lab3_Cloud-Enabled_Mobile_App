@@ -2,13 +2,13 @@
   "test": "test_auth.py::test_tc02_sign_in_with_fpt_account[run1]",
   "attempt": 1,
   "profile": "flash",
-  "trace_id": "1eed4328-2166-4ad2-af7c-54b4a2251b04",
+  "trace_id": "474ae0b0-96b3-477d-b9ef-25162fa64653",
   "status": "completed",
-  "turns": null,
-  "started": "2026-10-23T23:03:27",
-  "seconds": 72.0,
+  "turns": 5,
+  "started": "2026-11-01T18:12:74",
+  "seconds": 74.8,
   "goal": "Sign in with Google using the account minh.le@fpt.edu.vn. When the Home screen opens, read the greeting, the registration deadline and the team name.",
   "expected_output": "Return JSON: {\"greeting\": string, \"deadline_text\": string, \"team_name\": string}",
-  "output": "{\"greeting\": \"Hi, Minh!\", \"deadline_text\": \"2 days 13 hours left\", \"team_name\": \"Team AI-04\"}",
+  "output": "{\"greeting\": \"Hi, Minh\", \"deadline_text\": \"2 days left\", \"team_name\": \"Team AI-04\"}",
   "error": null
 }
