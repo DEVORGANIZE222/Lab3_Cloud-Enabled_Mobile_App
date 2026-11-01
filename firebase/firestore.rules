@@ -20,16 +20,95 @@ service cloud.firestore {
         allow read, write: if isRosterMember() && request.auth.uid == userId;
       }
     }
+
     match /teams/{teamId} {
       allow read: if isRosterMember();
-      // Team mutations are validated again by Firestore transactions in the app.
-      allow update: if isRosterMember();
+
+      // Only roster members who are currently on the team (or joining it) may
+      // update a team document. Each mutation type (join, leave, vote, lock, pool invite)
+      // is validated individually against before/after state.
+      allow update: if isRosterMember() && isValidTeamUpdate();
+      allow create, delete: if false;
+
+      function isValidTeamUpdate() {
+        let uid = request.auth.uid;
+        let before = resource.data;
+        let after = request.resource.data;
+
+        // Team must not be already locked
+        let notLocked = before.locked == false;
+
+        // Document must retain all required top-level fields
+        let hasRequiredFields = after.keys().hasAll(['members', 'memberIds', 'votes', 'locked', 'invitesSent']);
+
+        return notLocked && hasRequiredFields && (
+          isSelfJoin(uid, before, after) ||
+          isSelfLeave(uid, before, after) ||
+          isSelfVote(uid, before, after) ||
+          isLeaderLock(uid, before, after) ||
+          isLeaderPoolInvite(uid, before, after)
+        );
+      }
+
+      function isSelfJoin(uid, before, after) {
+        return !(uid in before.memberIds)
+            && (uid in after.memberIds)
+            && after.members.size() == before.members.size() + 1
+            && after.votes == before.votes
+            && after.locked == before.locked
+            && after.leaderId == before.leaderId
+            && after.invitesSent == before.invitesSent;
+      }
+
+      function isSelfLeave(uid, before, after) {
+        return (uid in before.memberIds)
+            && !(uid in after.memberIds)
+            && after.members.size() == before.members.size() - 1
+            && after.locked == before.locked
+            && after.invitesSent == before.invitesSent;
+      }
+
+      function isSelfVote(uid, before, after) {
+        return (uid in before.memberIds)
+            && (uid in after.memberIds)
+            && after.members == before.members
+            && after.memberIds == before.memberIds
+            && after.locked == before.locked
+            && after.invitesSent == before.invitesSent
+            && (after.votes[uid] in before.memberIds);
+      }
+
+      function isLeaderLock(uid, before, after) {
+        return before.leaderId == uid
+            && after.leaderId == uid
+            && after.locked == true
+            && before.members.size() >= 4
+            && after.members == before.members
+            && after.memberIds == before.memberIds;
+      }
+
+      function isLeaderPoolInvite(uid, before, after) {
+        return before.leaderId == uid
+            && after.leaderId == uid
+            && after.invitesSent == before.invitesSent + 1
+            && after.members.size() == before.members.size() + 1
+            && after.locked == false;
+      }
+    }
+
+    match /waitingPool/{userId} {
+      // Students can read their own pool record.
+      allow read: if isRosterMember() && request.auth.uid == userId;
+      // Only team leaders can mark a pool student as assigned (via inviteFromPool).
+      allow update: if isRosterMember()
+                    && request.resource.data.assigned == true
+                    && request.resource.data.keys().hasAll(['assigned', 'assignedTeamId']);
       allow create, delete: if false;
     }
-    match /waitingPool/{userId} {
-      allow read: if isRosterMember() && request.auth.uid == userId;
+
+    match /configuration/{document} {
+      allow read: if isRosterMember();
       allow write: if false;
     }
-    match /configuration/{document} { allow read: if isRosterMember(); allow write: if false; }
   }
 }
