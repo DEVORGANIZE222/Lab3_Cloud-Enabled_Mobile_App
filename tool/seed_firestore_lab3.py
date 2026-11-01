@@ -33,7 +33,9 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 PROJECT_ID = "prm393-lab-3-exematching"
-BASE_URL = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/(default)/documents"
+DOC_PREFIX = f"projects/{PROJECT_ID}/databases/(default)/documents"
+ENDPOINT_URL = f"https://firestore.googleapis.com/v1/{DOC_PREFIX}"
+BASE_URL = DOC_PREFIX
 
 ALLOWED_EMAILS = [
     "minh.le@fpt.edu.vn",
@@ -411,7 +413,7 @@ def commit_writes(token: str, writes: list[dict]) -> None:
     for i in range(0, len(writes), batch_size):
         chunk = writes[i:i + batch_size]
         req = urllib.request.Request(
-            f"{BASE_URL}:batchWrite",
+            f"{ENDPOINT_URL}:batchWrite",
             data=json.dumps({"writes": chunk}).encode("utf-8"),
             headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
             method="POST",
