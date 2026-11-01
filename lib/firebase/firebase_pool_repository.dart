@@ -52,15 +52,20 @@ class FirebaseRegistrationService implements RegistrationService {
     // administrators.  Keep the first app launch usable while that document
     // is being populated; as soon as Timestamp values exist they take
     // precedence over these runtime defaults.
-    final now = DateTime.now();
     final opensAt = v['opensAt'];
     final closesAt = v['closesAt'];
+    if (opensAt is! Timestamp || closesAt is! Timestamp) {
+      throw const AppFailure(
+        'Registration dates are not configured',
+        'opensAt and closesAt Timestamps must be set in Firestore configuration/registration.',
+        retryable: true,
+        code: 'invalid-configuration',
+      );
+    }
     return RegistrationWindow(
       semester: v['semester'] as String? ?? 'Current semester',
-      opensAt: opensAt is Timestamp ? opensAt.toDate() : now,
-      closesAt: closesAt is Timestamp
-          ? closesAt.toDate()
-          : now.add(const Duration(days: 90)),
+      opensAt: opensAt.toDate(),
+      closesAt: closesAt.toDate(),
     );
   }
 }
