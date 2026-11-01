@@ -59,6 +59,7 @@ ALLOWED_EMAILS = [
     "khanh.vo@fpt.edu.vn",
     "nhanlhse184226@fpt.edu.vn",
     "lamhoangnhan20000@gmail.com",
+    "megalit2578@gmail.com",
 ]
 
 def build_seed_writes() -> list[dict]:
