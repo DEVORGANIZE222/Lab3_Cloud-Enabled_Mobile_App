@@ -108,7 +108,7 @@ class Backend:
         self._token = _access_token()
 
     # --- REST ------------------------------------------------------------------
-    def _call(self, method: str, url: str, body: Any = None) -> Any:
+    def _call(self, method: str, url: str, body: Any = None, *, retry: bool = True) -> Any:
         data = json.dumps(body).encode() if body is not None else None
         request = urllib.request.Request(
             url,
@@ -120,6 +120,10 @@ class Backend:
             with urllib.request.urlopen(request, timeout=30) as response:
                 return json.load(response)
         except urllib.error.HTTPError as error:
+            if error.code == 401 and retry:
+                # Access tokens last one hour; a full 3-run suite takes longer.
+                self._token = _access_token()
+                return self._call(method, url, body, retry=False)
             if error.code == 404 and method == "GET":
                 return None
             raise AssertionError(f"Firestore {method} {url} failed: {error.code} {error.read()[:300]!r}") from error

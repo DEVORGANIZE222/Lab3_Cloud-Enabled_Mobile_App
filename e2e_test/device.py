@@ -51,6 +51,9 @@ class Device:
     def reset_app(self) -> None:
         """Clears the Firebase session and local caches: the app opens on Sign In."""
         self.shell("pm", "clear", PACKAGE)
+        # `pm clear` also revokes the Android 13+ notification permission; FCM would ask
+        # for it again right after sign-in and cover Home, which these cases do not test.
+        self.shell("pm", "grant", PACKAGE, "android.permission.POST_NOTIFICATIONS")
         self.set_network(True)
 
     def launch(self) -> None:
