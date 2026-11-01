@@ -445,6 +445,29 @@ def main():
         token = token_from_service_account(args.key)
 
     if not token:
+        # Check ~/.config/configstore/firebase-tools.json from firebase login
+        try:
+            cfg_path = Path.home() / ".config" / "configstore" / "firebase-tools.json"
+            if cfg_path.exists():
+                cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+                tokens = cfg.get("tokens", {})
+                if "access_token" in tokens:
+                    token = tokens["access_token"]
+                    print("Obtained access token from Firebase CLI login!")
+                elif "refresh_token" in tokens:
+                    post_data = urllib.parse.urlencode({
+                        "client_id": "563584335869-fgrhgmd47bqnekij5i8b5pr03ho859e1.apps.googleusercontent.com",
+                        "grant_type": "refresh_token",
+                        "refresh_token": tokens["refresh_token"],
+                    }).encode("utf-8")
+                    req = urllib.request.Request("https://oauth2.googleapis.com/token", data=post_data, method="POST")
+                    with urllib.request.urlopen(req) as resp:
+                        token = json.load(resp)["access_token"]
+                        print("Obtained fresh access token from Firebase CLI login!")
+        except Exception:
+            pass
+
+    if not token:
         # Check gcloud if installed
         try:
             import subprocess
@@ -471,3 +494,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
