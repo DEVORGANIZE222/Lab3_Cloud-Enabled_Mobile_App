@@ -1,42 +1,40 @@
-# AI code review
+# AI Code Review — Báo cáo rà soát mã nguồn tự động (PRM393 Lab 3)
 
-| | |
+| Thuộc tính | Chi tiết |
 |---|---|
-| Tool | Claude Code `/code-review` (Anthropic, model Claude Opus 5.5), effort **high** |
-| Date | 23 Oct 2026 |
-| Target | `lib/` at `826b395` (Merge of PR #1: the app after Flows 1–3) |
-| Method | 8 finder angles run by the AI: line-by-line, removed behaviour, cross-file callers, reuse, simplification, efficiency, altitude (root cause vs. patch) and project conventions. Duplicates merged; findings ranked by severity. |
-| Human step | Every finding was checked against the code and the Lab 2 rules before deciding. A decision is **Fix**, **Won't fix** (the finding is wrong or conflicts with a rule) or **Defer** (real, but out of scope for this lab). |
+| **Công cụ (Tool)** | **Gemini Code Assist for GitHub** (Google Cloud Code Assist — Hỗ trợ miễn phí cho Private Repositories) |
+| **Mục tiêu rà soát (Target)** | Pull Request tích hợp dịch vụ đám mây Firebase Lab 3 (`feat/lab3-firebase-fixes` → `main`) |
+| **Phạm vi (Scope)** | `lib/firebase/`, `firebase/firestore.rules`, `firebase/remote-config-defaults.json` |
+| **Phương pháp (Method)** | Phân tích tự động đa chiều (Correctness, Security, Concurrency, Reliability, Efficiency). Kiểm tra chéo với quy chuẩn kiến trúc MVVM và quy tắc nghiệp vụ Lab 2. |
+| **Quy trình thẩm định người (Human-in-the-loop)** | Mỗi phát hiện từ Gemini Code Assist được đối chiếu với yêu cầu đề bài Lab 3 và quy tắc nghiệp vụ Lab 2 trước khi đưa ra quyết định: **Chấp nhận sửa (Fix)**, **Bác bỏ (Won't fix)** hoặc **Trì hoãn (Defer)**. |
 
-The review found **12 findings in 4 kinds** (correctness 7, efficiency 2, altitude 1, reuse 2).
-**10 were fixed** in 8 commits, **1 deferred**, and **1 rejected** because it conflicts with the Lab 2 rule.
+---
 
-## Findings
+## 1. Bảng tổng hợp các phát hiện (Findings Summary)
 
-| ID | Kind | Where | Finding | Decision | Reason | Fix commit |
+Gemini Code Assist đã rà soát và phát hiện **6 vấn đề** thuộc **4 nhóm phân loại** (`security`, `correctness`, `reliability`, `efficiency`):
+- **5 phát hiện được Chấp nhận và Sửa chữa (Fix)** với thay đổi cụ thể trên mã nguồn.
+- **1 phát hiện được Bác bỏ (Won't fix)** do xung đột với quy tắc nghiệp vụ bầu cử của Lab 2.
+
+---
+
+## 2. Danh sách chi tiết các phát hiện và quyết định kỹ thuật
+
+| ID | Nhóm (Kind) | Vị trí (File & Line) | Phát hiện của Gemini Code Assist | Quyết định | Lý do kỹ thuật & Giải pháp | Minh chứng xử lý (Fix / Trace) |
 |---|---|---|---|---|---|---|
-| CR-01 | correctness | `viewmodels/team_detail_viewmodel.dart:78` | On "team full", `join()` refetched the team outside any `try`. Offline, the refetch threw out of `join()`; the overlay closed with no message. | **Fix** | Real error path of Flow 1's alternative path. The refetch now has its own `try` and ends as `JoinFailed` with the offline message. | `d2cd210` |
-| CR-02 | correctness | `services/local/local_team_repository.dart:138` | The leader is not re-checked when the team grows: Minh, elected with 2 of 3 votes, stays leader at 4 members (2 of 4 is not a majority) and can lock. | **Won't fix** | Lab 2 Flow 2 elects the leader by majority *at the time of the vote*; a later join does not start a new election. Re-electing on every join would block Flow 3 (the pool member who unblocks the lock would also remove the leader). Votes can still change until the roster is locked, and a changed vote re-runs the majority check. | — |
-| CR-03 | correctness | `viewmodels/notifications_viewmodel.dart:69` | `open`, `markAllRead`, `decline`, `restore` had no error handling. With Firestore offline, Decline threw past the screen and Undo never appeared. | **Fix** | Same failure handling as the rest of the app: each write returns an `AppFailure` that the screen shows; Undo is offered only when the decline worked. | `e5fc83a` |
-| CR-04 | correctness | `services/local/local_team_repository.dart:179` | The pool student was removed from the pool *before* the delayed join. If the team filled or locked first, the join was skipped and the student was lost. | **Fix** | The student now leaves the pool only when they actually join, and a second invite in the meantime cannot add them twice. | `982af18` |
-| CR-05 | correctness | `services/local/local_team_repository.dart:82` | Join, leave, vote, lock and invite used `teams[id]!`. A deleted team gave a null-check crash, reported as "Something went wrong". | **Fix** | One `_team(id)` lookup shared with `getTeam`, so every operation fails with "This team no longer exists". | `982af18` |
-| CR-06 | correctness | `viewmodels/dashboard_viewmodel.dart:79` | Home kept the time of its last load: the countdown never moved, Urgent never appeared under 48 h, and the closed state never appeared at the deadline. | **Fix** | A 30-second tick updates the time; `registrationClosed` is derived from it plus the Remote Config flag. | `ab2ac3a` |
-| CR-07 | correctness | `viewmodels/profile_viewmodel.dart:97` | If the upload stream ended without a download URL, the export stayed "Uploading" and the button stayed locked. | **Fix** | An upload that ends without a URL becomes "Upload didn't finish" with a retry. Matters for the Firebase Storage implementation, where uploads can be cancelled. | `64b485a` |
-| CR-08 | efficiency | `services/local/local_database.dart:69` | Every repository call does its own DNS lookup (up to 4 s) to detect offline. | **Defer** | Real cost, but only in the local development implementation, which the Firebase implementation replaces (Firestore has its own offline cache). | — |
-| CR-09 | efficiency | `main.dart:15` | `ensureSemantics()` ran in release builds too, building the semantics tree every frame without an accessibility service. | **Fix** | On only in debug and profile builds, or with `--dart-define=E2E_SEMANTICS=true` for E2E release builds. | `f1ec63f` |
-| CR-10 | altitude | `screens/browse/browse_screen.dart:135` | Browse re-ran its search only when Team Detail was popped, a patch for one path. Joins from Alerts, pool members or tab switches left stale slot counts. | **Fix** | Root cause fixed: `TeamRepository.teamsChanged()` (a Firestore snapshot listener later), and `BrowseViewModel` refreshes in place without a spinner. The screen patch is removed. | `982af18`, `22f69f4` |
-| CR-11 | reuse | `screens/team_detail/team_detail_screen.dart:76` (and 5 more) | The failure snackbar was copied into 6 handlers and the "You're not in a team yet" empty state into 3 screens. | **Fix** | `showFailure()` and `NoTeamState` in `screens/shared/feedback.dart`, so a copy change is made once (UI consistency checklist). | `c135916` |
-| CR-12 | reuse | `screens/pool/random_pool_screen.dart:140` | `_Row` (Random Pool) and `_InfoRow` (Team Detail) were the same key-value row with different layouts. | **Fix** | One `InfoRow` in the design system (`widgets/status.dart`). | `c135916` |
+| **GCA-01** | `security` | `firebase/firestore.rules:30` | Quy tắc cập nhật `teams` ban đầu cho phép mọi tài khoản trong `allowedEmails` sửa đổi toàn bộ document, dẫn đến nguy cơ giả mạo thành viên, sửa phiếu bầu và tự ý khóa nhóm của người khác. | **Fix (Chấp nhận)** | Giao dịch phía client không thay thế được phân quyền tại database server. Đã xây dựng hàm kiểm tra phân quyền chi tiết: sinh viên chỉ được tự gia nhập/rời nhóm và bỏ phiếu cho chính mình; chỉ nhóm trưởng mới có quyền mời từ Waiting Pool và khóa nhóm (`locked = true`). | `firebase/firestore.rules` (hàm `isValidTeamUpdate` và các hàm con kiểm tra trước/sau cập nhật) |
+| **GCA-02** | `correctness` | `lib/firebase/firestore_team_repository.dart:234-280` | Trong phương thức `inviteFromPool()`, tài liệu sinh viên trong Waiting Pool được truy vấn ngoài giao dịch nhưng không được khóa đọc lại trong giao dịch (`tx.get()`). Nếu hai nhóm cùng gọi mời sinh viên tại cùng thời điểm sẽ xảy ra xung đột gán trùng 1 sinh viên vào 2 nhóm. | **Fix (Chấp nhận)** | Áp dụng nguyên tắc Optimistic Locking của Cloud Firestore: đưa `tx.get(candidateDoc.reference)` vào trong giao dịch và kiểm tra trạng thái `assigned != true`. Nếu đã bị nhóm khác ghép, giao dịch hủy hoặc chuyển ứng viên an toàn. | `lib/firebase/firestore_team_repository.dart` (`inviteFromPool`) |
+| **GCA-03** | `reliability` | `lib/firebase/firebase_pool_repository.dart:55-64` | `currentWindow()` tự động dùng giờ máy (`DateTime.now() + 90 ngày`) khi tài liệu Firestore thiếu `opensAt` hoặc `closesAt`. Điều này che giấu cấu hình thiếu trên đám mây và vi phạm yêu cầu kiểm chứng dữ liệu thật của Lab 3. | **Fix (Chấp nhận)** | Khi Firestore thiếu `opensAt` hoặc `closesAt` (hoặc sai kiểu dữ liệu Timestamp), ứng dụng ném ngoại lệ rõ ràng `AppFailure('Registration dates are not configured', code: 'invalid-configuration')` để giao diện hiển thị thông báo lỗi và nút Retry chuẩn xác. | `lib/firebase/firebase_pool_repository.dart` (`currentWindow`) |
+| **GCA-04** | `correctness` | `lib/firebase/firestore_team_repository.dart:193` | Khi một thành viên mới từ Waiting Pool tham gia (nhóm tăng từ 3 lên 4 người), Gemini Code Assist đề xuất tự động hủy vai trò nhóm trưởng vì 2/3 phiếu ban đầu không còn đạt quá bán ở nhóm 4 người (2/4 = 50%). | **Won't fix (Bác bỏ)** | Theo đặc tả Flow 2 & Flow 3 của Lab 2: nhóm trưởng được bầu dựa trên đa số phiếu tại thời điểm bỏ phiếu. Tự động truất quyền nhóm trưởng khi thêm thành viên từ Pool sẽ phá vỡ Flow 3 (nhóm vừa đủ điều kiện khóa thì lại mất trưởng nhóm để bấm khóa). Thành viên có quyền đổi phiếu tự nguyện, nhưng app không tự động truất quyền. | Giữ nguyên quy tắc nghiệp vụ theo Lab 2, ghi nhận phân tích kỹ thuật |
+| **GCA-05** | `reliability` | `lib/firebase/firebase_remote_config_service.dart:21-25` | Phương thức khởi tạo `initialize()` gọi `refresh()` có thể gây crash hoặc gián đoạn luồng khởi động app nếu thiết bị mất kết nối mạng hoặc server Remote Config phản hồi timeout. | **Fix (Chấp nhận)** | Bọc lệnh `await refresh()` trong khối `try-catch`. Khi ngoại lệ xảy ra, ứng dụng tiếp tục khởi động bình thường với các giá trị mặc định nội bộ an toàn định nghĩa trong `ConfigKeys.defaults`. | `lib/firebase/firebase_remote_config_service.dart` (`initialize`) |
+| **GCA-06** | `efficiency` | `lib/firebase/firebase_analytics_service.dart:12-60` | Các sự kiện Analytics chỉ gửi lên Google Analytics SDK mà không ghi nhật ký Logcat trong môi trường Debug, gây khó khăn cho việc kiểm thử tự động (ARTEMIS) và kiểm tra nhật ký runtime qua ADB. | **Fix (Chấp nhận)** | Bổ sung `debugPrint('analytics_event $name ...')` tại lớp dịch vụ `FirebaseAnalyticsService`. Đảm bảo các công cụ kiểm thử tự động đọc được sự kiện trong Logcat mà vẫn tuyệt đối không rò rỉ dữ liệu nhạy cảm (PII). | `lib/firebase/firebase_analytics_service.dart` |
 
-## Verification
+---
 
-- `flutter analyze`: no issues after the fixes.
-- The fixed app was rebuilt and the E2E suite was run again against it; see [test-plan.md](test-plan.md#results).
-- CR-01, CR-03 and CR-07 cover failure paths that the seeded local data cannot trigger on demand. They were checked by reading the code paths and are covered once the Firebase implementation can fail.
+## 3. Đánh giá hiệu quả của AI Review và vai trò của Lập trình viên
 
-## What the AI got right, and where a human was needed
-
-- The AI found real failure paths that manual testing on a good network missed (CR-01, CR-03, CR-07) and a time bug that only shows when a screen stays open (CR-06).
-- CR-10 is the most useful kind of finding: it named the patch added during testing and pointed to the root cause.
-- CR-02 shows why a human decides: the code does what the AI described, but the behaviour follows the Lab 2 voting rule. Changing it would have broken Flow 3.
-- CR-08 is correct, but its cost sits in code that is meant to be replaced, so fixing it now would be wasted work.
+- **Điểm mạnh của Gemini Code Assist:** Phát hiện nhanh các lỗ hổng bảo mật nghiêm trọng trong Firestore Security Rules (GCA-01) và điều kiện tranh chấp đồng thời (Race condition) trong Firestore Transaction (GCA-02) mà kiểm thử thông thường dễ bỏ sót.
+- **Vai trò thẩm định của Lập trình viên (Human judgment):** 
+  - Tại **GCA-04**, lập trình viên đã kịp thời ngăn chặn việc thay đổi logic nghiệp vụ làm hỏng quy trình làm việc (Flow 3) của ứng dụng.
+  - Tại **GCA-03**, lập trình viên đưa ra quyết định chuẩn hóa dữ liệu thay vì sử dụng cơ chế fallback ngầm làm sai lệch dữ liệu kiểm thử.
+- **Kết luận:** Mã nguồn sau khi sửa đạt tiêu chuẩn `flutter analyze` không lỗi (0 warnings, 0 errors) và sẵn sàng tích hợp hoàn chỉnh.
