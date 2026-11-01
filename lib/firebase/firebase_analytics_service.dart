@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:firebase_analytics/firebase_analytics.dart';
 
 import '../services/services.dart';
@@ -6,15 +8,21 @@ import '../services/services.dart';
 class FirebaseAnalyticsService implements AnalyticsService {
   FirebaseAnalyticsService([FirebaseAnalytics? analytics]) : _analytics = analytics ?? FirebaseAnalytics.instance;
   final FirebaseAnalytics _analytics;
-  Future<void> _event(String name, Map<String, Object> parameters) =>
-      _analytics.logEvent(name: name, parameters: parameters);
+
+  Future<void> _event(String name, Map<String, Object> parameters) async {
+    debugPrint('analytics_event $name $parameters');
+    await _analytics.logEvent(name: name, parameters: parameters);
+  }
+
   @override
   Future<void> setUserId(String? id) async {
+    debugPrint('analytics_event set_user_id {id: $id}');
     await _analytics.setUserId(id: id);
   }
 
   @override
   Future<void> logLogin({required String method}) async {
+    debugPrint('analytics_event login {method: $method}');
     await _analytics.logLogin(loginMethod: method);
   }
 
@@ -25,6 +33,7 @@ class FirebaseAnalyticsService implements AnalyticsService {
 
   @override
   Future<void> logSearch({required String term, required int resultCount, required List<String> filters}) async {
+    debugPrint('analytics_event search {search_term: $term, result_count: $resultCount}');
     await _event('search_teams', {
       'query_length': term.length,
       'result_count': resultCount,
@@ -39,6 +48,7 @@ class FirebaseAnalyticsService implements AnalyticsService {
 
   @override
   Future<void> logJoinTeam({required String teamId, required int memberCount}) async {
+    debugPrint('analytics_event join_group {group_id: $teamId, member_count: $memberCount}');
     await _event('join_team', {'team_id': teamId, 'member_count': memberCount});
   }
 
@@ -49,6 +59,7 @@ class FirebaseAnalyticsService implements AnalyticsService {
 
   @override
   Future<void> logInviteFromPool({required String teamId, required int invited}) async {
+    debugPrint('analytics_event invite_from_pool {team_id: $teamId, invited: $invited}');
     await _event('invite_pool', {'team_id': teamId, 'invited_count': invited});
   }
 
