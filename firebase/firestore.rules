@@ -41,7 +41,13 @@ service cloud.firestore {
         // Document must retain all required top-level fields
         let hasRequiredFields = after.keys().hasAll(['members', 'memberIds', 'votes', 'locked', 'invitesSent']);
 
-        return notLocked && hasRequiredFields && (
+        // GR-01: students may only change roster state, never the team's
+        // metadata (name, topic, capacity, supervisor, tags, open roles...).
+        // These are exactly the fields FirestoreTeamRepository._teamUpdate writes.
+        let onlyRosterFields = after.diff(before).affectedKeys().hasOnly(
+            ['members', 'memberIds', 'votes', 'leaderId', 'locked', 'lockCode', 'lockedAt', 'invitesSent']);
+
+        return notLocked && hasRequiredFields && onlyRosterFields && (
           isSelfJoin(uid, before, after) ||
           isSelfLeave(uid, before, after) ||
           isSelfVote(uid, before, after) ||
