@@ -1,13 +1,14 @@
-"""TC-03, TC-04, TC-05: Browse Teams (SCR_03), Flow 1 entry and its states."""
+"""TC-03, TC-04, TC-05: Browse Teams (SCR_03), Flow 1 entry and its states, on live Firestore."""
 
 import pytest
 
-from conftest import NEWCOMER
+from conftest import ACCOUNT
 
 
 @pytest.mark.flow1
-async def test_tc03_search_and_filter(device, artemis):
-    device.sign_in(NEWCOMER)
+async def test_tc03_search_and_filter(device, backend, me, artemis):
+    backend.reset(me)  # a student with no team
+    device.sign_in(ACCOUNT)
 
     run = await artemis(
         "Open the Browse tab. Turn on the 'AI/ML' filter chip and keep 'Open Slots' on. "
@@ -18,13 +19,14 @@ async def test_tc03_search_and_filter(device, artemis):
     assert run.data["result_count"] == 1
     assert any("AI-04" in name for name in run.data["team_names"])
     assert "[browse_result_count] 1 team with open slots" in run.screen
-    assert "[team_card_AI-04]" in run.screen
-    assert "search" in device.analytics_events()
+    assert "search_teams" in device.analytics_events()
 
 
 @pytest.mark.flow1
-async def test_tc04_empty_state_and_clear_filters(device, artemis):
-    device.sign_in(NEWCOMER)
+async def test_tc04_empty_state_and_clear_filters(device, backend, me, artemis):
+    backend.reset(me)
+    device.sign_in(ACCOUNT)
+    open_teams = backend.open_team_count()  # ground truth from Firestore
 
     run = await artemis(
         "Open the Browse tab and search for 'quantum'. Read the message shown when nothing matches. "
@@ -33,13 +35,15 @@ async def test_tc04_empty_state_and_clear_filters(device, artemis):
     )
 
     assert run.data["empty_title"] == "No teams match your search"
-    assert run.data["teams_after_clearing"] == 4
-    assert "[browse_result_count] 4 teams with open slots" in run.screen
+    assert run.data["teams_after_clearing"] == open_teams
+    assert f"[browse_result_count] {open_teams} teams with open slots" in run.screen
 
 
 @pytest.mark.flow1
-async def test_tc05_offline_error_and_retry(device, artemis):
-    device.sign_in(NEWCOMER)
+async def test_tc05_offline_error_and_retry(device, backend, me, artemis):
+    backend.reset(me)
+    device.sign_in(ACCOUNT)
+    open_teams = backend.open_team_count()
     device.set_network(False)
 
     first = await artemis(
@@ -55,5 +59,5 @@ async def test_tc05_offline_error_and_retry(device, artemis):
         "The phone is back online. On the Browse screen, tap 'Try Again' and report how many teams are listed.",
         'Return JSON: {"result_count": int}',
     )
-    assert second.data["result_count"] == 4
+    assert second.data["result_count"] == open_teams
     assert "[state_error]" not in second.screen

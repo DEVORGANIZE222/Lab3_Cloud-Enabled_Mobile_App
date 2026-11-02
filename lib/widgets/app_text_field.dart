@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_tokens.dart';
+
 /// Lab 2 *Text field*: default, focused, filled, error, disabled.
 /// Focused and filled come from the controller and focus node; error shows an
 /// icon plus the message under the field (never colour alone).
@@ -85,8 +87,13 @@ class AppSearchField extends StatelessWidget {
           controller: controller,
           textInputAction: TextInputAction.search,
           onSubmitted: onSubmitted,
+          // Figma: grey filled search bar without an outline; focus keeps the
+          // 2 dp primary ring from the theme so the field is still findable.
           decoration: InputDecoration(
             hintText: hint,
+            filled: true,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+            enabledBorder: const OutlineInputBorder(borderRadius: AppRadius.cardAll, borderSide: BorderSide.none),
             prefixIcon: const Icon(Icons.search),
             suffixIcon: value.text.isEmpty
                 ? null

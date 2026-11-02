@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "643229924861-nqco5tig6anhjrpco8vc11k65apqljb8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.devorganize222.exematching",
+            "certificate_hash": "71c4429ef8a02d0fe943ae579212b52cb526b36f"
+          }
+        },
+        {
           "client_id": "643229924861-9i25freibnpbpm4qs95lkhb1i4mcu0g7.apps.googleusercontent.com",
           "client_type": 3
         }

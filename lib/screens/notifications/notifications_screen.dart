@@ -50,14 +50,28 @@ class NotificationsScreen extends StatelessWidget {
           Semantics(
             identifier: 'alert_filters',
             container: true,
-            child: SegmentedButton<AlertFilter>(
-              showSelectedIcon: false,
-              segments: [
-                for (final f in AlertFilter.values)
-                  ButtonSegment(value: f, label: Text('${_filterLabels[f]} (${vm.count(f)})')),
-              ],
-              selected: {vm.filter},
-              onSelectionChanged: (s) => vm.setFilter(s.first),
+            // Figma SCR_09: pill filters, the selected one solid green.
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final f in AlertFilter.values) ...[
+                    ChoiceChip(
+                      label: Text('${_filterLabels[f]} (${vm.count(f)})'),
+                      selected: vm.filter == f,
+                      showCheckmark: false,
+                      onSelected: (_) => vm.setFilter(f),
+                      selectedColor: context.colors.primary,
+                      backgroundColor: context.colors.surfaceContainerHigh,
+                      side: BorderSide.none,
+                      labelStyle: context.text.labelLarge?.copyWith(
+                        color: vm.filter == f ? context.colors.onPrimary : context.colors.onSurface,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                  ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -139,22 +153,35 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
+    final (kindLabel, kindTone) = switch (item.kind) {
+      NotificationKind.invite => ('Team invitation', Tone.warning),
+      NotificationKind.vote => ('Vote update', Tone.info),
+      NotificationKind.system => ('System alert', Tone.error),
+      NotificationKind.application => ('Application status', Tone.primary),
+    };
     return AppCard(
       semanticId: 'alert_${item.id}',
       semanticLabel: '${item.read ? '' : 'Unread. '}${item.title}',
-      color: item.read ? null : c.primaryContainer.withValues(alpha: 0.35),
       onTap: () => _open(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            children: [
+              StatusBadge(label: kindLabel, tone: kindTone),
+              if (!item.read) ...[
+                const SizedBox(width: AppSpacing.xs),
+                const StatusBadge(label: 'New', tone: Tone.primary),
+              ],
+              const Spacer(),
+              Text(Fmt.ago(item.createdAt, DateTime.now()), style: context.text.bodySmall),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                backgroundColor: c.primaryContainer,
-                child: Icon(notificationIcon(item.kind), color: c.onPrimaryContainer),
-              ),
+              IconTile(icon: notificationIcon(item.kind), tone: kindTone),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
@@ -163,24 +190,21 @@ class _NotificationCard extends StatelessWidget {
                     Text(item.title, style: context.text.titleSmall),
                     const SizedBox(height: AppSpacing.xs),
                     Text(item.body, style: context.text.bodyMedium),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(Fmt.ago(item.createdAt, DateTime.now()), style: context.text.bodySmall),
                     // Aligned with the text column, not the card edge.
                     if (!item.isInvite && item.actionLabel != null && item.teamId != null)
-                      AppButton(
-                        label: item.actionLabel!,
-                        variant: AppButtonVariant.text,
-                        expand: false,
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: context.colors.secondary,
+                          padding: EdgeInsets.zero,
+                        ),
+                        iconAlignment: IconAlignment.end,
+                        icon: const Icon(Icons.arrow_forward, size: 18),
+                        label: Text(item.actionLabel!),
                         onPressed: () => _open(context),
                       ),
                   ],
                 ),
               ),
-              if (!item.read)
-                const Padding(
-                  padding: EdgeInsets.only(left: AppSpacing.sm),
-                  child: StatusBadge(label: 'New', tone: Tone.primary),
-                ),
             ],
           ),
           if (item.isInvite) ...[
@@ -189,18 +213,20 @@ class _NotificationCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: AppButton(
-                    semanticId: 'btn_decline_${item.id}',
-                    label: 'Decline',
-                    variant: AppButtonVariant.secondary,
-                    onPressed: () => _decline(context),
+                    semanticId: 'btn_accept_${item.id}',
+                    label: 'Accept',
+                    icon: Icons.check_circle_outline,
+                    onPressed: () => _accept(context),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: AppButton(
-                    semanticId: 'btn_accept_${item.id}',
-                    label: 'Accept',
-                    onPressed: () => _accept(context),
+                    semanticId: 'btn_decline_${item.id}',
+                    label: 'Decline',
+                    icon: Icons.close,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () => _decline(context),
                   ),
                 ),
               ],

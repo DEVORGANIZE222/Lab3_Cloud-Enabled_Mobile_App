@@ -49,8 +49,11 @@ class Device:
 
     # --- app lifecycle ----------------------------------------------------
     def reset_app(self) -> None:
-        """Clears the session and seeded data: the app opens on Sign In."""
+        """Clears the Firebase session and local caches: the app opens on Sign In."""
         self.shell("pm", "clear", PACKAGE)
+        # `pm clear` also revokes the Android 13+ notification permission; FCM would ask
+        # for it again right after sign-in and cover Home, which these cases do not test.
+        self.shell("pm", "grant", PACKAGE, "android.permission.POST_NOTIFICATIONS")
         self.set_network(True)
 
     def launch(self) -> None:
@@ -135,17 +138,18 @@ class Device:
 
     # --- preconditions -------------------------------------------------------
     def sign_in(self, email: str) -> None:
-        """Fresh app signed in as one of the seeded test accounts, on Home."""
+        """Fresh app signed in with the Google account on the device, on Home."""
         self.reset_app()
         self.launch()
-        # A tap during the first frames can be dropped, so retry until the picker opens.
+        # A tap during the first frames can be dropped, so retry until the
+        # Google Play services account chooser opens.
         for _ in range(3):
             self.tap(id="btn_google_sign_in", timeout=40)
             try:
-                self.tap(id=f"account_{email}", timeout=6)
+                self.tap(text=email, timeout=10)
                 break
             except AssertionError:
                 continue
         else:
-            raise AssertionError("The account picker never opened")
-        self.wait_for(id="nav_home", timeout=30)
+            raise AssertionError("The Google account chooser never opened")
+        self.wait_for(id="nav_home", timeout=40)

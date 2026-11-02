@@ -1,42 +1,39 @@
-# AI code review
+# AI Code Review — PRM393 Lab 3
 
 | | |
 |---|---|
-| Tool | Claude Code `/code-review` (Anthropic, model Claude Opus 5.5), effort **high** |
-| Date | 23 Oct 2026 |
-| Target | `lib/` at `826b395` (Merge of PR #1: the app after Flows 1–3) |
-| Method | 8 finder angles run by the AI: line-by-line, removed behaviour, cross-file callers, reuse, simplification, efficiency, altitude (root cause vs. patch) and project conventions. Duplicates merged; findings ranked by severity. |
-| Human step | Every finding was checked against the code and the Lab 2 rules before deciding. A decision is **Fix**, **Won't fix** (the finding is wrong or conflicts with a rule) or **Defer** (real, but out of scope for this lab). |
+| **Pull request** | [DEVORGANIZE222/Lab3_Cloud-Enabled_Mobile_App#8](https://github.com/DEVORGANIZE222/Lab3_Cloud-Enabled_Mobile_App/pull/8) `feat/lab3-firebase-fixes` → `main` |
+| **AI tool** | Google Gemini (`gemini-3.5-flash-lite`, free API key from Google AI Studio), run by GitHub Actions: [`.github/workflows/gemini-review.yml`](../.github/workflows/gemini-review.yml) + [`.github/scripts/gemini_review.py`](../.github/scripts/gemini_review.py) |
+| **Review run** | Actions run #6 (2026-11-02, commit `0f8c2d5`), posted as a review with inline comments on PR #8 |
+| **Scope sent to the model** | Source diff only: `lib/`, `firebase/`, `e2e_test/*.py`, `tool/*.py`, `.github/` (36 files, ~159 KB). Images, evidence and lock files are excluded. |
+| **Human decision** | Every finding was checked against the code before it was accepted, adjusted or rejected. |
 
-The review found **12 findings in 4 kinds** (correctness 7, efficiency 2, altitude 1, reuse 2).
-**10 were fixed** in 8 commits, **1 deferred**, and **1 rejected** because it conflicts with the Lab 2 rule.
+## 1. How the tool was chosen (and what failed)
 
-## Findings
+The lab allows "Copilot, CodeRabbit or an equivalent tool". The repository is private and the team wanted a free tool:
 
-| ID | Kind | Where | Finding | Decision | Reason | Fix commit |
+| Attempt | Result |
+|---|---|
+| **Gemini Code Assist for GitHub** (GitHub App) | Installed on the organisation after the owner approved it, but it never reviewed: its setup now goes through Google Cloud *Developer Connect*, which needs a billing-enabled project. Three `/gemini review` comments on PR #8 got no response. |
+| **`google-github-actions/run-gemini-cli`** with the official `code-review` extension (runs #1–#5) | Agentic: one API request per step. The CLI kept calling `gemini-3.8-flash`, whose free tier allows **20 requests/day**, so every run ended with `429 exhausted your daily quota` before posting a review (run #2 also hit `404` for `gemini-2.5-flash`, closed to new keys). |
+| **One-request Gemini review script** (run #6) | Sends the source diff to `gemini-3.5-flash-lite` in a single request and posts the JSON findings as a GitHub review. **Succeeded in 14 s.** |
+
+> An earlier version of this file listed six "Gemini Code Assist" findings (GCA-01…06). No pull request existed at that time, so no AI tool had reviewed the code; those entries were removed (commit `ebd793f`). The findings below come from run #6.
+
+## 2. Findings and decisions
+
+5 findings in **3 categories** (security, concurrency, reliability). 3 accepted and fixed, 2 rejected.
+
+| ID | Category · severity | Location | Gemini finding | Decision | Technical reasoning | Fix commit |
 |---|---|---|---|---|---|---|
-| CR-01 | correctness | `viewmodels/team_detail_viewmodel.dart:78` | On "team full", `join()` refetched the team outside any `try`. Offline, the refetch threw out of `join()`; the overlay closed with no message. | **Fix** | Real error path of Flow 1's alternative path. The refetch now has its own `try` and ends as `JoinFailed` with the offline message. | `d2cd210` |
-| CR-02 | correctness | `services/local/local_team_repository.dart:138` | The leader is not re-checked when the team grows: Minh, elected with 2 of 3 votes, stays leader at 4 members (2 of 4 is not a majority) and can lock. | **Won't fix** | Lab 2 Flow 2 elects the leader by majority *at the time of the vote*; a later join does not start a new election. Re-electing on every join would block Flow 3 (the pool member who unblocks the lock would also remove the leader). Votes can still change until the roster is locked, and a changed vote re-runs the majority check. | — |
-| CR-03 | correctness | `viewmodels/notifications_viewmodel.dart:69` | `open`, `markAllRead`, `decline`, `restore` had no error handling. With Firestore offline, Decline threw past the screen and Undo never appeared. | **Fix** | Same failure handling as the rest of the app: each write returns an `AppFailure` that the screen shows; Undo is offered only when the decline worked. | `e5fc83a` |
-| CR-04 | correctness | `services/local/local_team_repository.dart:179` | The pool student was removed from the pool *before* the delayed join. If the team filled or locked first, the join was skipped and the student was lost. | **Fix** | The student now leaves the pool only when they actually join, and a second invite in the meantime cannot add them twice. | `982af18` |
-| CR-05 | correctness | `services/local/local_team_repository.dart:82` | Join, leave, vote, lock and invite used `teams[id]!`. A deleted team gave a null-check crash, reported as "Something went wrong". | **Fix** | One `_team(id)` lookup shared with `getTeam`, so every operation fails with "This team no longer exists". | `982af18` |
-| CR-06 | correctness | `viewmodels/dashboard_viewmodel.dart:79` | Home kept the time of its last load: the countdown never moved, Urgent never appeared under 48 h, and the closed state never appeared at the deadline. | **Fix** | A 30-second tick updates the time; `registrationClosed` is derived from it plus the Remote Config flag. | `ab2ac3a` |
-| CR-07 | correctness | `viewmodels/profile_viewmodel.dart:97` | If the upload stream ended without a download URL, the export stayed "Uploading" and the button stayed locked. | **Fix** | An upload that ends without a URL becomes "Upload didn't finish" with a retry. Matters for the Firebase Storage implementation, where uploads can be cancelled. | `64b485a` |
-| CR-08 | efficiency | `services/local/local_database.dart:69` | Every repository call does its own DNS lookup (up to 4 s) to detect offline. | **Defer** | Real cost, but only in the local development implementation, which the Firebase implementation replaces (Firestore has its own offline cache). | — |
-| CR-09 | efficiency | `main.dart:15` | `ensureSemantics()` ran in release builds too, building the semantics tree every frame without an accessibility service. | **Fix** | On only in debug and profile builds, or with `--dart-define=E2E_SEMANTICS=true` for E2E release builds. | `f1ec63f` |
-| CR-10 | altitude | `screens/browse/browse_screen.dart:135` | Browse re-ran its search only when Team Detail was popped, a patch for one path. Joins from Alerts, pool members or tab switches left stale slot counts. | **Fix** | Root cause fixed: `TeamRepository.teamsChanged()` (a Firestore snapshot listener later), and `BrowseViewModel` refreshes in place without a spinner. The screen patch is removed. | `982af18`, `22f69f4` |
-| CR-11 | reuse | `screens/team_detail/team_detail_screen.dart:76` (and 5 more) | The failure snackbar was copied into 6 handlers and the "You're not in a team yet" empty state into 3 screens. | **Fix** | `showFailure()` and `NoTeamState` in `screens/shared/feedback.dart`, so a copy change is made once (UI consistency checklist). | `c135916` |
-| CR-12 | reuse | `screens/pool/random_pool_screen.dart:140` | `_Row` (Random Pool) and `_InfoRow` (Team Detail) were the same key-value row with different layouts. | **Fix** | One `InfoRow` in the design system (`widgets/status.dart`). | `c135916` |
+| **GR-01** | security · high | `firebase/firestore.rules:57` (`isSelfJoin`) | The join rule checks only roster fields, so a joining user could also overwrite `supervisor`, `capacity`, `tags`… | **Accepted (widened)** | Confirmed: none of the five update paths (join, leave, vote, lock, pool invite) restricted team metadata. Instead of per-path equality checks, every team update must now satisfy `after.diff(before).affectedKeys().hasOnly([...])` with the eight fields `FirestoreTeamRepository._teamUpdate` writes. Deployed to `prm393-lab-3-exematching` after confirming the live ruleset equalled the repository HEAD. | [`c9543a3`](https://github.com/DEVORGANIZE222/Lab3_Cloud-Enabled_Mobile_App/commit/c9543a3) |
+| **GR-02** | concurrency · medium | `lib/firebase/firestore_team_repository.dart:269` (`inviteFromPool`) | Querying the pool outside the transaction lets two teams target the same candidate. | **Rejected** | The query only *proposes* a candidate. Inside the transaction the candidate is re-read with `tx.get(candidateDoc.reference)` and skipped if `assigned == true`; Firestore aborts and retries a transaction whose read document changed before commit, so two teams cannot both assign the same student. The suggested fix (query inside the transaction) is not possible: the client SDKs do not support queries in transactions. | — |
+| **GR-03** | reliability · medium | `e2e_test/backend.py:42` | `["tokens"]["refresh_token"]` raises a bare `KeyError` when the Firebase CLI store is missing or logged out. | **Accepted** | A missing login should tell the tester what to do. Now raises an assertion naming `firebase login` / `FIREBASE_TOKEN`. | [`ee6ec78`](https://github.com/DEVORGANIZE222/Lab3_Cloud-Enabled_Mobile_App/commit/ee6ec78) |
+| **GR-04** | reliability · low | `lib/firebase/firebase_remote_config_service.dart:24` | Empty catch block hides Remote Config start-up errors. | **Accepted (adjusted)** | The block was not empty, but its `debugPrint` dropped the exception (`"…using in-app defaults: "`), so the effect was the same. The error and the top of the stack are now printed; start-up still continues with the in-app defaults, as the lab requires. | [`d6926d1`](https://github.com/DEVORGANIZE222/Lab3_Cloud-Enabled_Mobile_App/commit/d6926d1) |
+| **GR-05** | reliability · medium | `.github/scripts/gemini_review.py:61` | Slicing the error body to 2000 characters may split UTF-8 bytes and raise `UnicodeDecodeError`. | **Rejected** | False positive: the body is decoded with `errors='replace'` *before* slicing, and slicing a Python `str` cannot split a code point. | — |
 
-## Verification
+## 3. Assessment
 
-- `flutter analyze`: no issues after the fixes.
-- The fixed app was rebuilt and the E2E suite was run again against it; see [test-plan.md](test-plan.md#results).
-- CR-01, CR-03 and CR-07 cover failure paths that the seeded local data cannot trigger on demand. They were checked by reading the code paths and are covered once the Firebase implementation can fail.
-
-## What the AI got right, and where a human was needed
-
-- The AI found real failure paths that manual testing on a good network missed (CR-01, CR-03, CR-07) and a time bug that only shows when a screen stays open (CR-06).
-- CR-10 is the most useful kind of finding: it named the patch added during testing and pointed to the root cause.
-- CR-02 shows why a human decides: the code does what the AI described, but the behaviour follows the Lab 2 voting rule. Changing it would have broken Flow 3.
-- CR-08 is correct, but its cost sits in code that is meant to be replaced, so fixing it now would be wasted work.
+- **Useful:** GR-01 found a real authorization gap in the Security Rules that the earlier manual hardening missed; it was the most valuable finding.
+- **Limits:** two of five findings were wrong (GR-02 ignored the in-transaction re-read; GR-05 misread the order of decode and slice). One accepted finding (GR-04) overstated the problem. AI review output needs the same verification as any other review comment.
+- **Cost:** the free tier made the agentic tools unusable for a 36-file diff; a single structured request was enough to produce line-anchored findings.

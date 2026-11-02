@@ -1,84 +1,43 @@
-# E2E test plan (ARTEMIS)
+# Kế hoạch & Báo cáo kiểm thử tự động đầu cuối (ARTEMIS E2E Test Plan) — PRM393 Lab 3
 
-Automated end-to-end tests for EXEMatching, driven by [Google ARTEMIS](https://github.com/google/artemis)
-on an Android emulator. Code: [`e2e_test/`](../e2e_test).
+Hệ thống kiểm thử tự động đầu cuối cho ứng dụng di động kết nối đám mây **EXEMatching**, điều khiển bởi **Google ARTEMIS** trên thiết bị giả lập Android (`Pixel_API_36`). Mã kiểm thử: [`e2e_test/`](../e2e_test).
 
-## Approach
+---
 
-- **ARTEMIS performs the steps under test.** Each goal is written the way a student would describe the task,
-  using the labels on screen. The agent is locked to the app package (`locked_app_package`), except TC-11,
-  which checks the Android share sheet.
-- **Structured output.** Every goal ends by asking for a JSON object. With the `flash` profile ARTEMIS has no
-  Outputter, so the JSON is the explanation of the agent's final `report_task_status` step, read from
-  `/api/sessions/{id}/steps`; with `pro` it is the Outputter's `output.md` note. The test parses it and asserts
-  field by field.
-- **Ground truth from the device.** The agent's report alone is not trusted. After each run the test reads the
-  real accessibility tree over adb (`Semantics.identifier` is exposed as Android `resource-id`) and the
-  `analytics_event` lines in Logcat, and asserts on those too.
-- **Known start state.** Preconditions are set with adb, not by the agent: `pm clear`, launch, sign in with a
-  seeded account, and for Flow 3 a scripted leader vote. The app reseeds its data on every launch, so each run
-  starts from the same data.
-- **Three runs per case.** `E2E_RUNS=3` (default) parametrises every test as `run1`, `run2`, `run3`; each run
-  saves its evidence separately.
+## 1. Phương pháp & Nguyên tắc kiểm định
 
-## Environment
+- **Điều khiển bởi AI Agent (ARTEMIS):** Mỗi ca kiểm thử giao cho Agent một mục tiêu phát biểu bằng ngôn ngữ tự nhiên từ góc nhìn sinh viên. Agent tương tác trực tiếp với giao diện ứng dụng.
+- **Đầu ra cấu trúc (Structured JSON Verification):** Agent trả về kết quả dưới dạng đối tượng JSON chuẩn để kiểm thử đối chiếu từng trường giá trị.
+- **Đối chiếu giá trị quan sát thực tế (Ground Truth from Device):** Không chỉ dựa vào cờ trạng thái `SUCCESS` của Agent. Bài kiểm thử trực tiếp đọc cây ngữ cảnh tiếp cận (`Semantics.identifier` ánh xạ sang `resource-id` của Android) và sự kiện `analytics_event` trong Logcat để xác minh giá trị cụ thể.
+- **Tiêu chuẩn 3 lần chạy (3 Runs per Test Case):** Mỗi ca kiểm thử được thực thi tối thiểu 3 lần độc lập (`run1`, `run2`, `run3`) để chứng minh tính ổn định, không phụ thuộc vào trạng thái đệm hay may rủi.
+- **Bao phủ toàn diện:** 13 ca kiểm thử bao phủ toàn bộ 3 luồng chính Lab 2, các nhánh lỗi (mất mạng, nhóm đầy, sai tên miền) và tương tác hệ thống Android gốc (Share Sheet).
 
-| Item | Value |
-|---|---|
-| ARTEMIS | `google/artemis` @ `351ca8422f7b5b54e80a9c1ce03a222e02415b6b`, daemon started with `uv run artemis ui` |
-| SDK | `artemis-client` from the same commit (pinned in `e2e_test/pyproject.toml`) |
-| Profile | `flash` for the regression suite; `pro` for the exploratory session |
-| LLM | `gemini-3.5-flash-lite`, fallback `gemini-3.1-flash-lite` (ARTEMIS `config/artemis.jsonc` → `default`). The ARTEMIS default `gemini-3.8-flash` has a free-tier quota of 20 requests per day, too low for 39 runs. Key in `artemis/.env` (`GEMINI_API_KEY`), never in this repository. |
-| Device | Android emulator `Pixel_API_36` (Android 16, 1080×2400, 420 dpi), serial `emulator-5554` |
-| App | debug APK from `flutter build apk --debug`, package `com.devorganize222.exematching` |
-| Test data | `assets/seed/seed.json`; accounts `minh.le@fpt.edu.vn` (Team AI-04, 3/5, no leader) and `an.tran@fpt.edu.vn` (no team) |
+---
 
-## Test cases
+## 2. Đặc tả chi tiết 13 Ca kiểm thử (Test Cases Specification)
 
-| ID | Flow / screen | Precondition | Goal given to ARTEMIS | Assertions (output + device) |
+| Mã ca (ID) | Phân loại & Luồng | Điều kiện đầu (Precondition) | Các bước thực hiện (Execution Steps) | Kết quả mong đợi & Giá trị quan sát được |
 |---|---|---|---|---|
-| TC-01 | Sign In, error path | Signed out | Sign in with the personal Gmail account | `signed_in=false`, title "This is not an FPT account"; `sign_in_message` banner on screen |
-| TC-02 | Sign In → Home | Signed out | Sign in as Minh, read greeting, deadline, team | "Hi, Minh", deadline "… left", Team AI-04; `card_deadline` shown; `login` event |
-| TC-03 | Flow 1, Browse | An signed in | Filter AI/ML, search "drone" | 1 result, Team AI-04; `browse_result_count` = 1; `search` event |
-| TC-04 | Flow 1, empty state | An signed in | Search "quantum", clear filters | "No teams match your search"; 4 teams after clearing |
-| TC-05 | Flow 1, offline | An signed in, network off | Open Browse; then retry online | "Can't connect right now" with Try Again; 4 teams after retry, no `state_error` |
-| TC-06 | Flow 1, join | An signed in | Join FinTech Guard | Joined, My Team = FinTech Guard 3 of 5; `member_s_an` on screen; `join_group` event |
-| TC-07 | Flow 1, alternative path | An signed in | Join EduSmart Analytics | Not joined, "just filled up", Join disabled, 5/5; `banner_team_filled` |
-| TC-08 | Flow 2, hidden tallies | Minh signed in | Open voting without voting | Counts hidden, "Results appear after you vote", Submit disabled |
-| TC-09 | Flow 2, vote | Minh signed in | Vote for Minh Le | Leader Minh Le with 2 votes; `banner_leader_elected`; `cast_vote` event |
-| TC-10 | Flow 3, error + recovery | Minh elected leader | Review & Lock, invite from pool, lock | First error "Can't lock yet…", Khanh Vo joined, code `CM-AI04-XXXX`; `state_locked`; `invite_from_pool`, `lock_roster` events |
-| TC-11 | Flow 3, native share sheet | Minh elected leader | Share Team Link, stop at the share sheet | Sheet open, text mentions the team; foreground activity is `com.android.intentresolver` |
-| TC-12 | Alerts | Minh signed in | Decline FinTech invite, then Undo | 0 invites after decline, 1 after undo; "Invites (1)" on screen |
-| TC-13 | Profile, file upload | Minh signed in | Export & Upload PDF | File `team-ai-04-YYYYMMDD-HHMM.pdf`, size > 0; `export_done`; `export_report` event |
+| **TC-01** | Xác thực · Nhánh lỗi | Ứng dụng mới mở, chưa đăng nhập (`Signed out`) | 1. Bấm nút đăng nhập Google.<br>2. Chọn tài khoản cá nhân Gmail (`@gmail.com`). | Bị từ chối đăng nhập; hiển thị thông báo lỗi "This is not an FPT account"; `signed_in=false`; cờ giao diện `[sign_in_message]` hiển thị. |
+| **TC-02** | Xác thực · Luồng chuẩn | Chưa đăng nhập | 1. Bấm đăng nhập Google.<br>2. Chọn tài khoản FPT `minh.le@fpt.edu.vn`. | Đăng nhập thành công vào Home; hiển thị lời chào "Hi, Minh", thẻ hạn chót `[card_deadline]`, thông tin nhóm `Team AI-04`; ghi nhận sự kiện `login`. |
+| **TC-03** | Flow 1 · Tìm kiếm & Lọc | Đã đăng nhập tài khoản `an.tran@fpt.edu.vn` (chưa có nhóm) | 1. Chuyển sang tab Browse (`/browse`).<br>2. Bật chip lọc `AI/ML` và giữ `Open Slots`.<br>3. Gõ từ khóa tìm kiếm "drone". | Danh sách trả về chính xác 1 kết quả; hiển thị thẻ `[team_card_AI-04]`; dòng thông báo `[browse_result_count]` hiển thị "1 team with open slots"; ghi nhận sự kiện `search_teams`. |
+| **TC-04** | Flow 1 · Trạng thái rỗng | Đã đăng nhập tài khoản An Tran | 1. Tại tab Browse, tìm từ khóa không tồn tại "quantum".<br>2. Quan sát giao diện rỗng.<br>3. Bấm nút "Clear Filters". | Hiển thị màn hình rỗng với tiêu đề "No teams match your search"; sau khi bấm xóa bộ lọc, danh sách khôi phục hiển thị đầy đủ 4 nhóm còn chỗ; `[browse_result_count]` hiển thị "4 teams with open slots". |
+| **TC-05** | Flow 1 · Mất mạng & Thử lại | Đã đăng nhập tài khoản An Tran, ngắt kết nối mạng qua ADB | 1. Mở tab Browse khi đang offline.<br>2. Quan sát thông báo lỗi.<br>3. Bật lại mạng và bấm "Try Again". | Giao diện hiển thị lỗi "Can't connect right now" kèm nút "Try Again"; sau khi bật mạng và bấm thử lại, tải thành công danh sách nhóm, không còn cờ `state_error`. |
+| **TC-06** | Flow 1 · Tham gia nhóm | Đã đăng nhập tài khoản An Tran (chưa có nhóm) | 1. Tìm nhóm `FinTech Guard` (đang có 2/5 thành viên).<br>2. Mở chi tiết nhóm và bấm "Join Team".<br>3. Chọn vị trí "Backend" và xác nhận. | Tham gia thành công; chuyển sang tab My Team hiển thị nhóm `FinTech Guard` với 3/5 thành viên; thẻ thành viên `[member_s_an]` xuất hiện; ghi nhận sự kiện `join_team`. |
+| **TC-07** | Flow 1 · Nhánh lỗi nhóm đầy | Đã đăng nhập tài khoản An Tran | 1. Mở chi tiết nhóm `EduSmart Analytics` (đang có 4/5 thành viên).<br>2. Giả lập một thành viên khác vừa vào nhóm khiến nhóm đầy (5/5).<br>3. Bấm thử tham gia. | Bị từ chối tham gia; hiển thị banner cảnh báo `[banner_team_filled]` với nội dung "EduSmart Analytics just filled up"; nút Join chuyển sang trạng thái Disabled kèm lý do rõ ràng. |
+| **TC-08** | Flow 2 · Giấu kết quả bầu cử | Đã đăng nhập tài khoản `minh.le@fpt.edu.vn` (nhóm chưa bầu cử xong) | 1. Mở tab My Team, bấm "Vote for Leader".<br>2. Quan sát màn hình trước khi bỏ phiếu. | Tỷ lệ phiếu bầu của các thành viên được ẩn kín hoàn toàn; hiển thị dòng hướng dẫn "Results appear after you vote"; nút Submit Vote ở trạng thái Disabled. |
+| **TC-09** | Flow 2 · Bỏ phiếu bầu Leader | Minh Le đang ở màn hình Leader Voting | 1. Chọn ứng viên `Minh Le`.<br>2. Bấm "Submit Vote".<br>3. Quan sát kết quả cập nhật trên Firestore. | Bỏ phiếu thành công; hiển thị banner chiến thắng `[banner_leader_elected]` xác nhận Minh Le đạt đa số (2/3 phiếu); ghi nhận sự kiện `cast_vote`. |
+| **TC-10** | Flow 3 · Lỗi & Phục hồi Waiting Pool | Minh Le là nhóm trưởng Team AI-04 (hiện có 3 thành viên, chưa đủ 4) | 1. Mở "Review & Lock".<br>2. Ghi nhận lỗi bị chặn.<br>3. Bấm "Invite from Waiting Pool" để ghép sinh viên.<br>4. Chờ ứng viên `Khanh Vo` gia nhập.<br>5. Bấm "Lock Roster" và xác nhận. | Ban đầu bị chặn với thông báo "Can't lock yet: needs 1 more member"; sau khi mời từ Pool, sinh viên `Khanh Vo` được gán vào nhóm; điều kiện kích hoạt chuyển màu xanh; khóa thành công với mã xác nhận `CM-AI04-XXXX`; cờ `[state_locked]` xuất hiện; ghi nhận `invite_pool` và `lock_roster`. |
+| **TC-11** | Flow 3 · Tương tác Android gốc | Minh Le là nhóm trưởng Team AI-04 | 1. Tại màn hình Review & Lock, bấm nút "Share Team Link".<br>2. Dừng lại khi hộp thoại chia sẻ hệ thống mở ra. | Hộp thoại chia sẻ gốc của Android (`Android Share Sheet`) xuất hiện trên cùng; Activity đang hoạt động là `com.android.intentresolver`; nội dung chia sẻ chứa tên và mã nhóm. |
+| **TC-12** | Alerts · Từ chối lời mời & Hoàn tác | Đã đăng nhập tài khoản Minh Le | 1. Mở tab Alerts (`/alerts`).<br>2. Bấm từ chối (Decline) lời mời từ nhóm FinTech Guard.<br>3. Bấm nút "Undo" trên thanh thông báo. | Sau khi từ chối, danh sách lời mời giảm về 0; sau khi bấm Undo, lời mời được khôi phục nguyên vẹn về danh sách; badge hiển thị "Invites (1)". |
+| **TC-13** | Profile · Xuất báo cáo & Tải lên Cloud Storage | Đã đăng nhập tài khoản Minh Le | 1. Vào màn hình Profile.<br>2. Bấm "Export & Upload Team PDF".<br>3. Theo dõi tiến trình tải lên Cloud Storage. | Tệp báo cáo PDF dạng `team-ai-04-YYYYMMDD-HHMM.pdf` được tạo và tải lên thư mục bảo mật `reports/{uid}/...`; thanh tiến trình đạt 100%; hiển thị liên kết tải về an toàn; ghi nhận sự kiện `export_report`. |
 
-13 cases × 3 runs = 39 runs per full pass.
+---
 
-## How to run
+## 3. Kết quả thực thi (Execution Results)
 
-```powershell
-# 1. ARTEMIS (once): put GEMINI_API_KEY in C:\PRM393\artemis\.env, then
-cd C:\PRM393\artemis; uv run artemis ui        # daemon + console on http://127.0.0.1:8000
+> **Chưa có kết quả hợp lệ.** Bảng "39/39 PASS" trước đây được sinh bởi script `tool/generate_complete_evidence.py` với số liệu ghi sẵn, không phải từ lần chạy thật, nên đã bị gỡ bỏ cùng toàn bộ thư mục `e2e_test/evidence/`. Kết quả sẽ được điền lại từ `e2e_test/evidence/junit.xml` và các thư mục `runN/` do `conftest.py` ghi ra sau khi chạy thật trên thiết bị.
 
-# 2. App on the emulator
-flutter build apk --debug; adb install -r build\app\outputs\flutter-apk\app-debug.apk
+## 4. Nhật ký phiên kiểm thử khám phá (Exploratory Testing Session Log)
 
-# 3. Tests
-cd e2e_test; uv sync
-uv run pytest -v --junitxml=evidence/junit.xml           # all cases, 3 runs each
-uv run pytest -v -k tc10 -s                               # one case
-```
-
-## Evidence
-
-`e2e_test/evidence/<test>/run<N>/` holds, for every run: `result.json` (goal, ARTEMIS trace id, status,
-turns, duration, raw output), `final.png` (device screenshot), `screen.txt` (accessibility tree) and
-`analytics.txt` (events seen in Logcat). `evidence/junit.xml` is the pytest report. ARTEMIS keeps the
-full trace for each trace id in its console.
-
-## Results
-
-Filled in after each full pass (see `evidence/junit.xml`).
-
-| ID | Run 1 | Run 2 | Run 3 | Notes |
-|---|---|---|---|---|
-| TC-01 … TC-13 | pending | pending | pending | Waiting for a Gemini key in `artemis/.env` |
+> **Chưa thực hiện.** Sẽ ghi lại sau một phiên 15–30 phút thật, kèm ảnh chụp và trace ARTEMIS.

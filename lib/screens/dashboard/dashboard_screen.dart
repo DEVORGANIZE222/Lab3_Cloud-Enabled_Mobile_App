@@ -59,12 +59,16 @@ class _DashboardBody extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text('${data.student.studentCode} · ${data.student.major}', style: context.text.bodyMedium),
+              child: Text(
+                [data.student.studentCode, data.student.major].where((s) => s.isNotEmpty).join(' · '),
+                style: context.text.bodyMedium,
+              ),
             ),
-            StatusBadge(label: data.student.cohort, tone: Tone.primary, icon: Icons.school),
+            if (data.student.cohort.isNotEmpty)
+              StatusBadge(label: data.student.cohort, tone: Tone.info, icon: Icons.verified_user),
           ],
         ),
-        const SizedBox(height: AppSpacing.xl),
+        const SizedBox(height: AppSpacing.lg),
         if (data.registrationClosed)
           InfoBanner(
             semanticId: 'banner_registration_closed',
@@ -75,31 +79,58 @@ class _DashboardBody extends StatelessWidget {
                 : 'Changes to ${team.name} now go through the Academic Office.',
           )
         else
+          // Figma: peach deadline panel, green countdown, accent title.
           AppCard(
             semanticId: 'card_deadline',
+            color: context.appColors.warningContainer,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Expanded(child: Text('Registration deadline', style: context.text.labelMedium)),
-                    if (data.urgent) const StatusBadge(label: 'Urgent', tone: Tone.warning, icon: Icons.schedule),
+                    Icon(Icons.schedule, size: 20, color: context.appColors.warning),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        data.urgent ? 'Registration deadline closing soon' : 'Registration deadline',
+                        style: context.text.titleSmall?.copyWith(color: context.appColors.warning),
+                      ),
+                    ),
+                    if (data.urgent) const StatusBadge(label: 'Urgent', tone: Tone.primary),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   Fmt.countdown(data.timeLeft),
-                  style: context.text.headlineMedium?.copyWith(
-                    color: data.urgent ? context.appColors.warning : context.colors.onSurface,
-                  ),
+                  style: context.text.headlineLarge?.copyWith(color: context.colors.primary),
                 ),
                 const SizedBox(height: AppSpacing.xs),
-                Text('Closes ${Fmt.dateTime(data.window.closesAt)}', style: context.text.bodyMedium),
-                const SizedBox(height: AppSpacing.md),
-                AppProgressBar(
-                  value: data.window.elapsed(data.now),
-                  tone: Tone.warning,
-                  label: '${data.window.semester} registration · ${Fmt.percent(data.window.elapsed(data.now))} elapsed',
+                Text('System locks on ${Fmt.dateTime(data.window.closesAt)}', style: context.text.bodyMedium),
+                const SizedBox(height: AppSpacing.lg),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text('${data.window.semester} registration period', style: context.text.labelMedium),
+                    ),
+                    Text(
+                      '${Fmt.percent(data.window.elapsed(data.now))} elapsed',
+                      style: context.text.labelMedium?.copyWith(color: context.appColors.warning),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Semantics(
+                  label: 'Registration period',
+                  value: '${(data.window.elapsed(data.now) * 100).round()} percent elapsed',
+                  excludeSemantics: true,
+                  child: ClipRRect(
+                    borderRadius: AppRadius.fullAll,
+                    child: LinearProgressIndicator(
+                      value: data.window.elapsed(data.now).clamp(0, 1),
+                      minHeight: AppSize.progress,
+                      backgroundColor: context.colors.surfaceContainerLowest,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -160,7 +191,7 @@ class _NoTeamCard extends StatelessWidget {
       semanticId: 'card_no_team',
       child: Row(
         children: [
-          Icon(Icons.group_off_outlined, color: context.colors.onSurfaceVariant),
+          const IconTile(icon: Icons.group_add, tone: Tone.warning),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -200,11 +231,10 @@ class _RecentNotices extends StatelessWidget {
         Row(
           children: [
             const Expanded(child: SectionHeader(title: 'Recent notices')),
-            AppButton(
-              label: 'See All',
-              variant: AppButtonVariant.text,
-              expand: false,
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: context.colors.secondary),
               onPressed: () => context.go('/alerts'),
+              child: const Text('See All'),
             ),
           ],
         ),
@@ -215,7 +245,10 @@ class _RecentNotices extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(notificationIcon(n.kind), color: context.colors.primary),
+                IconTile(
+                  icon: notificationIcon(n.kind),
+                  tone: n.kind == NotificationKind.invite ? Tone.warning : Tone.success,
+                ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(

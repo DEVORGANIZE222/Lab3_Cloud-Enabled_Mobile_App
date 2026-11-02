@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
 import '../theme/app_tokens.dart';
 import 'app_button.dart';
 
 /// Lab 2 *Dialog*: confirmation and destructive. Buttons are stacked full width,
 /// confirm first, so long labels never truncate at 360 dp (Lab 2 decision D9).
+/// Figma `SRC4 Diaglog`: icon in a tinted circle, centred title and message,
+/// details in a grey panel, white outlined Cancel.
 /// Returns `true` when the user confirms.
 Future<bool> showAppDialog(
   BuildContext context, {
@@ -22,16 +25,24 @@ Future<bool> showAppDialog(
     builder: (context) {
       final c = Theme.of(context).colorScheme;
       return AlertDialog(
-        icon: Icon(
-          icon ?? (destructive ? Icons.warning_amber_rounded : Icons.info_outline),
-          color: destructive ? c.error : c.primary,
+        icon: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: destructive ? c.errorContainer : context.appColors.warningContainer,
+          ),
+          child: Icon(
+            icon ?? (destructive ? Icons.warning_amber_rounded : Icons.info_outline),
+            color: destructive ? c.error : context.appColors.warning,
+          ),
         ),
-        title: Text(title),
+        title: Text(title, textAlign: TextAlign.center),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(message),
+            Text(message, textAlign: TextAlign.center),
             if (details != null) ...[const SizedBox(height: AppSpacing.lg), details],
           ],
         ),
@@ -47,11 +58,21 @@ Future<bool> showAppDialog(
                 onPressed: () => Navigator.of(context).pop(true),
               ),
               const SizedBox(height: AppSpacing.sm),
-              AppButton(
-                label: cancelLabel,
-                semanticId: semanticId == null ? null : '${semanticId}_cancel',
-                variant: AppButtonVariant.secondary,
-                onPressed: () => Navigator.of(context).pop(false),
+              Semantics(
+                identifier: semanticId == null ? null : '${semanticId}_cancel',
+                button: true,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: c.surfaceContainerLowest,
+                      foregroundColor: c.onSurface,
+                      side: BorderSide(color: c.outlineVariant),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(cancelLabel),
+                  ),
+                ),
               ),
             ],
           ),

@@ -1,32 +1,35 @@
 import 'package:flutter/material.dart';
 
-/// Lab 2 colour tokens (`design/DESIGN.md` §2, green revision).
+/// Lab 2 colour tokens (`design/DESIGN.md` §2, green revision), matched to the
+/// Figma *03 Final UI* frames: green primary actions, an orange-brown accent
+/// for links and secondary actions, and peach containers for warnings.
 ///
-/// Two tokens differ from the brief because they fail WCAG AA in the built
-/// app (see docs/design-traceability.md DV-09, DV-10): warning text uses
-/// #8F5400 instead of #B26A00, and input/radio boundaries use #737980
-/// instead of #E1E3E5.
+/// Input/radio boundaries use #737980 instead of #E1E3E5 because the lighter
+/// value fails WCAG AA (docs/design-traceability.md DV-10). The accent
+/// #B4530A keeps 5.7:1 on white and 4.9:1 on its peach container.
 abstract final class AppPalette {
   static const primary = Color(0xFF15803D); // white text 5.02:1
   static const onPrimary = Color(0xFFFFFFFF);
   static const primaryContainer = Color(0xFFDCFCE7);
   static const onPrimaryContainer = Color(0xFF14532D); // 8.30:1 on container
-  static const background = Color(0xFFF8F9FA);
+  static const accent = Color(0xFFB4530A); // links, secondary buttons, Figma orange
+  static const accentContainer = Color(0xFFFDE8DA);
+  static const background = Color(0xFFF4F5F7);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceVariant = Color(0xFFF1F3F4);
+  static const surfaceVariant = Color(0xFFF0F1F3);
   static const textPrimary = Color(0xFF1A1D1E);
   static const textSecondary = Color(0xFF596066);
   static const outline = Color(0xFF737980); // 4.40:1, UI boundary
   static const border = Color(0xFFE1E3E5); // decorative dividers only
   static const success = Color(0xFF0F766E);
   static const successContainer = Color(0xFFCCFBF1);
-  static const warning = Color(0xFF8F5400);
-  static const warningContainer = Color(0xFFFFF4E0);
+  static const warning = accent;
+  static const warningContainer = accentContainer;
   static const error = Color(0xFFBA1A1A);
   static const errorContainer = Color(0xFFFDF2F2);
   static const info = Color(0xFF1F5FA8);
   static const infoContainer = Color(0xFFE8F1FB);
-  static const tag = Color(0xFFE9ECEF);
+  static const tag = Color(0xFFEDEFF2);
   static const onTag = Color(0xFF343A40);
   static const disabled = Color(0xFFE1E3E5);
   static const onDisabled = Color(0xFF5E6469);
@@ -39,8 +42,10 @@ final ColorScheme appColorScheme = ColorScheme.fromSeed(seedColor: AppPalette.pr
       onPrimary: AppPalette.onPrimary,
       primaryContainer: AppPalette.primaryContainer,
       onPrimaryContainer: AppPalette.onPrimaryContainer,
-      secondary: AppPalette.success,
+      secondary: AppPalette.accent,
       onSecondary: AppPalette.onPrimary,
+      secondaryContainer: AppPalette.accentContainer,
+      onSecondaryContainer: AppPalette.accent,
       surface: AppPalette.background,
       onSurface: AppPalette.textPrimary,
       onSurfaceVariant: AppPalette.textSecondary,

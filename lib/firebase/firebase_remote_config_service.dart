@@ -20,8 +20,11 @@ class FirebaseRemoteConfigService implements ConfigService {
     await _remoteConfig.setDefaults(ConfigKeys.defaults);
     try {
       await refresh();
-    } catch (_) {
-      // Defaults remain available when the first fetch is offline or denied.
+    } catch (e, st) {
+      // A failed fetch must not block start-up: keep the in-app defaults, but
+      // keep the cause visible (GR-04: the old message dropped the error).
+      debugPrint('RemoteConfig fetch failed on startup, using in-app defaults: $e');
+      debugPrintStack(stackTrace: st, maxFrames: 5);
     }
     _remoteConfig.onConfigUpdated.listen((_) async {
       try {

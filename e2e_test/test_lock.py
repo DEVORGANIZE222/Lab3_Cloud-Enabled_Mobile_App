@@ -1,27 +1,17 @@
-"""TC-10, TC-11: Review & Lock (SCR_07), Flow 3 error, recovery and native share sheet."""
+"""TC-10, TC-11: Review & Lock (SCR_07), Flow 3 error, recovery and native share sheet, on live Firestore."""
 
 import re
 
 import pytest
 
-from conftest import LEADER
-
-
-def elect_minh(device) -> None:
-    """Precondition: Minh is the elected leader of Team AI-04 (3 of 5 members)."""
-    device.sign_in(LEADER)
-    device.tap(id="nav_team")
-    device.tap(id="btn_vote_leader")
-    device.tap(id="candidate_s_minh")
-    device.tap(id="btn_submit_vote")
-    device.wait_for(id="banner_leader_elected")
-    device.tap(id="btn_back_to_team")
-    device.wait_for(id="btn_review_lock")
+from conftest import ACCOUNT
 
 
 @pytest.mark.flow3
-async def test_tc10_lock_blocked_then_recovered_from_pool(device, artemis):
-    elect_minh(device)
+async def test_tc10_lock_blocked_then_recovered_from_pool(device, backend, me, artemis):
+    # The test account is the elected leader of Team AI-04 (3 of 5); Khanh Vo waits in the pool.
+    backend.reset(me, team="team_ai04", leader=True)
+    device.sign_in(ACCOUNT)
 
     run = await artemis(
         "On My Team, open 'Review & Lock'. Note the error that explains why the roster can't be locked. "
@@ -38,13 +28,19 @@ async def test_tc10_lock_blocked_then_recovered_from_pool(device, artemis):
     assert "[state_locked]" in run.screen
     assert run.data["confirmation_code"] in run.screen
     events = device.analytics_events()
-    assert "invite_from_pool" in events and "lock_roster" in events
+    assert "invite_pool" in events and "lock_roster" in events
+    # Ground truth: pool assignment and lock are stored in Firestore.
+    team = backend.get("teams/team_ai04")
+    assert "s_khanh" in team["memberIds"] and team["locked"] is True
+    assert team["lockCode"] == run.data["confirmation_code"]
+    assert backend.get("waitingPool/s_khanh")["assigned"] is True
 
 
 @pytest.mark.flow3
 @pytest.mark.native
-async def test_tc11_share_team_link_opens_android_share_sheet(device, artemis):
-    elect_minh(device)
+async def test_tc11_share_team_link_opens_android_share_sheet(device, backend, me, artemis):
+    backend.reset(me, team="team_ai04", leader=True)
+    device.sign_in(ACCOUNT)
 
     run = await artemis(
         "On My Team, open 'Review & Lock' and tap 'Share Team Link'. "

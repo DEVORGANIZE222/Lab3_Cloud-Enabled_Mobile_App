@@ -51,26 +51,73 @@ class TeamStatusCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(team.name, style: context.text.titleMedium)),
+              Expanded(
+                child: Text(
+                  'CURRENT TEAM STATUS',
+                  style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant, letterSpacing: 0.6),
+                ),
+              ),
               StatusBadge(label: p.label, tone: p.tone, icon: p.icon),
             ],
           ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(team.name, style: context.text.titleLarge),
+              StatusBadge(label: team.code),
+            ],
+          ),
           const SizedBox(height: AppSpacing.xs),
-          Text(team.topic, style: context.text.bodyMedium),
+          Text(team.topic, style: context.text.bodyLarge),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: [
+              Icon(Icons.groups, size: AppSize.iconSmall, color: context.colors.primary),
+              const SizedBox(width: AppSpacing.xs),
+              Flexible(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${team.memberCount}/${team.capacity} members formed ',
+                        style: context.text.labelLarge?.copyWith(color: context.colors.primary),
+                      ),
+                      TextSpan(text: '(minimum ${TeamRules.minMembers} required)', style: context.text.bodyMedium),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: AppSpacing.md),
           SlotRow(memberInitials: [for (final m in team.members) m.initials], capacity: team.capacity),
           if (needs.isNotEmpty && !team.locked) ...[
             const SizedBox(height: AppSpacing.md),
-            Text(
-              'Needs ${needs.join(' and ')} before locking.',
-              style: context.text.bodyMedium?.copyWith(color: context.appColors.warning),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(color: context.colors.surfaceContainerHigh, borderRadius: AppRadius.smAll),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 20, color: context.appColors.warning),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text('Needs ${needs.join(' and ')} before locking.', style: context.text.bodyMedium),
+                  ),
+                ],
+              ),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               _Stat(value: '${team.memberCount}/${team.capacity}', label: 'Team size', ok: team.meetsSizeRule),
+              const SizedBox(width: AppSpacing.sm),
               _Stat(value: team.hasLeader ? 'Elected' : 'Pending', label: 'Leader', ok: team.hasLeader),
+              const SizedBox(width: AppSpacing.sm),
               const _Stat(value: 'Assigned', label: 'Supervisor', ok: true),
             ],
           ),
@@ -80,6 +127,7 @@ class TeamStatusCard extends StatelessWidget {
   }
 }
 
+/// Figma "Formation Health" tile: grey panel, coloured value, caption.
 class _Stat extends StatelessWidget {
   const _Stat({required this.value, required this.label, required this.ok});
 
@@ -89,23 +137,21 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = ok ? context.appColors.success : context.appColors.warning;
+    final color = ok ? context.colors.primary : context.appColors.warning;
     return Expanded(
       child: Semantics(
         label: '$label: $value',
         excludeSemantics: true,
-        child: Column(
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(ok ? Icons.check_circle : Icons.schedule, size: AppSize.iconSmall, color: color),
-                const SizedBox(width: AppSpacing.xs),
-                Text(value, style: context.text.labelLarge?.copyWith(color: color)),
-              ],
-            ),
-            Text(label, style: context.text.bodySmall),
-          ],
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md, horizontal: AppSpacing.xs),
+          decoration: BoxDecoration(color: context.colors.surfaceContainerHigh, borderRadius: AppRadius.smAll),
+          child: Column(
+            children: [
+              Text(value, style: context.text.titleMedium?.copyWith(color: color), maxLines: 1),
+              const SizedBox(height: 2),
+              Text(label, style: context.text.bodySmall),
+            ],
+          ),
         ),
       ),
     );
@@ -164,8 +210,7 @@ class OpenSlotTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      color: context.colors.surface,
-      borderColor: context.colors.outline,
+      color: context.colors.surfaceContainerHigh,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
       child: Row(
         children: [
@@ -175,8 +220,25 @@ class OpenSlotTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Open slot $slot', style: context.text.titleSmall),
-                Text('Looking for: $lookingFor', style: context.text.bodyMedium),
+                Row(
+                  children: [
+                    Expanded(child: Text('Open slot $slot', style: context.text.titleSmall)),
+                    const StatusBadge(label: 'Waiting for applicant', tone: Tone.warning),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Row(
+                  children: [
+                    Icon(Icons.person_search, size: AppSize.iconSmall, color: context.colors.secondary),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        'Looking for: $lookingFor',
+                        style: context.text.labelMedium?.copyWith(color: context.colors.secondary),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

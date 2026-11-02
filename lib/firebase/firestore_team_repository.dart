@@ -231,9 +231,59 @@ class FirestoreTeamRepository implements TeamRepository {
 
   @override
   Future<int> inviteFromPool(String teamId) async {
-    final team = await getTeam(teamId);
-    if (team.locked || team.isFull) return 0;
-    await _teams.doc(teamId).update({'invitesSent': FieldValue.increment(1)});
-    return 1;
+    final ref = _teams.doc(teamId);
+    // Find unassigned pool candidates outside the transaction.
+    final poolSnap = await _db
+        .collection('waitingPool')
+        .where('assigned', isEqualTo: false)
+        .limit(10)
+        .get();
+    if (poolSnap.docs.isEmpty) return 0;
+
+    return _db.runTransaction((tx) async {
+      final teamDoc = await tx.get(ref);
+      final team = _team(teamDoc);
+      if (team.locked || team.isFull) return 0;
+
+      // Pick the best match: prefer a student whose role matches an open role.
+      final openRolesLower = team.openRoles.map((r) => r.toLowerCase()).toSet();
+      QueryDocumentSnapshot<Map<String, dynamic>>? candidateDoc;
+      for (final doc in poolSnap.docs) {
+        final role = (doc.data()['role'] as String? ?? '').toLowerCase();
+        if (openRolesLower.any((r) => r.contains(role) || role.contains(r))) {
+          candidateDoc = doc;
+          break;
+        }
+      }
+      candidateDoc ??= poolSnap.docs.first;
+
+      // Perform transaction read on candidate pool record to ensure atomic assignment.
+      final freshCandidateSnap = await tx.get(candidateDoc.reference);
+      if (!freshCandidateSnap.exists || (freshCandidateSnap.data()?['assigned'] == true)) {
+        return 0;
+      }
+
+      final poolData = freshCandidateSnap.data()!;
+      final newMember = TeamMember(
+        studentId: freshCandidateSnap.id,
+        fullName: poolData['fullName'] as String? ?? 'Pool Student',
+        studentCode: poolData['studentCode'] as String? ?? '',
+        role: poolData['role'] as String? ?? 'Member',
+        skills: List<String>.from(poolData['skills'] ?? const []),
+      );
+
+      // Add the student to the team and mark them as assigned in the pool.
+      final updated = team.copyWith(
+        members: [...team.members, newMember],
+        invitesSent: team.invitesSent + 1,
+      );
+      tx.update(ref, _teamUpdate(updated));
+      tx.update(candidateDoc.reference, {
+        'assigned': true,
+        'assignedTeamId': teamId,
+        'assignedAt': FieldValue.serverTimestamp(),
+      });
+      return 1;
+    });
   }
 }

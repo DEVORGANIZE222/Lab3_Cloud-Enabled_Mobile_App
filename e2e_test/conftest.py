@@ -5,6 +5,12 @@ Environment:
   ARTEMIS_PROFILE    flash (default) or pro
   DEVICE_SERIAL      adb serial (default emulator-5554)
   E2E_RUNS           runs per test case (default 3)
+  E2E_COOLDOWN       seconds to wait before each ARTEMIS task (default 60), so the Gemini
+                     free tier's per-minute request quota is not already spent
+  E2E_ACCOUNT        Google account signed in on the device and in Firestore allowedEmails
+                     (default megalit2578@gmail.com)
+  FIREBASE_TOKEN     optional OAuth token for Firestore preconditions; defaults to the
+                     Firebase CLI login (see backend.py)
 """
 
 from __future__ import annotations
@@ -12,6 +18,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime
@@ -21,18 +28,19 @@ from typing import Any
 import pytest
 from artemis_client import ArtemisClient
 
+from backend import Account, Backend
 from device import PACKAGE, Device
 
 BASE_URL = os.environ.get("ARTEMIS_BASE_URL", "http://127.0.0.1:8000")
 PROFILE = os.environ.get("ARTEMIS_PROFILE", "flash")
 SERIAL = os.environ.get("DEVICE_SERIAL", "emulator-5554")
 RUNS = int(os.environ.get("E2E_RUNS", "3"))
+COOLDOWN = float(os.environ.get("E2E_COOLDOWN", "60"))
 EVIDENCE = Path(__file__).parent / "evidence"
 
-# Seeded test accounts (assets/seed/seed.json). They have no password: the app's
-# local auth shows them in a simulated Google account picker.
-LEADER = "minh.le@fpt.edu.vn"  # in Team AI-04, 3 of 5 members, no leader yet
-NEWCOMER = "an.tran@fpt.edu.vn"  # not in a team
+# The real Google account added on the emulator. Each test case uses backend.reset()
+# to give it the role it needs: Minh Le's seat in Team AI-04, or a student with no team.
+ACCOUNT = os.environ.get("E2E_ACCOUNT", "megalit2578@gmail.com")
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
@@ -44,6 +52,18 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 @pytest.fixture(scope="session")
 def device() -> Device:
     return Device(SERIAL)
+
+
+@pytest.fixture(scope="session")
+def backend() -> Backend:
+    return Backend()
+
+
+@pytest.fixture(scope="session")
+def me(backend: Backend, device: Device) -> Account:
+    accounts = device.shell("dumpsys", "account")
+    assert ACCOUNT in accounts, f"Add the Google account {ACCOUNT} on {SERIAL} (Settings > Accounts) first"
+    return backend.account(ACCOUNT)
 
 
 @pytest.fixture(scope="session")
@@ -107,6 +127,7 @@ def artemis(client: ArtemisClient, device: Device, request: pytest.FixtureReques
     folder.mkdir(parents=True, exist_ok=True)
 
     async def run(goal: str, expected_output: str, *, timeout: float = 900) -> Run:
+        time.sleep(COOLDOWN)
         started = datetime.now()
         result = await client.run(
             f"{goal}\nWhen you finish, report the task as completed. The explanation of that final report must be "
