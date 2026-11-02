@@ -53,14 +53,45 @@ class _Body extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const InfoBanner(
-          semanticId: 'banner_pool',
-          tone: Tone.info,
-          icon: Icons.hourglass_top,
-          title: "You're in the Random Pool",
-          message:
-              'Registration closed before you joined a team. '
-              'The system is matching you with students who need your role.',
+        // Figma SCR_08 hero: blue panel, engine icon, centred status.
+        Semantics(
+          identifier: 'banner_pool',
+          container: true,
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              color: context.appColors.infoContainer,
+              borderRadius: AppRadius.cardAll,
+            ),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 32,
+                  backgroundColor: context.appColors.info.withValues(alpha: 0.15),
+                  child: CircleAvatar(
+                    radius: 22,
+                    backgroundColor: context.appColors.info,
+                    child: Icon(Icons.hub, color: context.colors.onPrimary),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                const StatusBadge(label: 'Pool engine active', tone: Tone.primary),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  "You're in the Random Pool",
+                  textAlign: TextAlign.center,
+                  style: context.text.titleLarge?.copyWith(color: context.appColors.info),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Registration closed before you joined a team. '
+                  'The system is matching you with students who need your role.',
+                  textAlign: TextAlign.center,
+                  style: context.text.bodyMedium,
+                ),
+              ],
+            ),
+          ),
         ),
         const SizedBox(height: AppSpacing.lg),
         AppCard(
@@ -70,15 +101,42 @@ class _Body extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(child: Text('Queue ${status.queueId}', style: context.text.titleMedium)),
-                  const StatusBadge(label: 'Matching', tone: Tone.warning, icon: Icons.sync),
+                  Icon(Icons.sync, color: context.appColors.info),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: Text('System matching status', style: context.text.titleSmall)),
+                  Text(
+                    Fmt.percent(status.progress),
+                    style: context.text.labelLarge?.copyWith(color: context.appColors.info),
+                  ),
                 ],
               ),
+              const SizedBox(height: AppSpacing.sm),
+              AppProgressBar(value: status.progress, tone: Tone.info, label: status.stage),
               const SizedBox(height: AppSpacing.md),
-              AppProgressBar(value: status.progress, label: '${status.stage} · ${Fmt.percent(status.progress)}'),
-              const SizedBox(height: AppSpacing.lg),
-              InfoRow(icon: Icons.event, label: 'Expected result', value: Fmt.dateTime(status.expectedResult)),
+              InfoRow(icon: Icons.tag, label: 'Assigned queue', value: status.queueId),
               InfoRow(icon: Icons.groups_outlined, label: 'Students in pool', value: '${status.studentsInPool}'),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        AppCard(
+          color: context.appColors.warningContainer,
+          child: Row(
+            children: [
+              Icon(Icons.hourglass_top, color: context.appColors.warning),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'EXPECTED RESOLUTION',
+                      style: context.text.labelSmall?.copyWith(color: context.appColors.warning, letterSpacing: 0.6),
+                    ),
+                    Text(Fmt.dateTime(status.expectedResult), style: context.text.titleSmall),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -94,7 +152,7 @@ class _Body extends StatelessWidget {
               Wrap(
                 spacing: AppSpacing.xs,
                 runSpacing: AppSpacing.xs,
-                children: [for (final r in status.preferredRoles) StatusBadge(label: r, tone: Tone.primary)],
+                children: [for (final r in status.preferredRoles) StatusBadge(label: r, tone: Tone.warning)],
               ),
               const SizedBox(height: AppSpacing.lg),
               Text('Skills', style: context.text.labelMedium),

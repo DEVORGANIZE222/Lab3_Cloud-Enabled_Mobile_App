@@ -77,12 +77,30 @@ class LeaderVotingScreen extends StatelessWidget {
                 color: context.colors.surface,
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: AppButton(
-                    semanticId: 'btn_submit_vote',
-                    label: vm.myVote(team) == null ? 'Submit Vote' : 'Change Vote',
-                    icon: Icons.how_to_vote,
-                    loading: vm.submitting,
-                    onPressed: vm.canSubmit(team) ? () => _submit(context, team) : null,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppButton(
+                        semanticId: 'btn_submit_vote',
+                        label: vm.myVote(team) == null ? 'Submit Vote' : 'Change Vote',
+                        icon: Icons.how_to_vote,
+                        loading: vm.submitting,
+                        onPressed: vm.canSubmit(team) ? () => _submit(context, team) : null,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: context.colors.surfaceContainerLowest,
+                            foregroundColor: context.colors.onSurface,
+                            side: BorderSide(color: context.colors.outlineVariant),
+                          ),
+                          onPressed: () => context.pop(),
+                          child: const Text('Cancel and return to My Team'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -103,7 +121,21 @@ class _Body extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(team.name, style: context.text.titleLarge),
+        // Figma SCR_06 header: team chip, session chip, heading, rule.
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.xs,
+          children: [
+            StatusBadge(
+              label: '${team.name} · ${Fmt.count(team.memberCount, 'candidate')}',
+              tone: Tone.info,
+              icon: Icons.groups,
+            ),
+            StatusBadge(label: team.locked ? 'Voting closed' : 'Active session', icon: Icons.how_to_reg),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Semantics(header: true, child: Text('Elect team leader', style: context.text.headlineMedium)),
         const SizedBox(height: AppSpacing.xs),
         Text(
           'The leader submits the final roster. A leader needs ${Fmt.count(team.votesNeeded, 'vote')} '
@@ -111,6 +143,46 @@ class _Body extends StatelessWidget {
           style: context.text.bodyMedium,
         ),
         const SizedBox(height: AppSpacing.lg),
+        if (showTally) ...[
+          AppCard(
+            color: context.colors.surfaceContainerHigh,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const IconTile(icon: Icons.how_to_vote, tone: Tone.info, size: 32),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(child: Text('Voting progress', style: context.text.titleSmall)),
+                    Text(
+                      '${team.votes.length} of ${team.memberCount} cast',
+                      style: context.text.labelLarge?.copyWith(color: context.colors.primary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                ClipRRect(
+                  borderRadius: AppRadius.fullAll,
+                  child: LinearProgressIndicator(
+                    value: team.memberCount == 0 ? 0 : team.votes.length / team.memberCount,
+                    minHeight: AppSize.progress,
+                    backgroundColor: context.colors.surfaceContainerLowest,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text('${Fmt.count(team.votes.length, 'ballot')} recorded', style: context.text.bodySmall),
+                    ),
+                    Text('Majority rule (${team.votesNeeded}+ votes)', style: context.text.bodySmall),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
         if (team.hasLeader)
           InfoBanner(
             semanticId: 'banner_leader_elected',

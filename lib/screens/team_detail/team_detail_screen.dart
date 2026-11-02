@@ -39,6 +39,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
       message: "You'll take ${vm.slotFor(team)}. You can leave from My Team until the roster is locked.",
       confirmLabel: 'Join Team',
       details: AppCard(
+        color: context.colors.surfaceContainerHigh,
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           children: [
@@ -159,6 +160,9 @@ class _Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = teamPhase(team);
+    final progress = team.memberCount / team.capacity;
+    final missing = TeamRules.minMembers - team.memberCount;
+    // Figma SCR_04: header card, roster breakdown, open slots, assembly progress.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -169,38 +173,62 @@ class _Body extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  StatusBadge(label: team.code, tone: Tone.primary),
+                  const IconTile(icon: Icons.groups, tone: Tone.warning, size: 32),
                   const SizedBox(width: AppSpacing.sm),
-                  Flexible(
-                    child: StatusBadge(label: p.label, tone: p.tone, icon: p.icon),
-                  ),
+                  Expanded(child: Text(team.code, style: context.text.titleSmall)),
+                  Flexible(child: StatusBadge(label: p.label, tone: p.tone, icon: p.icon)),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
-              Text(team.topic, style: context.text.titleLarge),
-              const SizedBox(height: AppSpacing.sm),
-              Text(team.description, style: context.text.bodyLarge),
               const SizedBox(height: AppSpacing.lg),
-              InfoRow(icon: Icons.category_outlined, label: 'Category', value: team.category),
-              InfoRow(icon: Icons.school_outlined, label: 'Supervisor', value: team.supervisor),
-              const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.xs,
-                runSpacing: AppSpacing.xs,
-                children: [for (final tag in team.tags) StatusBadge(label: tag)],
-              ),
+              Text(team.topic, style: context.text.titleLarge),
+              if (team.supervisor.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.school_outlined, size: AppSize.iconSmall, color: context.appColors.info),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        'Mentor: ${team.supervisor}',
+                        style: context.text.labelMedium?.copyWith(color: context.appColors.info),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: AppSpacing.md),
+              Text(team.description, style: context.text.bodyMedium),
+              if (team.tags.isNotEmpty || team.category.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  'CORE TECHNOLOGIES',
+                  style: context.text.labelSmall?.copyWith(color: context.colors.onSurfaceVariant, letterSpacing: 0.6),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Wrap(
+                  spacing: AppSpacing.xs,
+                  runSpacing: AppSpacing.xs,
+                  children: [
+                    if (team.category.isNotEmpty) StatusBadge(label: team.category, tone: Tone.warning),
+                    for (final tag in team.tags) StatusBadge(label: tag),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
-        SectionHeader(title: 'Members', trailing: '${team.memberCount} of ${team.capacity}'),
+        SectionHeader(title: 'Roster breakdown', trailing: '${team.capacity} total slots'),
         const SizedBox(height: AppSpacing.md),
         for (final m in team.members) ...[
           MemberTile(
             member: m,
             badges: [
               if (m.studentId == team.leaderId)
-                const StatusBadge(label: 'Leader', tone: Tone.primary, icon: Icons.star),
+                const StatusBadge(label: 'Leader', tone: Tone.primary, icon: Icons.star)
+              else
+                const StatusBadge(label: 'Confirmed', tone: Tone.primary),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -212,6 +240,38 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
+        const SizedBox(height: AppSpacing.md),
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: Text('Team assembly progress', style: context.text.titleSmall)),
+                  Text(
+                    '${(progress * 100).round()}%',
+                    style: context.text.labelLarge?.copyWith(color: context.colors.secondary),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              ClipRRect(
+                borderRadius: AppRadius.fullAll,
+                child: LinearProgressIndicator(value: progress, minHeight: AppSize.progress),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  Expanded(child: Text('${team.memberCount} members confirmed', style: context.text.bodySmall)),
+                  Text(
+                    missing > 0 ? '$missing more needed to lock' : 'Minimum size reached',
+                    style: context.text.bodySmall,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

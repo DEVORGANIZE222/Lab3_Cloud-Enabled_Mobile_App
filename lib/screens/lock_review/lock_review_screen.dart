@@ -104,9 +104,23 @@ class _Review extends StatelessWidget {
     final checks = vm.checks(team);
     final blocked = vm.blockedReason(team);
     final leader = vm.isLeader(team);
+    final issues = checks.where((c) => c.status != CheckStatus.passed).length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Figma SCR_07 header.
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: StatusBadge(label: 'Capstone Spring 2026', icon: Icons.school_outlined),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Semantics(header: true, child: Text('Review & lock team', style: context.text.headlineMedium)),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Locking finalises ${team.name} and sends it to the FPT Academic Office for mentor matching.',
+          style: context.text.bodyMedium,
+        ),
+        const SizedBox(height: AppSpacing.lg),
         if (vm.lastJoinedName != null) ...[
           InfoBanner(
             semanticId: 'banner_pool_joined',
@@ -128,20 +142,37 @@ class _Review extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
         ],
-        const SectionHeader(title: 'Before you lock'),
-        const SizedBox(height: AppSpacing.md),
         AppCard(
           semanticId: 'card_lock_checks',
-          padding: EdgeInsets.zero,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final (i, c) in checks.indexed) ...[if (i > 0) const Divider(height: 1), _CheckRow(check: c)],
+              Row(
+                children: [
+                  Expanded(child: Text('Verification requirements', style: context.text.titleSmall)),
+                  if (issues > 0)
+                    StatusBadge(label: Fmt.count(issues, 'issue'), tone: Tone.error)
+                  else
+                    const StatusBadge(label: 'All passed', tone: Tone.primary),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              for (final (i, c) in checks.indexed) ...[
+                if (i > 0) const SizedBox(height: AppSpacing.sm),
+                _CheckRow(check: c),
+              ],
             ],
           ),
         ),
         if (!team.meetsSizeRule) ...[
           const SizedBox(height: AppSpacing.xl),
-          const SectionHeader(title: 'Find more members'),
+          Row(
+            children: [
+              Icon(Icons.bolt, color: context.colors.primary),
+              const SizedBox(width: AppSpacing.xs),
+              const Expanded(child: SectionHeader(title: 'How to resolve this blocker')),
+            ],
+          ),
           const SizedBox(height: AppSpacing.md),
           AppCard(
             semanticId: 'card_recovery',
@@ -150,9 +181,9 @@ class _Review extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.groups_2_outlined, color: context.colors.primary),
+                    const IconTile(icon: Icons.person_add_alt_1, tone: Tone.warning, size: 36),
                     const SizedBox(width: AppSpacing.md),
-                    Expanded(child: Text('Waiting Pool', style: context.text.titleSmall)),
+                    Expanded(child: Text('Invite from the Waiting Pool', style: context.text.titleSmall)),
                     if (team.invitesSent > 0)
                       StatusBadge(label: '${team.invitesSent} invited', tone: Tone.info, icon: Icons.send),
                   ],
@@ -228,26 +259,36 @@ class _CheckRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, tone, label) = switch (check.status) {
-      CheckStatus.passed => (Icons.check_circle, Tone.success, 'Done'),
-      CheckStatus.pending => (Icons.schedule, Tone.warning, 'Pending'),
-      CheckStatus.failed => (Icons.cancel, Tone.error, 'Not met'),
+      CheckStatus.passed => (Icons.check, Tone.primary, 'PASSED'),
+      CheckStatus.pending => (Icons.priority_high, Tone.warning, 'PENDING'),
+      CheckStatus.failed => (Icons.close, Tone.error, 'FAILED'),
     };
+    final colors = toneColors(context, tone);
     return Semantics(
       identifier: 'check_${check.id}',
       label: '${check.title}: $label. ${check.detail}',
       excludeSemantics: true,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      // Figma: tinted row, filled status circle, status pill.
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: check.status == CheckStatus.passed ? context.colors.surfaceContainerHigh : colors.bg,
+          borderRadius: AppRadius.smAll,
+        ),
         child: Row(
           children: [
-            Icon(icon, color: toneColors(context, tone).fg),
+            CircleAvatar(
+              radius: 14,
+              backgroundColor: colors.fg,
+              child: Icon(icon, size: 18, color: context.colors.onPrimary),
+            ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(check.title, style: context.text.titleSmall),
-                  Text(check.detail, style: context.text.bodyMedium),
+                  Text(check.detail, style: context.text.bodySmall?.copyWith(color: colors.fg)),
                 ],
               ),
             ),

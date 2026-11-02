@@ -220,8 +220,25 @@ class OpenSlotTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Open slot $slot', style: context.text.titleSmall),
-                Text('Looking for: $lookingFor', style: context.text.bodyMedium),
+                Row(
+                  children: [
+                    Expanded(child: Text('Open slot $slot', style: context.text.titleSmall)),
+                    const StatusBadge(label: 'Waiting for applicant', tone: Tone.warning),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Row(
+                  children: [
+                    Icon(Icons.person_search, size: AppSize.iconSmall, color: context.colors.secondary),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        'Looking for: $lookingFor',
+                        style: context.text.labelMedium?.copyWith(color: context.colors.secondary),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
