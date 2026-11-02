@@ -38,7 +38,11 @@ def _access_token() -> str:
     if token := os.environ.get("FIREBASE_TOKEN"):
         return token
     config = Path.home() / ".config" / "configstore" / "firebase-tools.json"
-    refresh = json.loads(config.read_text(encoding="utf-8"))["tokens"]["refresh_token"]
+    # GR-03: a missing or logged-out CLI store must say what to do, not raise KeyError.
+    stored = json.loads(config.read_text(encoding="utf-8")) if config.exists() else {}
+    refresh = (stored.get("tokens") or {}).get("refresh_token")
+    if not refresh:
+        raise AssertionError(f"No Firebase CLI login in {config}: run `firebase login` or set FIREBASE_TOKEN")
     body = urllib.parse.urlencode(
         {
             "grant_type": "refresh_token",
