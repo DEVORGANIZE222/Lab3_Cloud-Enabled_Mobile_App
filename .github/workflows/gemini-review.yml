@@ -1,9 +1,10 @@
-# AI code review for PRM393 Lab 3 with Gemini CLI.
-# Adapted from google-github-actions/run-gemini-cli examples/workflows/pr-review
-# (review path only). Runs when a pull request opens or is reopened, or when an
-# owner, member or collaborator comments "@gemini-cli /review [extra focus]" on
-# one. GitHub runs issue_comment workflows from the default branch only, so the
-# comment trigger works once this file is on main.
+# AI code review for PRM393 Lab 3 with Gemini.
+#
+# .github/scripts/gemini_review.py sends the pull request's source diff to
+# Gemini in one API request and posts the findings as a review with inline
+# comments. The agentic run-gemini-cli action was tried first (runs #1-#5) but
+# needs one request per step and its gemini-3.8-flash free tier allows only
+# 20 requests/day, so it never finished a review of this pull request.
 #
 # Needs the repository secret GEMINI_API_KEY (free key from Google AI Studio).
 name: '🔎 Gemini Review'
@@ -13,116 +14,36 @@ on:
     types:
       - 'opened'
       - 'reopened'
+      - 'ready_for_review'
+      # A push re-reviews only when its head commit message contains
+      # "[gemini-review]"; the script checks this and exits otherwise.
       - 'synchronize'
-  issue_comment:
-    types:
-      - 'created'
 
 concurrency:
-  group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number }}'
+  group: '${{ github.workflow }}-${{ github.event.pull_request.number }}'
   cancel-in-progress: true
-
-defaults:
-  run:
-    shell: 'bash'
 
 jobs:
   review:
-    if: |-
-      (
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.head.repo.fork == false
-      ) || (
-        github.event_name == 'issue_comment' &&
-        github.event.issue.pull_request &&
-        github.event.sender.type == 'User' &&
-        startsWith(github.event.comment.body, '@gemini-cli /review') &&
-        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
-      )
+    if: ${{ github.event.pull_request.head.repo.fork == false }}
     runs-on: 'ubuntu-latest'
-    timeout-minutes: 15
+    timeout-minutes: 10
     permissions:
       contents: 'read'
-      id-token: 'write'
-      issues: 'write'
       pull-requests: 'write'
     steps:
-      - name: 'Acknowledge request'
-        env:
-          GITHUB_TOKEN: '${{ github.token }}'
-          NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
-          REPOSITORY: '${{ github.repository }}'
-          MESSAGE: |-
-            🤖 Gemini CLI is reviewing this pull request. Progress: [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
-        run: |-
-          gh issue comment "${NUMBER}" --body "${MESSAGE}" --repo "${REPOSITORY}"
-
       - name: 'Checkout repository'
         uses: 'actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8' # ratchet:actions/checkout@v6
         with:
           persist-credentials: 'false'
 
-      - name: 'Prepare prompt context'
-        run: |-
-          mkdir -p .gemini
-          jq -n \
-            --arg repo "${REPOSITORY}" \
-            --arg pr "${PULL_REQUEST_NUMBER}" \
-            --arg context "${ADDITIONAL_CONTEXT}" \
-            '{repository: $repo, pull_request_number: $pr, additional_context: $context}' > .gemini/context.json
+      - name: 'Run Gemini review'
         env:
-          REPOSITORY: '${{ github.repository }}'
-          PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
-          ADDITIONAL_CONTEXT: '${{ github.event_name == ''issue_comment'' && github.event.comment.body || '''' }}'
-
-      - name: 'Run Gemini pull request review'
-        uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
-        env:
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-          GITHUB_TOKEN: '${{ github.token }}'
           GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'
-        with:
-          gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
-          # Free tier: gemini-3.8-flash allows 20 requests/day (the CLI may still
-          # use it internally, hence maxSessionTurns 15), and gemini-2.5-flash
-          # is closed to new keys.
-          gemini_model: 'gemini-3.5-flash-lite'
-          workflow_name: 'gemini-review'
-          # issue_comment events carry the PR as an issue, so pass the number explicitly.
-          github_pr_number: '${{ github.event.pull_request.number || github.event.issue.number }}'
-          settings: |-
-            {
-              "model": {
-                "name": "gemini-3.5-flash-lite",
-                "maxSessionTurns": 15
-              },
-              "mcpServers": {
-                "github": {
-                  "command": "docker",
-                  "args": [
-                    "run",
-                    "-i",
-                    "--rm",
-                    "-e",
-                    "GITHUB_PERSONAL_ACCESS_TOKEN",
-                    "ghcr.io/github/github-mcp-server:v0.27.0"
-                  ],
-                  "includeTools": [
-                    "add_comment_to_pending_review",
-                    "pull_request_read",
-                    "pull_request_review_write"
-                  ],
-                  "env": {
-                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-                  }
-                }
-              },
-              "tools": {
-                "core": []
-              }
-            }
-          extensions: |
-            [
-              "https://github.com/gemini-cli-extensions/code-review"
-            ]
-          prompt: '/pr-code-review'
+          GITHUB_TOKEN: '${{ github.token }}'
+          GITHUB_REPOSITORY: '${{ github.repository }}'
+          PR_NUMBER: '${{ github.event.pull_request.number }}'
+          EVENT_ACTION: '${{ github.event.action }}'
+          HEAD_SHA: '${{ github.event.pull_request.head.sha }}'
+          GEMINI_MODEL: 'gemini-3.5-flash-lite'
+        run: python3 .github/scripts/gemini_review.py
