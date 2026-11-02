@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_tokens.dart';
 
-/// Lab 2 *Card*: default (border, no shadow) and pressed (ink + level-1 tint).
+/// Soft shadow used by Figma cards (y 1, blur 3, ~8% ink).
+const List<BoxShadow> cardShadow = [
+  BoxShadow(color: Color(0x14101828), blurRadius: 3, offset: Offset(0, 1)),
+  BoxShadow(color: Color(0x0A101828), blurRadius: 8, offset: Offset(0, 2)),
+];
+
+/// Lab 2 *Card*: Figma style (white, soft shadow, no border) and pressed (ink).
+/// A [color] gives a flat tinted panel (no shadow); [borderColor] adds an outline.
 class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
@@ -31,16 +38,22 @@ class AppCard extends StatelessWidget {
       label: semanticLabel,
       button: onTap != null,
       container: true,
-      child: Material(
-        color: color ?? c.surfaceContainerLowest,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.mdAll,
-          side: BorderSide(color: borderColor ?? c.outlineVariant),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.cardAll,
+          boxShadow: color == null ? cardShadow : null,
         ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(padding: padding, child: child),
+        child: Material(
+          color: color ?? c.surfaceContainerLowest,
+          shape: RoundedRectangleBorder(
+            borderRadius: AppRadius.cardAll,
+            side: borderColor == null ? BorderSide.none : BorderSide(color: borderColor!),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(padding: padding, child: child),
+          ),
         ),
       ),
     );
@@ -78,9 +91,11 @@ class SelectableCard extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 72),
         child: Material(
           color: selected ? c.primaryContainer : c.surfaceContainerLowest,
+          shadowColor: const Color(0x29101828),
+          elevation: selected ? 0 : 1,
           shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.mdAll,
-            side: BorderSide(color: selected ? c.primary : c.outlineVariant, width: selected ? 2 : 1),
+            borderRadius: AppRadius.cardAll,
+            side: selected ? BorderSide(color: c.primary, width: 2) : BorderSide.none,
           ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(

@@ -33,7 +33,7 @@ class StatusBadge extends StatelessWidget {
       label: label,
       excludeSemantics: true,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
         decoration: BoxDecoration(color: t.bg, borderRadius: AppRadius.fullAll),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -47,7 +47,7 @@ class StatusBadge extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: context.text.labelLarge?.copyWith(color: t.fg),
+                style: context.text.labelSmall?.copyWith(color: t.fg),
               ),
             ),
           ],
@@ -65,6 +65,7 @@ class InfoBanner extends StatelessWidget {
     this.message,
     this.tone = Tone.info,
     this.icon,
+    this.iconColor,
     this.action,
     this.semanticId,
   });
@@ -73,6 +74,7 @@ class InfoBanner extends StatelessWidget {
   final String? message;
   final Tone tone;
   final IconData? icon;
+  final Color? iconColor;
   final Widget? action;
   final String? semanticId;
 
@@ -92,22 +94,23 @@ class InfoBanner extends StatelessWidget {
       liveRegion: tone == Tone.error,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-        decoration: BoxDecoration(
-          color: t.bg,
-          borderRadius: AppRadius.smAll,
-          border: Border.all(color: t.fg),
-        ),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(color: t.bg, borderRadius: AppRadius.cardAll),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon ?? _defaultIcon, color: t.fg),
+            Icon(icon ?? _defaultIcon, color: iconColor ?? t.fg),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: context.text.labelLarge?.copyWith(color: t.fg)),
+                  Text(
+                    title,
+                    style: context.text.titleSmall?.copyWith(
+                      color: tone == Tone.error ? t.fg : context.colors.onSurface,
+                    ),
+                  ),
                   if (message != null) ...[
                     const SizedBox(height: AppSpacing.xs),
                     Text(message!, style: context.text.bodyMedium),
@@ -123,7 +126,27 @@ class InfoBanner extends StatelessWidget {
   }
 }
 
-/// Circle avatar with initials (or a dashed "open slot").
+/// Rounded-square icon tile in a tone colour (Figma step and notice icons).
+class IconTile extends StatelessWidget {
+  const IconTile({super.key, required this.icon, this.tone = Tone.primary, this.size = 40});
+
+  final IconData icon;
+  final Tone tone;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = toneColors(context, tone);
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: t.bg, borderRadius: AppRadius.smAll),
+      child: Icon(icon, size: size * 0.55, color: t.fg),
+    );
+  }
+}
+
+/// Circle avatar with initials (or a grey "open slot").
 class MemberAvatar extends StatelessWidget {
   const MemberAvatar({super.key, this.initials, this.size = AppSize.avatar});
 
@@ -139,10 +162,7 @@ class MemberAvatar extends StatelessWidget {
         child: Container(
           width: size,
           height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: c.outline),
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: context.appColors.tag),
           child: Icon(Icons.add, size: size / 2, color: c.onSurfaceVariant),
         ),
       );

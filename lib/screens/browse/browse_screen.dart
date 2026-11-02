@@ -55,17 +55,21 @@ class _BrowseScreenState extends State<BrowseScreen> {
             Semantics(
               identifier: 'browse_filters',
               container: true,
-              child: Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  for (final f in TeamFilter.values)
-                    AppChip(
-                      label: f.label,
-                      selected: vm.filters.contains(f),
-                      onSelected: (on) => vm.toggleFilter(f, on),
-                    ),
-                ],
+              // One scrollable row of chips, as in the Figma filter bar.
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final f in TeamFilter.values) ...[
+                      AppChip(
+                        label: f.label,
+                        selected: vm.filters.contains(f),
+                        onSelected: (on) => vm.toggleFilter(f, on),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                    ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -130,57 +134,88 @@ class _TeamCard extends StatelessWidget {
     final open = team.openSlots;
     void openDetail() => context.push('/browse/team/${team.id}');
 
+    // Figma SCR_03 card: green top stripe, member/open badge, category, tags,
+    // a grey "seeking roles" panel and a full-width green action.
     return AppCard(
       semanticId: 'team_card_${team.code}',
       onTap: openDetail,
+      padding: EdgeInsets.zero,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
+          Container(height: 4, color: open == 0 ? context.colors.outlineVariant : context.colors.primary),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(team.name, style: context.text.titleMedium),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(team.topic, style: context.text.bodyMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
+                    Expanded(child: Text(team.name, style: context.text.titleLarge)),
+                    const SizedBox(width: AppSpacing.sm),
+                    StatusBadge(
+                      label: open == 0
+                          ? 'Full'
+                          : '${team.memberCount}/${team.capacity} · $open open',
+                      tone: open == 0 ? Tone.neutral : Tone.primary,
+                      icon: open == 0 ? Icons.block : Icons.person_add_alt_1,
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              StatusBadge(
-                label: open == 0 ? 'Full' : '$open ${open == 1 ? 'slot' : 'slots'} open',
-                tone: open == 0 ? Tone.neutral : (open == 1 ? Tone.warning : Tone.success),
-                icon: open == 0 ? Icons.block : Icons.person_add_alt_1,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          SlotRow(memberInitials: [for (final m in team.members) m.initials], capacity: team.capacity),
-          const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: [
-              StatusBadge(label: team.category, tone: Tone.primary),
-              for (final tag in team.tags.take(3)) StatusBadge(label: tag),
-            ],
-          ),
-          if (team.openRoles.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Looking for: ${team.openRoles.join(', ')}',
-              style: context.text.bodyMedium?.copyWith(color: context.colors.onSurfaceVariant),
+                if (team.category.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  StatusBadge(label: team.category, tone: Tone.warning, icon: Icons.school),
+                ],
+                const SizedBox(height: AppSpacing.sm),
+                Text(team.topic, style: context.text.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                if (team.tags.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
+                    children: [for (final tag in team.tags.take(4)) StatusBadge(label: tag)],
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(color: context.colors.surfaceContainerHigh, borderRadius: AppRadius.smAll),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: SlotRow(
+                          memberInitials: [for (final m in team.members) m.initials],
+                          capacity: team.capacity,
+                        ),
+                      ),
+                      if (team.openRoles.isNotEmpty)
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text('Looking for:', style: context.text.bodySmall),
+                              Text(
+                                team.openRoles.join(', '),
+                                textAlign: TextAlign.end,
+                                style: context.text.labelLarge?.copyWith(color: context.colors.primary),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppButton(
+                  semanticId: 'btn_view_${team.code}',
+                  label: open == 0 ? 'View Details' : 'View Details & Join',
+                  icon: Icons.arrow_forward,
+                  variant: open == 0 ? AppButtonVariant.secondary : AppButtonVariant.primary,
+                  onPressed: openDetail,
+                ),
+              ],
             ),
-          ],
-          const SizedBox(height: AppSpacing.md),
-          AppButton(
-            semanticId: 'btn_view_${team.code}',
-            label: 'View Details',
-            variant: AppButtonVariant.secondary,
-            onPressed: openDetail,
           ),
         ],
       ),

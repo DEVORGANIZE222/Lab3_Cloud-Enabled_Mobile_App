@@ -19,7 +19,12 @@ abstract final class AppRadius {
   static const double lg = 16; // dialogs
   static const double full = 999; // pills, avatars
 
+  static const double button = 10; // Figma buttons
+  static const double card = 14; // Figma cards and panels
+
   static const BorderRadius smAll = BorderRadius.all(Radius.circular(sm));
+  static const BorderRadius buttonAll = BorderRadius.all(Radius.circular(button));
+  static const BorderRadius cardAll = BorderRadius.all(Radius.circular(card));
   static const BorderRadius mdAll = BorderRadius.all(Radius.circular(md));
   static const BorderRadius lgAll = BorderRadius.all(Radius.circular(lg));
   static const BorderRadius fullAll = BorderRadius.all(Radius.circular(full));

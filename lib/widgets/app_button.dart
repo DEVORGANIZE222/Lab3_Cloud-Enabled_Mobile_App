@@ -36,7 +36,8 @@ class AppButton extends StatelessWidget {
     final callback = loading ? null : onPressed;
     final fg = switch (variant) {
       AppButtonVariant.primary || AppButtonVariant.destructive => colors.onPrimary,
-      _ => colors.primary,
+      AppButtonVariant.secondary => colors.secondary,
+      AppButtonVariant.text => colors.primary,
     };
 
     final Widget content = Row(

@@ -87,19 +87,56 @@ class _Body extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Figma SCR_05 hub header: overline, name + code, join progress.
               Row(
                 children: [
-                  StatusBadge(label: team.code, tone: Tone.primary),
-                  const SizedBox(width: AppSpacing.sm),
-                  Flexible(
-                    child: StatusBadge(label: p.label, tone: p.tone, icon: p.icon),
+                  Icon(Icons.circle, size: 8, color: context.colors.primary),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      'ACTIVE TEAM HUB',
+                      style: context.text.labelSmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                  ),
+                  Flexible(child: StatusBadge(label: p.label, tone: p.tone, icon: p.icon)),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Semantics(header: true, child: Text(team.name, style: context.text.headlineMedium)),
+              const SizedBox(height: AppSpacing.xs),
+              StatusBadge(label: team.code, icon: Icons.tag),
+              const SizedBox(height: AppSpacing.sm),
+              Text(team.topic, style: context.text.bodyMedium),
+              const SizedBox(height: AppSpacing.lg),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${team.memberCount} of ${team.capacity} members joined',
+                      style: context.text.labelLarge,
+                    ),
+                  ),
+                  Text(
+                    '${(team.memberCount * 100 / team.capacity).round()}%',
+                    style: context.text.labelLarge?.copyWith(color: context.colors.primary),
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
-              Semantics(header: true, child: Text(team.name, style: context.text.titleLarge)),
               const SizedBox(height: AppSpacing.xs),
-              Text(team.topic, style: context.text.bodyMedium),
+              Semantics(
+                label: '${team.memberCount} of ${team.capacity} members joined',
+                excludeSemantics: true,
+                child: ClipRRect(
+                  borderRadius: AppRadius.fullAll,
+                  child: LinearProgressIndicator(
+                    value: team.memberCount / team.capacity,
+                    minHeight: AppSize.progress,
+                  ),
+                ),
+              ),
               const SizedBox(height: AppSpacing.lg),
               _Steps(phase: phase),
             ],

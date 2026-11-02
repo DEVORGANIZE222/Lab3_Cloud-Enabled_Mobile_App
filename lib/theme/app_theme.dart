@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_tokens.dart';
 
-/// Lab 2 type scale (`DESIGN.md` §2). Roboto is the platform font on Android,
-/// which the brief allows ("Inter or Roboto"), so no font asset is bundled.
+/// Lab 2 type scale (`DESIGN.md` §2), tightened to the sizes measured on the
+/// Figma *03 Final UI* frames. Roboto is the platform font on Android, which
+/// the brief allows ("Inter or Roboto"), so no font asset is bundled.
 TextTheme _textTheme(ColorScheme c) {
   TextStyle s(double size, double height, FontWeight weight, [Color? color]) => TextStyle(
     fontSize: size,
@@ -14,14 +15,16 @@ TextTheme _textTheme(ColorScheme c) {
     letterSpacing: 0,
   );
   return TextTheme(
-    headlineMedium: s(28, 34, FontWeight.w700), // type-display
-    titleLarge: s(22, 28, FontWeight.w600), // type-headline (screen / app bar title)
-    titleMedium: s(18, 24, FontWeight.w600), // type-title (card heading)
-    titleSmall: s(16, 22, FontWeight.w600), // card name
-    bodyLarge: s(16, 24, FontWeight.w400),
+    headlineLarge: s(26, 32, FontWeight.w700), // hero numbers (deadline countdown)
+    headlineMedium: s(24, 30, FontWeight.w700), // type-display (greeting, brand)
+    titleLarge: s(20, 26, FontWeight.w700), // type-headline (screen / app bar title)
+    titleMedium: s(17, 24, FontWeight.w700), // type-title (card heading, section)
+    titleSmall: s(15, 22, FontWeight.w600), // card name
+    bodyLarge: s(15, 22, FontWeight.w400),
     bodyMedium: s(14, 20, FontWeight.w400), // type-body
-    labelLarge: s(14, 20, FontWeight.w500), // type-label (buttons, chips)
-    labelMedium: s(14, 20, FontWeight.w500, c.onSurfaceVariant),
+    labelLarge: s(14, 20, FontWeight.w600), // type-label (buttons, chips)
+    labelMedium: s(13, 18, FontWeight.w500, c.onSurfaceVariant),
+    labelSmall: s(12, 16, FontWeight.w600), // badges, overlines
     bodySmall: s(12, 16, FontWeight.w400, c.onSurfaceVariant), // type-caption (timestamps only)
   );
 }
@@ -29,7 +32,7 @@ TextTheme _textTheme(ColorScheme c) {
 ThemeData buildAppTheme() {
   final c = appColorScheme;
   final t = _textTheme(c);
-  const buttonShape = RoundedRectangleBorder(borderRadius: AppRadius.smAll);
+  const buttonShape = RoundedRectangleBorder(borderRadius: AppRadius.buttonAll);
   const minButton = Size(AppSize.touchTarget, AppSize.button);
 
   return ThemeData(
@@ -37,6 +40,7 @@ ThemeData buildAppTheme() {
     colorScheme: c,
     textTheme: t,
     scaffoldBackgroundColor: c.surface,
+    shadowColor: const Color(0x14101828),
     extensions: const [AppColors.light],
     visualDensity: VisualDensity.standard,
     materialTapTargetSize: MaterialTapTargetSize.padded,
@@ -65,8 +69,11 @@ ThemeData buildAppTheme() {
         minimumSize: minButton,
         shape: buttonShape,
         textStyle: t.labelLarge,
-        foregroundColor: c.primary,
-        side: BorderSide(color: c.outline),
+        backgroundColor: AppPalette.tag,
+        foregroundColor: AppPalette.accent,
+        side: BorderSide.none,
+        disabledBackgroundColor: AppPalette.disabled,
+        disabledForegroundColor: AppPalette.onDisabled,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
       ),
     ),
@@ -119,21 +126,25 @@ ThemeData buildAppTheme() {
       surfaceTintColor: Colors.transparent,
       elevation: AppElevation.none,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.mdAll,
-        side: BorderSide(color: c.outlineVariant),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: AppRadius.cardAll),
     ),
     navigationBarTheme: NavigationBarThemeData(
       height: AppSize.navBar,
       backgroundColor: c.surfaceContainerLowest,
       surfaceTintColor: Colors.transparent,
-      indicatorColor: c.primaryContainer,
+      // Figma: no indicator pill; the selected tab is green, bold and uses the
+      // filled icon, so selection is not shown by colour alone.
+      indicatorColor: Colors.transparent,
+      shadowColor: const Color(0x1F101828),
+      elevation: AppElevation.bar,
       labelTextStyle: WidgetStateProperty.resolveWith(
-        (s) => t.labelLarge?.copyWith(color: s.contains(WidgetState.selected) ? c.onSurface : c.onSurfaceVariant),
+        (s) => t.labelSmall?.copyWith(
+          color: s.contains(WidgetState.selected) ? c.primary : c.onSurfaceVariant,
+          fontWeight: s.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
+        ),
       ),
       iconTheme: WidgetStateProperty.resolveWith(
-        (s) => IconThemeData(color: s.contains(WidgetState.selected) ? c.onPrimaryContainer : c.onSurfaceVariant),
+        (s) => IconThemeData(color: s.contains(WidgetState.selected) ? c.primary : c.onSurfaceVariant),
       ),
     ),
     dialogTheme: DialogThemeData(
@@ -146,7 +157,7 @@ ThemeData buildAppTheme() {
     ),
     chipTheme: ChipThemeData(
       shape: const StadiumBorder(),
-      side: BorderSide(color: c.outline),
+      side: BorderSide(color: c.outlineVariant),
       selectedColor: c.primaryContainer,
       backgroundColor: c.surfaceContainerLowest,
       labelStyle: t.labelLarge,
