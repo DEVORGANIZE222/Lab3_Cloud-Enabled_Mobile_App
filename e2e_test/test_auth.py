@@ -13,7 +13,8 @@ async def test_tc01_account_not_on_roster_is_rejected(device, backend, me, artem
 
         run = await artemis(
             f"Tap 'Continue with Google' and choose the account {ACCOUNT} in the Google account chooser. "
-            "Then read the message the app shows.",
+            "Then read the title of the error message that appeared after you chose the account "
+            "(not the permanent hint card below the button).",
             'Return JSON: {"signed_in": bool, "error_title": string, "error_mentions_email": bool}',
         )
     finally:
