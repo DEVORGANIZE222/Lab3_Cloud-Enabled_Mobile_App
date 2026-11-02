@@ -91,6 +91,7 @@ jobs:
           settings: |-
             {
               "model": {
+                "name": "gemini-3.5-flash-lite",
                 "maxSessionTurns": 25
               },
               "mcpServers": {
