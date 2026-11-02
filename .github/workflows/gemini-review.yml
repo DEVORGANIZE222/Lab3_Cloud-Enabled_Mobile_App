@@ -6,7 +6,6 @@
 # comment trigger works once this file is on main.
 #
 # Needs the repository secret GEMINI_API_KEY (free key from Google AI Studio).
-# Optional repository variable GEMINI_MODEL picks the model.
 name: '🔎 Gemini Review'
 
 on:
@@ -83,7 +82,9 @@ jobs:
           GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'
         with:
           gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
-          gemini_model: '${{ vars.GEMINI_MODEL }}'
+          # Free tier: gemini-3.8-flash allows 20 requests/day, fewer than one
+          # 25-turn review needs, and gemini-2.5-flash is closed to new keys.
+          gemini_model: 'gemini-3.5-flash-lite'
           workflow_name: 'gemini-review'
           # issue_comment events carry the PR as an issue, so pass the number explicitly.
           github_pr_number: '${{ github.event.pull_request.number || github.event.issue.number }}'
