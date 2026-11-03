@@ -12,6 +12,7 @@ class TeamMember {
     required this.fullName,
     required this.studentCode,
     required this.role,
+    this.avatarUrl,
     this.skills = const [],
   });
 
@@ -19,6 +20,7 @@ class TeamMember {
   final String fullName;
   final String studentCode;
   final String role;
+  final String? avatarUrl;
   final List<String> skills;
 
   String get initials {
@@ -27,13 +29,14 @@ class TeamMember {
   }
 
   factory TeamMember.fromStudent(Student s, String role) =>
-      TeamMember(studentId: s.id, fullName: s.fullName, studentCode: s.studentCode, role: role, skills: s.skills);
+      TeamMember(studentId: s.id, fullName: s.fullName, studentCode: s.studentCode, role: role, avatarUrl: s.avatarUrl, skills: s.skills);
 
   factory TeamMember.fromJson(Map<String, dynamic> j) => TeamMember(
     studentId: j['studentId'] as String,
     fullName: j['fullName'] as String,
     studentCode: j['studentCode'] as String,
     role: j['role'] as String,
+    avatarUrl: j['avatarUrl'] as String?,
     skills: List<String>.from(j['skills'] as List? ?? const []),
   );
 }

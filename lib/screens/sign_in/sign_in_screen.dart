@@ -11,12 +11,6 @@ import '../../widgets/status.dart';
 class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
 
-  static const _steps = [
-    (Icons.groups, Tone.warning, 'Form a 4–5 member team', 'Find teammates by role and skill before the deadline.'),
-    (Icons.how_to_vote, Tone.info, 'Elect a team leader', 'Your team votes for one leader who submits the roster.'),
-    (Icons.verified_user, Tone.success, 'Lock your roster', 'The leader sends the final team to the Academic Office.'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<SignInViewModel>();
@@ -27,24 +21,24 @@ class SignInScreen extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: AppSize.maxContentWidth),
             child: ListView(
-              padding: const EdgeInsets.all(AppSpacing.xl),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
               children: [
                 const Center(
                   child: StatusBadge(
-                    label: 'FPT University · Software Engineering',
+                    label: 'FPT University · Experiential Entrepreneurship 2026',
                     tone: Tone.warning,
                     icon: Icons.school,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.lg),
                 Center(
                   child: Semantics(
                     label: 'EXEMatching logo',
                     image: true,
                     child: Container(
-                      width: AppSize.logo,
-                      height: AppSize.logo,
-                      padding: const EdgeInsets.all(AppSpacing.md),
+                      width: 72,
+                      height: 72,
+                      padding: const EdgeInsets.all(AppSpacing.sm),
                       decoration: BoxDecoration(
                         color: context.colors.surfaceContainerLowest,
                         borderRadius: AppRadius.cardAll,
@@ -54,47 +48,46 @@ class SignInScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.md),
                 Semantics(
                   header: true,
                   child: Text('EXEMatching', textAlign: TextAlign.center, style: context.text.headlineMedium),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Spring 2026 Capstone team registration',
+                  'Experiential Entrepreneurship · Team Matching',
                   textAlign: TextAlign.center,
-                  style: context.text.bodyLarge?.copyWith(color: context.colors.onSurfaceVariant),
+                  style: context.text.bodyMedium?.copyWith(color: context.colors.onSurfaceVariant),
                 ),
-                const SizedBox(height: AppSpacing.xl),
-                for (final (i, s) in _steps.indexed) ...[
-                  AppCard(
-                    color: context.colors.surfaceContainerHigh,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        IconTile(icon: s.$1, tone: s.$2),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(child: Text(s.$3, style: context.text.titleSmall)),
-                                  StatusBadge(label: 'Step 0${i + 1}'),
-                                ],
-                              ),
-                              const SizedBox(height: AppSpacing.xs),
-                              Text(s.$4, style: context.text.bodyMedium),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                ],
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.lg),
+                // 3-step timeline cards with distinct high-contrast backgrounds
+                const _StepCard(
+                  step: '1',
+                  icon: Icons.groups,
+                  title: 'Form a 4–5 member team',
+                  tone: Tone.warning,
+                  bgColor: Color(0xFFFFF7ED),
+                  borderColor: Color(0xFFFED7AA),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const _StepCard(
+                  step: '2',
+                  icon: Icons.how_to_vote,
+                  title: 'Elect a team leader',
+                  tone: Tone.info,
+                  bgColor: Color(0xFFEFF6FF),
+                  borderColor: Color(0xFFBFDBFE),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const _StepCard(
+                  step: '3',
+                  icon: Icons.verified_user,
+                  title: 'Lock final roster',
+                  tone: Tone.success,
+                  bgColor: Color(0xFFF0FDF4),
+                  borderColor: Color(0xFFBBF7D0),
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 if (vm.message != null) ...[
                   InfoBanner(
                     semanticId: 'sign_in_message',
@@ -102,36 +95,72 @@ class SignInScreen extends StatelessWidget {
                     title: vm.message!.title,
                     message: vm.message!.cause,
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.md),
                 ],
                 _GoogleButton(busy: busy, onPressed: vm.signIn),
-                const SizedBox(height: AppSpacing.lg),
-                InfoBanner(
-                  tone: Tone.neutral,
-                  icon: Icons.lock,
-                  iconColor: context.colors.secondary,
-                  title: 'Only class-roster accounts can sign in',
-                  message: 'Use the Google email registered by the Academic Office for this class.',
-                ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.md),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.help_outline, size: AppSize.iconSmall, color: context.colors.onSurfaceVariant),
-                    const SizedBox(width: AppSpacing.xs),
-                    Text('Need help with enrollment?', style: context.text.bodyMedium),
+                    Icon(Icons.lock_outline, size: 14, color: context.colors.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Restricted to enrolled roster accounts',
+                      style: context.text.bodySmall?.copyWith(color: context.colors.onSurfaceVariant),
+                    ),
                   ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Contact the Academic Office · academic@fpt.edu.vn',
-                  textAlign: TextAlign.center,
-                  style: context.text.labelMedium?.copyWith(color: context.colors.secondary),
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _StepCard extends StatelessWidget {
+  const _StepCard({
+    required this.step,
+    required this.icon,
+    required this.title,
+    required this.tone,
+    required this.bgColor,
+    required this.borderColor,
+  });
+
+  final String step;
+  final IconData icon;
+  final String title;
+  final Tone tone;
+  final Color bgColor;
+  final Color borderColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: AppRadius.cardAll,
+        border: Border.all(color: borderColor, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          IconTile(icon: icon, tone: tone),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(title, style: context.text.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+          ),
+          StatusBadge(label: 'Step 0$step', tone: tone),
+        ],
       ),
     );
   }

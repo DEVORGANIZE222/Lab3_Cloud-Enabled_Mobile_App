@@ -74,3 +74,4 @@ e2e_test/.venv/
 **/__pycache__/
 **/.pytest_cache/
 .env
+.cache/

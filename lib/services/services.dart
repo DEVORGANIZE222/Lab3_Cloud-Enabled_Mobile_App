@@ -86,6 +86,18 @@ abstract interface class TeamRepository {
 
   /// Invites matching students from the Waiting Pool. Returns how many were invited.
   Future<int> inviteFromPool(String teamId);
+
+  /// Creates a new team with the student as founder and first member.
+  Future<Team> createTeam({
+    required Student student,
+    required String name,
+    required String topic,
+    required String category,
+    String? description,
+    List<String> tags = const [],
+    List<String> openRoles = const [],
+    int capacity = 5,
+  });
 }
 
 abstract interface class NotificationRepository {
@@ -150,6 +162,7 @@ abstract interface class AnalyticsService {
   Future<void> logLogout();
   Future<void> logSearch({required String term, required int resultCount, required List<String> filters});
   Future<void> logViewTeam({required String teamId, required String teamCode});
+  Future<void> logCreateTeam({required String teamId, required String teamCode});
   Future<void> logJoinTeam({required String teamId, required int memberCount});
   Future<void> logVote({required String teamId, required bool changed});
   Future<void> logInviteFromPool({required String teamId, required int invited});

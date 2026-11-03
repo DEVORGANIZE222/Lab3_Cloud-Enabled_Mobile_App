@@ -214,4 +214,48 @@ class LocalTeamRepository implements TeamRepository {
     }
     return invited;
   }
+
+  @override
+  Future<Team> createTeam({
+    required Student student,
+    required String name,
+    required String topic,
+    required String category,
+    String? description,
+    List<String> tags = const [],
+    List<String> openRoles = const [],
+    int capacity = 5,
+  }) async {
+    await _db.roundTrip();
+    final existing = _db.teams.values.where((t) => t.isMember(student.id)).firstOrNull;
+    if (existing != null) throw AlreadyInTeamException(existing.code);
+
+    final id = 'team_${DateTime.now().millisecondsSinceEpoch}';
+    final codePrefix = switch (category.toLowerCase()) {
+      'ai/ml' || 'ai' => 'AI',
+      'mobile' => 'MOB',
+      'web/cloud' || 'web' => 'WEB',
+      'iot' => 'IOT',
+      _ => 'EXE',
+    };
+    final code = '$codePrefix-${Random().nextInt(900) + 100}';
+    final creator = TeamMember.fromStudent(student, 'Team Lead');
+    final team = Team(
+      id: id,
+      code: code,
+      name: name.trim(),
+      topic: topic.trim(),
+      description: (description != null && description.isNotEmpty ? description : topic).trim(),
+      category: category,
+      tags: tags,
+      members: [creator],
+      openRoles: openRoles.isEmpty ? const ['Developer', 'Designer'] : openRoles,
+      supervisor: 'Assigned by Academic Office',
+      capacity: capacity.clamp(TeamRules.minMembers, TeamRules.maxMembers),
+      leaderId: student.id,
+      votes: {student.id: student.id},
+    );
+    _db.putTeam(team);
+    return team;
+  }
 }

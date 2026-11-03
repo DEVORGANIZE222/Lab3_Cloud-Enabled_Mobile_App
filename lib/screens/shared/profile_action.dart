@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../viewmodels/notifications_viewmodel.dart';
 import '../../viewmodels/session_viewmodel.dart';
 import '../../widgets/status.dart';
 
@@ -12,13 +13,42 @@ class ProfileAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final student = context.watch<SessionViewModel>().student;
-    return Semantics(
-      identifier: 'btn_open_profile',
-      child: IconButton(
-        tooltip: 'Profile',
-        onPressed: () => context.push('/profile'),
-        icon: MemberAvatar(initials: student?.initials ?? '?', size: 36),
-      ),
+    int unread = 0;
+    try {
+      unread = context.watch<NotificationsViewModel>().unread;
+    } catch (_) {}
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          identifier: 'btn_open_alerts',
+          button: true,
+          label: 'Alerts',
+          child: IconButton(
+            tooltip: 'Alerts',
+            onPressed: () => context.push('/alerts'),
+            icon: Badge(
+              isLabelVisible: unread > 0,
+              label: Text('$unread'),
+              child: const Icon(Icons.notifications_outlined, size: 22),
+            ),
+          ),
+        ),
+        Semantics(
+          identifier: 'btn_open_profile',
+          child: IconButton(
+            tooltip: 'Profile',
+            onPressed: () => context.go('/profile'),
+            icon: MemberAvatar(
+              initials: student?.initials ?? '?',
+              avatarUrl: student?.avatarUrl,
+              size: 34,
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+      ],
     );
   }
 }

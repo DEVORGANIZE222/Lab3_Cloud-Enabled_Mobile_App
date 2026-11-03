@@ -72,7 +72,65 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.md),
+            // Quick action banner to create team without having to scroll down
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: AppRadius.cardAll,
+                border: Border.all(color: const Color(0xFF86EFAC), width: 1.2),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFDCFCE7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.rocket_launch, color: Color(0xFF16A34A), size: 18),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Want to lead a startup?',
+                          style: context.text.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF14532D),
+                            fontSize: 13,
+                          ),
+                        ),
+                        Text(
+                          'Pitch your idea and recruit your dream team.',
+                          style: context.text.bodySmall?.copyWith(
+                            color: const Color(0xFF166534),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  FilledButton.icon(
+                    onPressed: () => context.push('/create-team'),
+                    icon: const Icon(Icons.group_add, size: 18),
+                    label: const Text('Create'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: context.colors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      textStyle: context.text.labelSmall?.copyWith(fontWeight: FontWeight.bold),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
             if (state is Data<List<Team>>) ...[
               Semantics(
                 identifier: 'browse_result_count',
@@ -109,13 +167,57 @@ class _BrowseScreenState extends State<BrowseScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            const InfoBanner(
-              tone: Tone.neutral,
-              icon: Icons.lightbulb_outline,
-              title: "Can't find a good fit?",
-              message:
-                  'Students without a team at the deadline go to the Random Pool, '
-                  'which matches them by role and skills.',
+            AppCard(
+              color: const Color(0xFFFFFBEB),
+              borderColor: const Color(0xFFFDE68A),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFEF3C7),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.groups, color: Color(0xFFD97706), size: 24),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Can't find the right fit?",
+                              style: context.text.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF92400E),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Create your own startup team or join the Random Pool before the deadline.',
+                              style: context.text.bodySmall?.copyWith(
+                                color: const Color(0xFFB45309),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppButton(
+                    semanticId: 'btn_create_team_browse',
+                    label: 'Create a Team',
+                    icon: Icons.group_add,
+                    backgroundColor: context.colors.primary,
+                    foregroundColor: Colors.white,
+                    onPressed: () => context.push('/create-team'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -155,17 +257,23 @@ class _TeamCard extends StatelessWidget {
                     Expanded(child: Text(team.name, style: context.text.titleLarge)),
                     const SizedBox(width: AppSpacing.sm),
                     StatusBadge(
-                      label: open == 0
-                          ? 'Full'
-                          : '${team.memberCount}/${team.capacity} · $open open',
+                      label: open == 0 ? 'Full' : '${team.memberCount}/${team.capacity} · $open open',
                       tone: open == 0 ? Tone.neutral : Tone.primary,
-                      icon: open == 0 ? Icons.block : Icons.person_add_alt_1,
+                      icon: open == 0 ? Icons.block : Icons.group_add,
                     ),
                   ],
                 ),
                 if (team.category.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xs),
-                  StatusBadge(label: team.category, tone: Tone.warning, icon: Icons.school),
+                  Row(
+                    children: [
+                      StatusBadge(label: team.category, tone: Tone.warning, icon: Icons.school),
+                      const SizedBox(width: AppSpacing.xs),
+                      Expanded(
+                        child: Text('', style: context.text.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
+                    ],
+                  ),
                 ],
                 const SizedBox(height: AppSpacing.sm),
                 Text(team.topic, style: context.text.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -181,28 +289,61 @@ class _TeamCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(color: context.colors.surfaceContainerHigh, borderRadius: AppRadius.smAll),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: SlotRow(
-                          memberInitials: [for (final m in team.members) m.initials],
-                          capacity: team.capacity,
-                        ),
-                      ),
-                      if (team.openRoles.isNotEmpty)
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text('Looking for:', style: context.text.bodySmall),
-                              Text(
-                                team.openRoles.join(', '),
-                                textAlign: TextAlign.end,
-                                style: context.text.labelLarge?.copyWith(color: context.colors.primary),
-                              ),
-                            ],
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                for (var i = 0; i < team.members.length; i++) ...[
+                                  MemberAvatar(
+                                    initials: team.members[i].initials,
+                                    avatarUrl: team.members[i].avatarUrl,
+                                    size: AppSize.avatarSmall,
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                ],
+                                for (var k = 0; k < open; k++) ...[
+                                  const MemberAvatar(size: AppSize.avatarSmall),
+                                  if (k < open - 1) const SizedBox(width: AppSpacing.xs),
+                                ],
+                              ],
+                            ),
                           ),
+                          Text(
+                            open == 0 ? 'Full' : '$open open',
+                            style: context.text.bodySmall?.copyWith(
+                              color: open == 0 ? context.colors.outline : context.colors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (team.openRoles.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        const Divider(height: 1, thickness: 0.5),
+                        const SizedBox(height: AppSpacing.sm),
+                        Row(
+                          children: [
+                            Icon(Icons.person_search, size: 16, color: context.colors.secondary),
+                            const SizedBox(width: 6),
+                            Text('Looking for: ', style: context.text.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+                            Expanded(
+                              child: Text(
+                                team.openRoles.join(' · '),
+                                style: context.text.bodySmall?.copyWith(
+                                  color: context.colors.secondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
+                      ],
                     ],
                   ),
                 ),
