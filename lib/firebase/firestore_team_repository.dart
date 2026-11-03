@@ -83,7 +83,19 @@ class FirestoreTeamRepository implements TeamRepository {
 
   @override
   Future<List<Team>> searchTeams({String query = '', Set<TeamFilter> filters = const {}, int limit = 20}) async {
-    final snap = await _teams.where('locked', isEqualTo: false).limit(100).get();
+    // Server only: offline, the default source answers from an empty cache,
+    // which Browse showed as "Every team is full right now" (TC-05). Failing
+    // with `unavailable` shows the designed "Can't connect right now" state.
+    final QuerySnapshot<Map<String, dynamic>> snap;
+    try {
+      snap = await _teams.where('locked', isEqualTo: false).limit(100).get(const GetOptions(source: Source.server));
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'unavailable' => AppFailure.offline,
+        'permission-denied' => AppFailure.permissionDenied,
+        _ => e,
+      };
+    }
     final q = query.trim().toLowerCase();
     String? category(TeamFilter f) => switch (f) {
       TeamFilter.aiMl => 'AI/ML',
