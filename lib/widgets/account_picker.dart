@@ -13,6 +13,7 @@ Future<String?> showAccountPicker(BuildContext context, List<({String email, Str
     builder: (context) => SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+<<<<<<< HEAD
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -61,6 +62,33 @@ Future<String?> showAccountPicker(BuildContext context, List<({String email, Str
                       ),
                     );
                   },
+=======
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Image.asset('assets/brand/logo.png', width: 48, height: 48),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Semantics(header: true, child: Text('Choose an account', style: context.text.titleLarge)),
+            const SizedBox(height: AppSpacing.xs),
+            Text('to continue to EXEMatching', style: context.text.bodyMedium),
+            const SizedBox(height: AppSpacing.md),
+            for (final a in accounts)
+              Semantics(
+                identifier: 'account_${a.email}',
+                button: true,
+                label: '${a.name}, ${a.email}',
+                excludeSemantics: true,
+                child: ListTile(
+                  minTileHeight: 64,
+                  contentPadding: EdgeInsets.zero,
+                  leading: MemberAvatar(initials: a.name.substring(0, 1)),
+                  title: Text(a.name),
+                  subtitle: Text(a.email),
+                  onTap: () => Navigator.of(context).pop(a.email),
+>>>>>>> main
                 ),
                 const Divider(height: 1),
               ],

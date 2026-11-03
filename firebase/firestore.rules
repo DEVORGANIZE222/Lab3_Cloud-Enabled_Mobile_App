@@ -28,7 +28,11 @@ service cloud.firestore {
       // update a team document. Each mutation type (join, leave, vote, lock, pool invite)
       // is validated individually against before/after state.
       allow update: if isRosterMember() && isValidTeamUpdate();
-      allow create, delete: if false;
+      allow create: if isRosterMember()
+          && request.resource.data.memberIds.size() == 1
+          && request.resource.data.memberIds[0] == request.auth.uid
+          && request.resource.data.locked == false;
+      allow delete: if false;
 
       function isValidTeamUpdate() {
         let uid = request.auth.uid;

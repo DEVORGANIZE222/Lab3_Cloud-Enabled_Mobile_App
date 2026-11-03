@@ -271,7 +271,7 @@ class _Body extends StatelessWidget {
             onTap: team.locked ? null : () => vm.select(m.studentId),
             child: Row(
               children: [
-                MemberAvatar(initials: m.initials),
+                MemberAvatar(initials: m.initials, avatarUrl: m.avatarUrl),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(

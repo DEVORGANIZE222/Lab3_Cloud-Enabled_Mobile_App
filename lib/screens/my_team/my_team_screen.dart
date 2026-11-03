@@ -262,7 +262,8 @@ class _Body extends StatelessWidget {
           AppButton(
             semanticId: 'btn_leave_team',
             label: 'Leave Team',
-            variant: AppButtonVariant.text,
+            icon: Icons.logout,
+            variant: AppButtonVariant.destructive,
             onPressed: onLeave,
           ),
         ],

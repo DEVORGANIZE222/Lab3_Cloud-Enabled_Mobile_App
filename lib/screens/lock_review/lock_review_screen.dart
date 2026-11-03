@@ -111,7 +111,7 @@ class _Review extends StatelessWidget {
         // Figma SCR_07 header.
         const Align(
           alignment: Alignment.centerLeft,
-          child: StatusBadge(label: 'Capstone Spring 2026', icon: Icons.school_outlined),
+          child: StatusBadge(label: 'Experiential Entrepreneurship Spring 2026', icon: Icons.school_outlined),
         ),
         const SizedBox(height: AppSpacing.sm),
         Semantics(header: true, child: Text('Review & lock team', style: context.text.headlineMedium)),
@@ -125,7 +125,7 @@ class _Review extends StatelessWidget {
           InfoBanner(
             semanticId: 'banner_pool_joined',
             tone: Tone.success,
-            icon: Icons.person_add_alt_1,
+            icon: Icons.group_add,
             title: '${vm.lastJoinedName} joined from the Waiting Pool',
             message: '${team.name} now has ${team.memberCount} of ${team.capacity} members.',
           ),
@@ -137,7 +137,7 @@ class _Review extends StatelessWidget {
             tone: Tone.error,
             title: "Can't lock yet: needs ${Fmt.count(TeamRules.minMembers - team.memberCount, 'more member')}",
             message:
-                'Your team has ${team.memberCount} of ${team.capacity} members and FPT Capstone rules need at least '
+                'Your team has ${team.memberCount} of ${team.capacity} members and FPT rules need at least '
                 '${TeamRules.minMembers}. Invite students from the Waiting Pool or share your team link.',
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -181,7 +181,7 @@ class _Review extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const IconTile(icon: Icons.person_add_alt_1, tone: Tone.warning, size: 36),
+                    const IconTile(icon: Icons.group_add, tone: Tone.warning, size: 36),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(child: Text('Invite from the Waiting Pool', style: context.text.titleSmall)),
                     if (team.invitesSent > 0)

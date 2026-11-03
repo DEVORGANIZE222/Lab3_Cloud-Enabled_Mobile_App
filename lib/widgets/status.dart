@@ -146,17 +146,25 @@ class IconTile extends StatelessWidget {
   }
 }
 
-/// Circle avatar with initials (or a grey "open slot").
+/// Circle avatar with initials, network image (or a grey "open slot").
 class MemberAvatar extends StatelessWidget {
-  const MemberAvatar({super.key, this.initials, this.size = AppSize.avatar});
+  const MemberAvatar({
+    super.key,
+    this.initials,
+    this.avatarUrl,
+    this.size = AppSize.avatar,
+    this.verified = false,
+  });
 
   final String? initials;
+  final String? avatarUrl;
   final double size;
+  final bool verified;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    if (initials == null) {
+    if (initials == null && (avatarUrl == null || avatarUrl!.isEmpty)) {
       return Semantics(
         label: 'Open slot',
         child: Container(
@@ -167,7 +175,51 @@ class MemberAvatar extends StatelessWidget {
         ),
       );
     }
-    // The outline keeps the avatar visible on tinted (selected) cards.
+
+    Widget content;
+    if (avatarUrl != null && avatarUrl!.isNotEmpty) {
+      content = ClipOval(
+        child: Image.network(
+          avatarUrl!,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => _buildInitials(context),
+        ),
+      );
+    } else {
+      content = _buildInitials(context);
+    }
+
+    if (!verified) {
+      return content;
+    }
+
+    final badgeSize = (size * 0.32).clamp(10.0, 16.0);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        content,
+        Positioned(
+          right: -1,
+          bottom: -1,
+          child: Container(
+            width: badgeSize,
+            height: badgeSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: c.primary,
+              border: Border.all(color: context.colors.surface, width: 1.5),
+            ),
+            child: Icon(Icons.check, size: badgeSize * 0.7, color: c.onPrimary),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInitials(BuildContext context) {
+    final c = context.colors;
     return Container(
       width: size,
       height: size,
@@ -177,16 +229,29 @@ class MemberAvatar extends StatelessWidget {
         color: c.primaryContainer,
         border: Border.all(color: c.primary.withValues(alpha: 0.4)),
       ),
-      child: Text(initials!, style: context.text.labelLarge?.copyWith(color: c.onPrimaryContainer)),
+      child: Text(
+        initials ?? '?',
+        style: context.text.labelLarge?.copyWith(
+          color: c.onPrimaryContainer,
+          fontSize: (size * 0.36).clamp(10.0, 20.0),
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }
 
 /// Lab 2 decision D1: capacity as visual slots (filled avatars + open slots).
 class SlotRow extends StatelessWidget {
-  const SlotRow({super.key, required this.memberInitials, required this.capacity});
+  const SlotRow({
+    super.key,
+    required this.memberInitials,
+    this.avatarUrls,
+    required this.capacity,
+  });
 
   final List<String> memberInitials;
+  final List<String?>? avatarUrls;
   final int capacity;
 
   @override
@@ -198,7 +263,12 @@ class SlotRow extends StatelessWidget {
       child: Wrap(
         spacing: AppSpacing.sm,
         children: [
-          for (final i in memberInitials) MemberAvatar(initials: i, size: AppSize.avatarSmall),
+          for (var i = 0; i < memberInitials.length; i++)
+            MemberAvatar(
+              initials: memberInitials[i],
+              avatarUrl: (avatarUrls != null && i < avatarUrls!.length) ? avatarUrls![i] : null,
+              size: AppSize.avatarSmall,
+            ),
           for (var k = 0; k < open; k++) const MemberAvatar(size: AppSize.avatarSmall),
         ],
       ),

@@ -90,7 +90,7 @@ def main() -> None:
     d.wait_for(id="state_locked")
     shot("scr07_locked")
     d.tap(id="btn_back_to_team")
-    d.tap(id="nav_alerts")
+    d.tap(id="btn_open_alerts")
     d.wait_for(id="alert_filters")
     shot("scr09_alerts")
     d.tap(id="btn_open_profile")

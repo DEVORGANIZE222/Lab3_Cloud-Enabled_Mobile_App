@@ -23,7 +23,7 @@ import '../../widgets/status.dart';
 String teamPhaseLabel(Team t) => teamPhase(t).label;
 
 IconData notificationIcon(NotificationKind k) => switch (k) {
-  NotificationKind.invite => Icons.person_add_alt_1,
+  NotificationKind.invite => Icons.group_add,
   NotificationKind.vote => Icons.how_to_vote,
   NotificationKind.system => Icons.campaign,
   NotificationKind.application => Icons.verified,
@@ -93,7 +93,11 @@ class TeamStatusCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          SlotRow(memberInitials: [for (final m in team.members) m.initials], capacity: team.capacity),
+          SlotRow(
+            memberInitials: [for (final m in team.members) m.initials],
+            avatarUrls: [for (final m in team.members) m.avatarUrl],
+            capacity: team.capacity,
+          ),
           if (needs.isNotEmpty && !team.locked) ...[
             const SizedBox(height: AppSpacing.md),
             Container(
@@ -113,10 +117,27 @@ class TeamStatusCard extends StatelessWidget {
           ],
           const SizedBox(height: AppSpacing.md),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _Stat(value: '${team.memberCount}/${team.capacity}', label: 'Team size', ok: team.meetsSizeRule),
+              Row(
+                children: [
+                  Icon(Icons.insights, size: 16, color: context.colors.primary),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text('Formation Health', style: context.text.labelMedium?.copyWith(fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Text(
+                '${((team.memberCount / team.capacity) * 100).round()}% Complete',
+                style: context.text.labelSmall?.copyWith(color: context.colors.primary, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: [
+              _Stat(value: '${team.memberCount}/${team.capacity}', label: 'Team Size', ok: team.meetsSizeRule),
               const SizedBox(width: AppSpacing.sm),
-              _Stat(value: team.hasLeader ? 'Elected' : 'Pending', label: 'Leader', ok: team.hasLeader),
+              _Stat(value: team.hasLeader ? 'Passed' : 'Pending', label: 'Leader Vote', ok: team.hasLeader),
               const SizedBox(width: AppSpacing.sm),
               const _Stat(value: 'Assigned', label: 'Supervisor', ok: true),
             ],
@@ -173,7 +194,11 @@ class MemberTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
       child: Row(
         children: [
-          MemberAvatar(initials: member.initials),
+          MemberAvatar(
+            initials: member.initials,
+            avatarUrl: member.avatarUrl,
+            verified: true,
+          ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -190,6 +215,17 @@ class MemberTile extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Wrap(spacing: AppSpacing.xs, runSpacing: AppSpacing.xs, children: badges),
                 ],
+                if (member.skills.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Wrap(
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
+                    children: [
+                      for (final skill in member.skills.take(3))
+                        StatusBadge(label: skill, tone: Tone.neutral),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -200,7 +236,7 @@ class MemberTile extends StatelessWidget {
   }
 }
 
-/// Dashed card for an open slot ("Looking for: …").
+/// Dashed/tinted card for an open slot ("Looking for: …").
 class OpenSlotTile extends StatelessWidget {
   const OpenSlotTile({super.key, required this.slot, required this.lookingFor});
 
@@ -210,11 +246,21 @@ class OpenSlotTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      color: context.colors.surfaceContainerHigh,
+      color: const Color(0xFFFFF7ED),
+      borderColor: const Color(0xFFFDBA74),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
       child: Row(
         children: [
-          const MemberAvatar(),
+          Container(
+            width: AppSize.avatar,
+            height: AppSize.avatar,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFED7AA),
+              border: Border.all(color: const Color(0xFFF97316), width: 1.5),
+            ),
+            child: const Icon(Icons.add, size: 20, color: Color(0xFFC2410C)),
+          ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -222,7 +268,7 @@ class OpenSlotTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Expanded(child: Text('Open slot $slot', style: context.text.titleSmall)),
+                    Expanded(child: Text('Open slot $slot', style: context.text.titleSmall?.copyWith(fontWeight: FontWeight.bold))),
                     const StatusBadge(label: 'Waiting for applicant', tone: Tone.warning),
                   ],
                 ),
@@ -234,7 +280,10 @@ class OpenSlotTile extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Looking for: $lookingFor',
-                        style: context.text.labelMedium?.copyWith(color: context.colors.secondary),
+                        style: context.text.labelMedium?.copyWith(
+                          color: context.colors.secondary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],

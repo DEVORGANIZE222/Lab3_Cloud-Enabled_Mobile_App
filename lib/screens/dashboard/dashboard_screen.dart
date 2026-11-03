@@ -54,19 +54,11 @@ class _DashboardBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Semantics(header: true, child: Text('Hi, ${data.student.firstName}!', style: context.text.headlineMedium)),
+        Semantics(header: true, child: Text('Hi, ${data.student.firstName}! 👋', style: context.text.headlineMedium)),
         const SizedBox(height: AppSpacing.xs),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                [data.student.studentCode, data.student.major].where((s) => s.isNotEmpty).join(' · '),
-                style: context.text.bodyMedium,
-              ),
-            ),
-            if (data.student.cohort.isNotEmpty)
-              StatusBadge(label: data.student.cohort, tone: Tone.info, icon: Icons.verified_user),
-          ],
+        Text(
+          [data.student.studentCode, data.student.major].where((s) => s.isNotEmpty).join(' · '),
+          style: context.text.bodyMedium,
         ),
         const SizedBox(height: AppSpacing.lg),
         if (data.registrationClosed)
@@ -78,63 +70,111 @@ class _DashboardBody extends StatelessWidget {
                 ? 'You were not in a team at the deadline, so the system placed you in the Random Pool.'
                 : 'Changes to ${team.name} now go through the Academic Office.',
           )
-        else
-          // Figma: peach deadline panel, green countdown, accent title.
-          AppCard(
-            semanticId: 'card_deadline',
-            color: context.appColors.warningContainer,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        else ...[
+          // Figma: peach deadline panel, green/red countdown and progress bar.
+          Builder(
+            builder: (context) {
+              final remainingFraction = (1.0 - data.window.elapsed(data.now)).clamp(0.0, 1.0);
+              final isUrgent = data.urgent || remainingFraction < 0.15;
+              final accentColor = isUrgent ? context.colors.error : context.colors.primary;
+              return AppCard(
+                semanticId: 'card_deadline',
+                color: isUrgent ? const Color(0xFFFEF2F2) : context.appColors.warningContainer,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.schedule, size: 20, color: context.appColors.warning),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        data.urgent ? 'Registration deadline closing soon' : 'Registration deadline',
-                        style: context.text.titleSmall?.copyWith(color: context.appColors.warning),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.schedule,
+                          size: 20,
+                          color: isUrgent ? context.colors.error : context.appColors.warning,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            isUrgent ? 'Registration deadline closing soon!' : 'Registration deadline',
+                            style: context.text.titleSmall?.copyWith(
+                              color: isUrgent ? context.colors.error : context.appColors.warning,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (isUrgent) const StatusBadge(label: 'Urgent', tone: Tone.error),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      Fmt.countdown(data.timeLeft),
+                      style: context.text.headlineLarge?.copyWith(color: accentColor, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text('System locks on ${Fmt.dateTime(data.window.closesAt)}', style: context.text.bodyMedium),
+                    const SizedBox(height: AppSpacing.lg),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${data.window.semester} Timeline',
+                          style: context.text.labelMedium?.copyWith(
+                            color: context.colors.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isUrgent ? const Color(0xFFFEE2E2) : const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isUrgent ? const Color(0xFFFCA5A5) : const Color(0xFF86EFAC),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isUrgent ? Icons.warning_amber_rounded : Icons.hourglass_bottom,
+                                size: 12,
+                                color: isUrgent ? const Color(0xFFDC2626) : const Color(0xFF15803D),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${(remainingFraction * 100).round()}% time left',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: isUrgent ? const Color(0xFFDC2626) : const Color(0xFF15803D),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Semantics(
+                      label: 'Registration period',
+                      value: '${(remainingFraction * 100).round()} percent remaining',
+                      excludeSemantics: true,
+                      child: ClipRRect(
+                        borderRadius: AppRadius.fullAll,
+                        child: LinearProgressIndicator(
+                          value: remainingFraction,
+                          minHeight: AppSize.progress,
+                          color: accentColor,
+                          backgroundColor: isUrgent ? const Color(0xFFFEE2E2) : context.colors.surfaceContainerLowest,
+                        ),
                       ),
                     ),
-                    if (data.urgent) const StatusBadge(label: 'Urgent', tone: Tone.primary),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  Fmt.countdown(data.timeLeft),
-                  style: context.text.headlineLarge?.copyWith(color: context.colors.primary),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text('System locks on ${Fmt.dateTime(data.window.closesAt)}', style: context.text.bodyMedium),
-                const SizedBox(height: AppSpacing.lg),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text('${data.window.semester} registration period', style: context.text.labelMedium),
-                    ),
-                    Text(
-                      '${Fmt.percent(data.window.elapsed(data.now))} elapsed',
-                      style: context.text.labelMedium?.copyWith(color: context.appColors.warning),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Semantics(
-                  label: 'Registration period',
-                  value: '${(data.window.elapsed(data.now) * 100).round()} percent elapsed',
-                  excludeSemantics: true,
-                  child: ClipRRect(
-                    borderRadius: AppRadius.fullAll,
-                    child: LinearProgressIndicator(
-                      value: data.window.elapsed(data.now).clamp(0, 1),
-                      minHeight: AppSize.progress,
-                      backgroundColor: context.colors.surfaceContainerLowest,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
+        ],
         if (data.registrationClosed && data.showPoolEntry && team == null) ...[
           const SizedBox(height: AppSpacing.lg),
           AppButton(
@@ -145,18 +185,33 @@ class _DashboardBody extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.xl),
-        const SectionHeader(title: 'My team'),
-        const SizedBox(height: AppSpacing.md),
-        if (team == null) _NoTeamCard(closed: data.registrationClosed) else TeamStatusCard(team: team),
+        if (team == null) ...[
+          const SectionHeader(title: 'My team'),
+          const SizedBox(height: AppSpacing.md),
+          _NoTeamCard(closed: data.registrationClosed),
+        ] else ...[
+          TeamStatusCard(team: team),
+        ],
         const SizedBox(height: AppSpacing.lg),
         if (!data.registrationClosed) ...[
-          if (team == null)
+          if (team == null) ...[
             AppButton(
               semanticId: 'btn_browse_teams',
               label: 'Browse Available Teams',
               icon: Icons.search,
               onPressed: () => context.go('/browse'),
-            )
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            AppButton(
+              semanticId: 'btn_create_team_home',
+              label: 'Create a New Team',
+              icon: Icons.group_add,
+              backgroundColor: const Color(0xFFFFF7ED),
+              foregroundColor: const Color(0xFFC2410C),
+              borderColor: const Color(0xFFF97316),
+              onPressed: () => context.push('/create-team'),
+            ),
+          ]
           else ...[
             AppButton(
               semanticId: 'btn_manage_team',

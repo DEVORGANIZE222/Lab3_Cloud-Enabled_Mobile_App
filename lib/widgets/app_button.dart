@@ -18,6 +18,9 @@ class AppButton extends StatelessWidget {
     this.loading = false,
     this.expand = true,
     this.semanticId,
+    this.backgroundColor,
+    this.foregroundColor,
+    this.borderColor,
   });
 
   final String label;
@@ -30,15 +33,25 @@ class AppButton extends StatelessWidget {
   /// Stable id exposed to the accessibility tree (Android resource-id) for E2E tests.
   final String? semanticId;
 
+  /// Optional custom background color to create high-visibility accent buttons.
+  final Color? backgroundColor;
+
+  /// Optional custom foreground/text color.
+  final Color? foregroundColor;
+
+  /// Optional custom border color.
+  final Color? borderColor;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final callback = loading ? null : onPressed;
-    final fg = switch (variant) {
-      AppButtonVariant.primary || AppButtonVariant.destructive => colors.onPrimary,
-      AppButtonVariant.secondary => colors.secondary,
-      AppButtonVariant.text => colors.primary,
-    };
+    final fg = foregroundColor ??
+        switch (variant) {
+          AppButtonVariant.primary || AppButtonVariant.destructive => colors.onPrimary,
+          AppButtonVariant.secondary => colors.secondary,
+          AppButtonVariant.text => colors.primary,
+        };
 
     final Widget content = Row(
       mainAxisSize: MainAxisSize.min,
@@ -66,16 +79,28 @@ class AppButton extends StatelessWidget {
       ],
     );
 
-    final Widget button = switch (variant) {
-      AppButtonVariant.primary => FilledButton(onPressed: callback, child: content),
-      AppButtonVariant.destructive => FilledButton(
-        onPressed: callback,
-        style: FilledButton.styleFrom(backgroundColor: colors.error, foregroundColor: colors.onError),
-        child: content,
-      ),
-      AppButtonVariant.secondary => OutlinedButton(onPressed: callback, child: content),
-      AppButtonVariant.text => TextButton(onPressed: callback, child: content),
-    };
+    final Widget button = backgroundColor != null
+        ? FilledButton(
+            onPressed: callback,
+            style: FilledButton.styleFrom(
+              backgroundColor: backgroundColor,
+              foregroundColor: fg,
+              side: borderColor != null ? BorderSide(color: borderColor!, width: 1.5) : null,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.cardAll),
+            ),
+            child: content,
+          )
+        : switch (variant) {
+            AppButtonVariant.primary => FilledButton(onPressed: callback, child: content),
+            AppButtonVariant.destructive => FilledButton(
+                onPressed: callback,
+                style: FilledButton.styleFrom(backgroundColor: colors.error, foregroundColor: colors.onError),
+                child: content,
+              ),
+            AppButtonVariant.secondary => OutlinedButton(onPressed: callback, child: content),
+            AppButtonVariant.text => TextButton(onPressed: callback, child: content),
+          };
 
     return Semantics(
       identifier: semanticId,

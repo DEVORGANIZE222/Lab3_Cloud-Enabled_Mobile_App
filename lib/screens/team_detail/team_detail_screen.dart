@@ -43,7 +43,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           children: [
-            MemberAvatar(initials: me.initials),
+            MemberAvatar(initials: me.initials, avatarUrl: me.avatarUrl),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(

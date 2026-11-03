@@ -58,8 +58,8 @@ class DashboardViewModel extends ChangeNotifier {
   DashboardViewModel(this._student, this._teams, this._registration, this._config, this._crash) {
     _configSub = _config.changes.listen((_) => load());
     _teamSub = _teams.watchTeamOf(_student.id).listen(_onTeam);
-    // The countdown, the Urgent badge and the closed state follow the clock (CR-06).
-    _clock = Timer.periodic(const Duration(seconds: 30), (_) => _tick());
+    // The countdown, the Urgent badge and the closed state follow the real-time clock (CR-06).
+    _clock = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
 
   final Student _student;

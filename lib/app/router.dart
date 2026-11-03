@@ -4,12 +4,16 @@ import 'package:provider/provider.dart';
 
 import '../models/student.dart';
 import '../screens/browse/browse_screen.dart';
+<<<<<<< HEAD
 import '../screens/mentor/mentor_detail_screen.dart';
 import '../screens/mentor/mentor_list_screen.dart';
 import '../screens/mentor/mentor_portal_screen.dart';
 import '../viewmodels/mentor_detail_viewmodel.dart';
 import '../viewmodels/mentor_list_viewmodel.dart';
 import '../viewmodels/mentor_portal_viewmodel.dart';
+=======
+import '../screens/create_team/create_team_screen.dart';
+>>>>>>> main
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/lock_review/lock_review_screen.dart';
 import '../screens/my_team/my_team_screen.dart';
@@ -21,6 +25,7 @@ import '../screens/team_detail/team_detail_screen.dart';
 import '../screens/voting/leader_voting_screen.dart';
 import '../services/services.dart';
 import '../viewmodels/browse_viewmodel.dart';
+import '../viewmodels/create_team_viewmodel.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
 import '../viewmodels/lock_review_viewmodel.dart';
 import '../viewmodels/my_team_viewmodel.dart';
@@ -73,6 +78,7 @@ GoRouter buildRouter(SessionViewModel session) {
         ),
       ),
       GoRoute(
+<<<<<<< HEAD
         path: '/mentor-portal',
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, _) => ChangeNotifierProvider(
@@ -116,18 +122,31 @@ GoRouter buildRouter(SessionViewModel session) {
       ),
       GoRoute(
         path: '/profile',
+=======
+        path: '/alerts',
+>>>>>>> main
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, _) => ChangeNotifierProvider(
-          create: (c) => ProfileViewModel(
+          create: (c) => NotificationsViewModel(
+            me(c),
+            c.read<NotificationRepository>(),
+            c.read<TeamRepository>(),
+            c.read<CrashReporter>(),
+          )..start(),
+          child: const NotificationsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/create-team',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, _) => ChangeNotifierProvider(
+          create: (c) => CreateTeamViewModel(
             me(c),
             c.read<TeamRepository>(),
-            c.read<ReportService>(),
-            c.read<StorageService>(),
-            c.read<ConfigService>(),
-            c.read<CrashReporter>(),
             c.read<AnalyticsService>(),
+            c.read<CrashReporter>(),
           ),
-          child: const ProfileScreen(),
+          child: const CreateTeamScreen(),
         ),
       ),
       StatefulShellRoute.indexedStack(
@@ -243,7 +262,23 @@ GoRouter buildRouter(SessionViewModel session) {
             ],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/alerts', builder: (context, _) => const NotificationsScreen())],
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (context, _) => ChangeNotifierProvider(
+                  create: (c) => ProfileViewModel(
+                    me(c),
+                    c.read<TeamRepository>(),
+                    c.read<ReportService>(),
+                    c.read<StorageService>(),
+                    c.read<ConfigService>(),
+                    c.read<CrashReporter>(),
+                    c.read<AnalyticsService>(),
+                  ),
+                  child: const ProfileScreen(),
+                ),
+              ),
+            ],
           ),
         ],
       ),

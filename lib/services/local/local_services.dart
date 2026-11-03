@@ -153,6 +153,9 @@ class DebugAnalyticsService implements AnalyticsService {
   Future<void> logViewTeam({required String teamId, required String teamCode}) =>
       _log('view_team', {'team_id': teamId, 'team_code': teamCode});
   @override
+  Future<void> logCreateTeam({required String teamId, required String teamCode}) =>
+      _log('create_team', {'team_id': teamId, 'team_code': teamCode});
+  @override
   Future<void> logJoinTeam({required String teamId, required int memberCount}) =>
       _log('join_group', {'group_id': teamId, 'member_count': memberCount});
   @override

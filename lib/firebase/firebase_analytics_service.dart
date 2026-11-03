@@ -47,6 +47,12 @@ class FirebaseAnalyticsService implements AnalyticsService {
   }
 
   @override
+  Future<void> logCreateTeam({required String teamId, required String teamCode}) async {
+    debugPrint('analytics_event create_team {team_id: $teamId, team_code: $teamCode}');
+    await _event('create_team', {'team_id': teamId, 'team_code': teamCode});
+  }
+
+  @override
   Future<void> logJoinTeam({required String teamId, required int memberCount}) async {
     debugPrint('analytics_event join_group {group_id: $teamId, member_count: $memberCount}');
     await _event('join_team', {'team_id': teamId, 'member_count': memberCount});
