@@ -107,8 +107,13 @@ service cloud.firestore {
     }
 
     match /waitingPool/{userId} {
-      // Students can read their own pool record.
-      allow read: if isRosterMember() && request.auth.uid == userId;
+      // Students can read their own pool record. Team leaders must also see
+      // unassigned candidates: inviteFromPool queries `assigned == false` and
+      // re-reads the chosen record inside its transaction. Assigned records
+      // stay private to their owner.
+      allow get: if isRosterMember()
+                    && (request.auth.uid == userId || resource.data.assigned == false);
+      allow list: if isRosterMember() && resource.data.assigned == false;
 
       // Only the verified leader of assignedTeamId can mark a pool student as assigned (via inviteFromPool).
       allow update: if isRosterMember()
