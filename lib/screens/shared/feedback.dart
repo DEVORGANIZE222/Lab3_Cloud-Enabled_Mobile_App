@@ -39,7 +39,9 @@ class NoTeamState extends StatelessWidget {
           AppButton(
             label: 'Create a Team',
             icon: Icons.group_add,
-            variant: AppButtonVariant.secondary,
+            backgroundColor: const Color(0xFFFFF7ED),
+            foregroundColor: const Color(0xFFC2410C),
+            borderColor: const Color(0xFFF97316),
             onPressed: () => context.push('/create-team'),
             semanticId: 'btn_create_team_empty',
           ),

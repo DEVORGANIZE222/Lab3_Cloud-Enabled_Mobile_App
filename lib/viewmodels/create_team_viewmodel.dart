@@ -75,7 +75,16 @@ class CreateTeamViewModel extends ChangeNotifier {
       return null;
     } catch (e, st) {
       creating = false;
-      failure = await toFailure(e, st, crash: _crash, reason: 'create_team');
+      final errStr = e.toString().toLowerCase();
+      if (errStr.contains('permission-denied') || errStr.contains('permission')) {
+        failure = const AppFailure(
+          'Chưa mở quyền tạo nhóm trên Firestore',
+          'Vui lòng cập nhật "allow create: if isRosterMember()..." trong tab Rules của Firestore Database trên Firebase Console rồi nhấn Publish.',
+          code: 'permission-denied',
+        );
+      } else {
+        failure = await toFailure(e, st, crash: _crash, reason: 'create_team');
+      }
       notifyListeners();
       return null;
     }

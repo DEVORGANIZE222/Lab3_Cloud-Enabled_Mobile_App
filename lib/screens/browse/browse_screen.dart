@@ -72,7 +72,65 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.md),
+            // Quick action banner to create team without having to scroll down
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: AppRadius.cardAll,
+                border: Border.all(color: const Color(0xFF86EFAC), width: 1.2),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFDCFCE7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.rocket_launch, color: Color(0xFF16A34A), size: 18),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Want to lead a startup?',
+                          style: context.text.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF14532D),
+                            fontSize: 13,
+                          ),
+                        ),
+                        Text(
+                          'Pitch your idea and recruit your dream team.',
+                          style: context.text.bodySmall?.copyWith(
+                            color: const Color(0xFF166534),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  FilledButton.icon(
+                    onPressed: () => context.push('/create-team'),
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Create'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: context.colors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      textStyle: context.text.labelSmall?.copyWith(fontWeight: FontWeight.bold),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
             if (state is Data<List<Team>>) ...[
               Semantics(
                 identifier: 'browse_result_count',
@@ -110,7 +168,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppCard(
-              color: context.colors.surfaceContainerHigh,
+              color: const Color(0xFFFFFBEB),
+              borderColor: const Color(0xFFFDE68A),
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
                 children: [
@@ -118,19 +177,30 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     children: [
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.sm),
-                        decoration: BoxDecoration(color: context.appColors.warningContainer, shape: BoxShape.circle),
-                        child: Icon(Icons.groups, color: context.appColors.warning, size: 24),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFEF3C7),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.groups, color: Color(0xFFD97706), size: 24),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Can't find the right fit?", style: context.text.titleSmall),
+                            Text(
+                              "Can't find the right fit?",
+                              style: context.text.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF92400E),
+                              ),
+                            ),
                             const SizedBox(height: 2),
                             Text(
                               'Create your own startup team or join the Random Pool before the deadline.',
-                              style: context.text.bodySmall,
+                              style: context.text.bodySmall?.copyWith(
+                                color: const Color(0xFFB45309),
+                              ),
                             ),
                           ],
                         ),
@@ -142,7 +212,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     semanticId: 'btn_create_team_browse',
                     label: 'Create a Team',
                     icon: Icons.group_add,
-                    variant: AppButtonVariant.secondary,
+                    backgroundColor: context.colors.primary,
+                    foregroundColor: Colors.white,
                     onPressed: () => context.push('/create-team'),
                   ),
                 ],
@@ -150,13 +221,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.group_add),
-        label: const Text('Create Team'),
-        backgroundColor: context.colors.primary,
-        foregroundColor: Colors.white,
-        onPressed: () => context.push('/create-team'),
       ),
     );
   }
