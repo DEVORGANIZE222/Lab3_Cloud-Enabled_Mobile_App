@@ -37,9 +37,10 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Identifier only: a `textField: true` wrapper adds a second, non-editable
+    // EditText node that swallows text typed by TalkBack or ARTEMIS.
     return Semantics(
       identifier: semanticId,
-      textField: true,
       child: TextField(
         controller: controller,
         enabled: enabled,
@@ -77,10 +78,11 @@ class AppSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Only the identifier is added here. Declaring `textField`/`label` on this
+    // wrapper created a second, non-editable EditText node above the real one,
+    // so TalkBack and ARTEMIS typed into a node that dropped the text.
     return Semantics(
       identifier: 'browse_search_field',
-      textField: true,
-      label: 'Search teams',
       child: ValueListenableBuilder<TextEditingValue>(
         valueListenable: controller,
         builder: (context, value, _) => TextField(
