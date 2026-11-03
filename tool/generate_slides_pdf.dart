@@ -82,6 +82,43 @@ void main() async {
     );
   }
 
+  // A screenshot that is missing is shown as missing, never replaced by a stand-in.
+  pw.Widget shot(String caption, String path, {double height = 300}) {
+    final file = File(path);
+    return pw.Column(
+      children: [
+        pw.Container(
+          height: height,
+          width: height * 0.45,
+          decoration: pw.BoxDecoration(border: pw.Border.all(color: borderCol), borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6))),
+          child: file.existsSync()
+              ? pw.Image(pw.MemoryImage(file.readAsBytesSync()), fit: pw.BoxFit.contain)
+              : pw.Center(child: pw.Text('missing:\n$path', style: pw.TextStyle(color: PdfColors.red, fontSize: 7), textAlign: pw.TextAlign.center)),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Text(caption, style: pw.TextStyle(color: textMuted, fontSize: 7.5)),
+      ],
+    );
+  }
+
+  // Pass counts per test case, read from the evidence of the last full run.
+  // pytest writes a second <testcase> for a teardown error, so key by run.
+  final outcome = <String, bool>{};
+  final junit = File('e2e_test/evidence/junit.xml');
+  if (junit.existsSync()) {
+    final xml = junit.readAsStringSync();
+    for (final m in RegExp(r'<testcase [^>]*name="(test_tc\d+[^"]*\[run\d+\])"[^>]*?(/>|>([\s\S]*?)</testcase>)').allMatches(xml)) {
+      final failed = (m.group(3) ?? '').contains('<failure') || (m.group(3) ?? '').contains('<error');
+      outcome[m.group(1)!] = (outcome[m.group(1)!] ?? true) && !failed;
+    }
+  }
+  final runs = <String, List<bool>>{};
+  for (final e in outcome.entries) {
+    runs.putIfAbsent(RegExp(r'test_(tc\d+)').firstMatch(e.key)!.group(1)!.toUpperCase(), () => []).add(e.value);
+  }
+  final passedRuns = runs.values.expand((r) => r).where((ok) => ok).length;
+  final totalRuns = runs.values.expand((r) => r).length;
+
   // ==================== SLIDE 1: TITLE SLIDE ====================
   pdf.addPage(
     pw.Page(
@@ -163,35 +200,25 @@ void main() async {
       build: (context) => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          buildSlideHeader('Screen Implementation & UX Deviations', 'Design Traceability', 3),
+          buildSlideHeader('Figma vs App: Key Screens & Deviations', 'Design Traceability', 3),
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Expanded(
-                child: buildCard('10 PRODUCTION SCREENS BUILT', [
-                  'SCR_01 Sign In: Google SSO with allowed roster check.',
-                  'SCR_02 Dashboard: Active team status & countdown banner.',
-                  'SCR_03 Browse: Debounced search, skill chips, empty state.',
-                  'SCR_04 Team Detail: Role selection & atomic join modal.',
-                  'SCR_05 My Team: Roster management & dynamic action button.',
-                  'SCR_06 Leader Voting: Hidden tallies & majority election.',
-                  'SCR_07 Lock Review: Capacity check & Waiting Pool recovery.',
-                  'SCR_08 Random Pool: Queue status & estimated match time.',
-                  'SCR_09 Alerts: Inbox with Decline + Undo support.',
-                  'Profile Screen: Firebase Demo Area & Cloud Export.',
-                ]),
-              ),
-              pw.SizedBox(width: 14),
-              pw.Expanded(
-                child: buildCard('KEY HEURISTIC DEVIATIONS (docs/design-traceability.md)', [
-                  'DV-01: Unified "Group" and "Team" to "Team" everywhere (UI Consistency Heuristic).',
-                  'DV-04: Replaced unhandled join "request" with direct open-slot join validated by backend transaction.',
-                  'DV-05: Front-loaded error messages ("Can\'t lock yet: needs 1 more member" instead of vague technical codes).',
-                  'DV-08: Added Profile screen as single destination for user profile and Firebase verification actions.',
-                  'DV-09/10: Elevated contrast to exceed WCAG AA standards (buttons >=48dp, text >=14sp, colors >=4.5:1).',
-                ]),
-              ),
+              shot('Figma SCR_02 Home', 'assets/figma/SCR_02_ Dashboard.png', height: 330),
+              shot('App · Home', 'docs/screenshots/scr02_home.png', height: 330),
+              shot('Figma SCR_03 Browse', 'assets/figma/SCR_03_ Browse Groups.png', height: 330),
+              shot('App · Browse', 'docs/screenshots/scr03_browse.png', height: 330),
+              shot('Figma SCR_07 Lock', 'assets/figma/SCR_07_ Group Lock Review & Error Recovery.png', height: 330),
+              shot('App · Review & Lock', 'docs/screenshots/scr07_lock_error.png', height: 330),
             ],
+          ),
+          pw.SizedBox(height: 8),
+          pw.Text(
+            'Deviations (all recorded in docs/design-traceability.md): DV-01 "Team" everywhere instead of Group/Team; '
+            'DV-04 direct open-slot join instead of a join request; DV-08 Profile/Settings as the Firebase demo area; '
+            'DV-09/10 contrast raised to WCAG AA; vote counts hidden until the student votes (SCR_06).',
+            style: pw.TextStyle(color: textDark, fontSize: 8),
           ),
         ],
       ),
@@ -297,7 +324,7 @@ void main() async {
                   'Problem: FPT students from K19+ use non-standard email domains, requiring flexible yet secure roster validation.',
                   'Solution: Firestore collection allowedEmails/{email} stores authorized class roster with enabled: true.',
                   'Two-Tier Check: Client-side _studentFor() verifies email against roster; Security Rules enforce isRosterMember().',
-                  'Unauthorized Denial: Non-roster Google accounts are immediately rejected with "This is not an FPT account" (TC-01).',
+                  'Unauthorized Denial: Non-roster Google accounts are immediately rejected with "This account is not on the class roster" (TC-01).',
                 ]),
               ),
             ],
@@ -462,7 +489,7 @@ void main() async {
               pw.Expanded(
                 child: buildCard('FIREBASE CRASHLYTICS (firebase_crash_reporter.dart)', [
                   'Fatal Crash Capture: FlutterError.onError and PlatformDispatcher record uncaught engine exceptions.',
-                  'Handled Non-Fatal: Profile button triggers diagnostic recordError with custom keys (screen=profile, cohort=FA26).',
+                  'Handled Non-Fatal: Profile button triggers diagnostic recordError with custom keys (screen=profile; student_cohort set at sign-in).',
                   'Test Crash Action: Dedicated Profile button invokes .crash() -> verified on Console with User ID.',
                   'User Feedback: Non-fatal errors always display user-facing explanations, never crashing the UI.',
                 ]),
@@ -495,21 +522,48 @@ void main() async {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Expanded(
-                child: buildCard('ARTEMIS AI AGENT HARNESS (e2e_test/)', [
-                  'Multimodal Driving: ARTEMIS drives real Android 16 emulator using Gemini Flash profile (~3-5s/step).',
-                  '13 Comprehensive Test Cases: Covers all 3 user flows, error paths, native share sheet, and storage upload.',
-                  '3-Run Reliability Rule: Every case runs 3 times independently (39 runs total) to eliminate flaky results.',
-                  'Ground-Truth Assertions: Asserts on Semantics accessibility tree and Logcat (never status=="SUCCESS" alone).',
+                child: buildCard('ARTEMIS HARNESS (e2e_test/) & HOW TO READ THE RESULTS', [
+                  'ARTEMIS (Gemini flash-lite) drives the app on an Android 16 emulator with a real Google account.',
+                  '13 cases cover the 3 Lab 2 flows, their error paths, a native share sheet and the Storage upload.',
+                  'Each case runs 3 times; assertions check the accessibility tree, Logcat analytics and Firestore/Storage, '
+                      'not the agent\'s SUCCESS flag alone.',
+                  'Run 1 (2 Nov): 6/39. Causes: expired Firestore token in the harness, Gemini free-tier 429s, and two app '
+                      'bugs found by the run (search box swallowed typed text; Waiting Pool invite denied by rules) - all fixed.',
+                  'Evidence: e2e_test/evidence/ (junit.xml, result.json with trace ID, screen dump, screenshot per run); '
+                      'failures explained in docs/test-plan.md.',
                 ]),
               ),
               pw.SizedBox(width: 14),
               pw.Expanded(
-                child: buildCard('39-RUN EXECUTION BENCHMARK RESULTS', [
-                  'Overall Pass Rate: 39/39 (100% Pass) across all 13 test cases after harness stabilization.',
-                  'Average Duration: ~24.0s per test case execution.',
-                  'Harness Improvements (Commit 9652bb4): Token refresh on 401, E2E cooldown to respect 15 RPM quota.',
-                  'Trace Evidence: Complete run logs, accessibility dumps, and final.png images stored in e2e_test/evidence/.',
-                ]),
+                child: pw.Container(
+                  padding: const pw.EdgeInsets.all(12),
+                  decoration: pw.BoxDecoration(color: bgLight, border: pw.Border.all(color: borderCol), borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6))),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        totalRuns == 0 ? 'FINAL RUN: no junit.xml found' : 'FINAL RUN: $passedRuns / $totalRuns runs passed',
+                        style: pw.TextStyle(color: primary, fontSize: 10, fontWeight: pw.FontWeight.bold),
+                      ),
+                      pw.SizedBox(height: 6),
+                      pw.TableHelper.fromTextArray(
+                        headers: ['Case', 'Run 1', 'Run 2', 'Run 3', 'Pass rate'],
+                        data: [
+                          for (final id in (runs.keys.toList()..sort()))
+                            [
+                              id,
+                              for (var i = 0; i < 3; i++) i < runs[id]!.length ? (runs[id]![i] ? 'PASS' : 'FAIL') : '-',
+                              '${runs[id]!.where((ok) => ok).length}/${runs[id]!.length}',
+                            ],
+                        ],
+                        headerStyle: pw.TextStyle(color: PdfColors.white, fontSize: 7.5, fontWeight: pw.FontWeight.bold),
+                        headerDecoration: pw.BoxDecoration(color: primary),
+                        cellStyle: pw.TextStyle(color: textDark, fontSize: 7.5),
+                        cellPadding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -600,20 +654,21 @@ void main() async {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Expanded(
-                child: buildCard('ENGINEERING CHALLENGES & SOLUTIONS', [
-                  'Challenge 1: Firebase Storage rules cannot perform cross-service firestore.get() lookups -> Solved via UID folder isolation.',
-                  'Challenge 2: Multi-turn AI review exhausted free-tier API quotas -> Solved via single-request structured review script.',
-                  'Challenge 3: Background isolate handling of FCM messages -> Solved with dedicated top-level background handler.',
-                  'Challenge 4: K19+ non-edu email accounts -> Solved with Centralized Roster Allowlist on Firestore.',
+                child: buildCard('CHALLENGES FOUND BY TESTING THE REAL APP', [
+                  'Invite from Waiting Pool always failed: Firestore rules let students read only their own pool record (PERMISSION_DENIED in Logcat). Rules now allow unassigned records.',
+                  'ARTEMIS could not type: a Semantics(textField) wrapper created a second, non-editable EditText, and Flutter ignored the Android Paste key. Both fixed in the app.',
+                  'cast_vote sent a bool parameter: the event never reached Analytics and voting showed a false error.',
+                  'Undo after declining an invite never appeared (card disposed before the snackbar).',
+                  'Gemini free tier (20-500 requests/day per model) limited both the AI review and ARTEMIS runs.',
                 ]),
               ),
               pw.SizedBox(width: 14),
               pw.Expanded(
-                child: buildCard('FINAL VERIFICATION & CONCLUSION', [
-                  'Architecture: 100% MVVM compliance with Provider; zero Firebase SDK calls in presentation widgets.',
-                  'Firebase: All 6 services verified with live device evidence, security rules, and real-time synchronization.',
-                  'Testing: 13 E2E test cases verified across 39 runs with Google ARTEMIS + 25-minute exploratory testing.',
-                  'Conclusion: EXEMatching is a robust, cloud-enabled production-ready Flutter app meeting all Lab 3 criteria.',
+                child: buildCard('LESSONS LEARNED', [
+                  'The agent SUCCESS flag is not evidence: TC-12 reported "Undo restored 1 invite" while the screen showed 0; ground-truth checks caught it.',
+                  'Generated or claimed results are worthless; only runs with trace IDs, screenshots and Firestore checks count.',
+                  'Accessibility labels are test infrastructure: the same bug blocked TalkBack users and the test agent.',
+                  'Security rules must be tested with the real client flows, not only read: a correct-looking rule broke Flow 3.',
                 ]),
               ),
             ],
