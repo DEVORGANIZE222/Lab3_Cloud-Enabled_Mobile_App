@@ -93,8 +93,32 @@ Các lỗi khác tìm thấy trong khi điều tra (không làm fail test nhưng
 
 ### 3.3. Lần chạy cuối — `e2e_test/evidence/` (build `81695c7`)
 
-<!-- FINAL_RUN_TABLE -->
-_Đang chạy — bảng sẽ được điền từ `e2e_test/evidence/junit.xml` khi xong._
+Lần chạy cuối gồm hai phiên trên cùng một build và cùng máy ảo.
+
+**Phiên 1** — 2026-11-03 18:40–20:19, `e2e_test/evidence-final-session1/` (24/39):
+
+| Ca | Run 1 | Run 2 | Run 3 | Đạt | TB ARTEMIS | TB tổng | Trace ID (run 1 / 2 / 3) |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|---|
+| TC-01 | PASS | PASS | PASS | 3/3 | 62.9s | 88.3s | `4078233d` / `8f8ec5be` / `7aefd229` |
+| TC-02 | PASS | PASS | PASS | 3/3 | 42.8s | 69.5s | `cdc86073` / `39d3bf7f` / `7cd41b3d` |
+| TC-03 | PASS | PASS | PASS | 3/3 | 45.4s | 89.5s | `91b509f2` / `dc800ec9` / `9c4f292d` |
+| TC-04 | PASS | PASS | PASS | 3/3 | 94.1s | 142.6s | `15f2da3d` / `c1efc34a` / `95238313` |
+| TC-05 | PASS | PASS | PASS | 3/3 | 21.8s | 104.8s | `bf1a0bae` / `97598caa` / `d29e21f5` |
+| TC-06 | PASS | PASS | PASS | 3/3 | 45.3s | 89.0s | `cb932c72` / `4b85d365` / `4b1b0b04` |
+| TC-07 | FAIL | FAIL | FAIL | 0/3 | 198.1s | 240.6s | `a6e454c9` / `e2cd65e2` / `55734f81` |
+| TC-08 | FAIL | FAIL | FAIL | 0/3 | 192.2s | 234.9s | `77b5c214` / `f77a99e6` / `3d23cd01` |
+| TC-09 | FAIL | FAIL | FAIL | 0/3 | 192.7s | 239.1s | `0f9d3b02` / `149477a3` / `a9bd3620` |
+| TC-10 | FAIL | FAIL | FAIL | 0/3 | 239.4s | 284.9s | `2991b43a` / `5bfc3ad6` / `46ed32cd` |
+| TC-11 | FAIL | FAIL | FAIL | 0/3 | 194.8s | 239.5s | `859356ab` / `07f0300a` / `469bbc0f` |
+| TC-12 | PASS | PASS | PASS | 3/3 | 42.2s | 86.3s | `94b83370` / `43278301` / `be79055b` |
+| TC-13 | PASS | PASS | PASS | 3/3 | 30.1s | 73.8s | `fbc83c2b` / `506a0dd2` / `1e17ec6a` |
+
+Cả 15 lần chạy thất bại (từ 19:17) đều có cùng nguyên nhân hạ tầng, không phải lỗi app: `stdout.log` của trace cho thấy mọi lời gọi Gemini nhận `429 RESOURCE_EXHAUSTED` — hết hạn mức miễn phí theo ngày của `gemini-3.5-flash-lite` (`limit: 500`, metric `generate_content_free_tier_requests`) sau các lần chạy trong ngày — và agent dừng với "LLM call timed out after 180 seconds" trước khi thực hiện bước nào (`steps` rỗng). Không có kiểm tra nào của app được đánh giá trong các lần này.
+
+Trong suốt phiên 1, Logcat của Flutter (590 dòng) không có `EXCEPTION CAUGHT`, `RenderFlex overflowed` hay lỗi layout nào trên build `81695c7`.
+
+<!-- SESSION2 -->
+**Phiên 2** — chạy lại TC-07…TC-11 (3 lần mỗi ca) khi hạn mức đã có lại: _đang chạy_.
 
 ---
 
