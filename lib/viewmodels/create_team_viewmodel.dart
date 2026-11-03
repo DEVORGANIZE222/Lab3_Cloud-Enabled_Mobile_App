@@ -17,25 +17,60 @@ class CreateTeamViewModel extends ChangeNotifier {
   bool creating = false;
   AppFailure? failure;
 
-  static const defaultCategories = ['Web/Cloud', 'Mobile', 'AI/ML', 'IoT', 'Fintech', 'EdTech'];
+  static const defaultCategories = [
+    'Web/Cloud',
+    'Mobile',
+    'AI/ML',
+    'IoT',
+    'Fintech',
+    'EdTech',
+    'E-Commerce',
+    'HealthTech',
+  ];
   static const suggestedRoles = [
     'Frontend Dev',
     'Backend Dev',
-    'UI/UX Designer',
+    'Fullstack Dev',
     'Mobile Dev',
-    'AI Engineer',
-    'QA Tester',
-    'Business Analyst',
+    'AI/ML Engineer',
+    'UI/UX Designer',
+    'QA/Tester',
+    'DevOps Engineer',
+    'Business Analyst (BA)',
+    'Data Engineer',
+    'Product Owner',
   ];
   static const suggestedTags = [
     'Flutter',
     'React',
+    'React Native',
     'NodeJS',
     'Python',
     'Firebase',
-    'Docker',
     'Spring Boot',
+    'Docker',
+    'Next.js',
+    'Vue.js',
+    'NestJS',
+    'FastAPI',
+    '.NET',
+    'Golang',
+    'Swift',
+    'Kotlin',
+    'AWS',
+    'Kubernetes',
+    'GraphQL',
+    'PostgreSQL',
+    'MongoDB',
+    'MySQL',
+    'Redis',
+    'TensorFlow',
+    'PyTorch',
+    'OpenCV',
+    'IoT / Hardware',
     'Figma',
+    'CI/CD',
+    'Microservices',
   ];
 
   Future<Team?> createTeam({

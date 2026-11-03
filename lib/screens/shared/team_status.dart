@@ -23,7 +23,7 @@ import '../../widgets/status.dart';
 String teamPhaseLabel(Team t) => teamPhase(t).label;
 
 IconData notificationIcon(NotificationKind k) => switch (k) {
-  NotificationKind.invite => Icons.person_add_alt_1,
+  NotificationKind.invite => Icons.group_add,
   NotificationKind.vote => Icons.how_to_vote,
   NotificationKind.system => Icons.campaign,
   NotificationKind.application => Icons.verified,

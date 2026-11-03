@@ -55,9 +55,7 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
     );
     if (!mounted) return;
     if (team != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Team "${team.name}" created successfully!')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Team "${team.name}" created successfully!')));
       context.go('/team');
     } else if (vm.failure != null) {
       showFailure(context, vm.failure!);
@@ -82,11 +80,7 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
               children: [
                 const Align(
                   alignment: Alignment.centerLeft,
-                  child: StatusBadge(
-                    label: 'Dự án Khởi nghiệp (EXE) · Spring 2026',
-                    tone: Tone.warning,
-                    icon: Icons.rocket_launch,
-                  ),
+                  child: StatusBadge(label: '', tone: Tone.warning, icon: Icons.rocket_launch),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text('Launch a new startup team', style: context.text.headlineSmall),
@@ -273,4 +267,3 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
     );
   }
 }
-

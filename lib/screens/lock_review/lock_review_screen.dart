@@ -125,7 +125,7 @@ class _Review extends StatelessWidget {
           InfoBanner(
             semanticId: 'banner_pool_joined',
             tone: Tone.success,
-            icon: Icons.person_add_alt_1,
+            icon: Icons.group_add,
             title: '${vm.lastJoinedName} joined from the Waiting Pool',
             message: '${team.name} now has ${team.memberCount} of ${team.capacity} members.',
           ),
@@ -181,7 +181,7 @@ class _Review extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const IconTile(icon: Icons.person_add_alt_1, tone: Tone.warning, size: 36),
+                    const IconTile(icon: Icons.group_add, tone: Tone.warning, size: 36),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(child: Text('Invite from the Waiting Pool', style: context.text.titleSmall)),
                     if (team.invitesSent > 0)

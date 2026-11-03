@@ -17,6 +17,10 @@ Future<String?> showAccountPicker(BuildContext context, List<({String email, Str
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Center(
+              child: Image.asset('assets/brand/logo.png', width: 48, height: 48),
+            ),
+            const SizedBox(height: AppSpacing.md),
             Semantics(header: true, child: Text('Choose an account', style: context.text.titleLarge)),
             const SizedBox(height: AppSpacing.xs),
             Text('to continue to EXEMatching', style: context.text.bodyMedium),

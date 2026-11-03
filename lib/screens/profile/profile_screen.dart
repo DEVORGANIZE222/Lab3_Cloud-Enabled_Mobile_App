@@ -143,7 +143,10 @@ class ProfileScreen extends StatelessWidget {
                   AppButton(
                     semanticId: 'btn_test_crash',
                     label: 'Force Test Crash',
-                    variant: AppButtonVariant.text,
+                    icon: Icons.error_outline,
+                    backgroundColor: const Color(0xFFFEE2E2),
+                    foregroundColor: const Color(0xFFDC2626),
+                    borderColor: const Color(0xFFFCA5A5),
                     onPressed: () async {
                       final ok = await showAppDialog(
                         context,

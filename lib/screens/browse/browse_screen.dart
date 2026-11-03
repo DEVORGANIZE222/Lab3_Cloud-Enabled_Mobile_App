@@ -117,7 +117,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   const SizedBox(width: AppSpacing.sm),
                   FilledButton.icon(
                     onPressed: () => context.push('/create-team'),
-                    icon: const Icon(Icons.add, size: 16),
+                    icon: const Icon(Icons.group_add, size: 18),
                     label: const Text('Create'),
                     style: FilledButton.styleFrom(
                       backgroundColor: context.colors.primary,
@@ -259,7 +259,7 @@ class _TeamCard extends StatelessWidget {
                     StatusBadge(
                       label: open == 0 ? 'Full' : '${team.memberCount}/${team.capacity} · $open open',
                       tone: open == 0 ? Tone.neutral : Tone.primary,
-                      icon: open == 0 ? Icons.block : Icons.person_add_alt_1,
+                      icon: open == 0 ? Icons.block : Icons.group_add,
                     ),
                   ],
                 ),
