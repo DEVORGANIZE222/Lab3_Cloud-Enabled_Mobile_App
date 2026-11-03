@@ -36,7 +36,9 @@ async def test_tc04_empty_state_and_clear_filters(device, backend, me, artemis):
 
     assert run.data["empty_title"] == "No teams match your search"
     assert run.data["teams_after_clearing"] == open_teams
-    assert f"[browse_result_count] {open_teams} teams with open slots" in run.screen
+    # The agent may leave the list scrolled down; read the count line from the top.
+    device.scroll_to_top()
+    assert f"[browse_result_count] {open_teams} teams with open slots" in device.screen_text()
 
 
 @pytest.mark.flow1

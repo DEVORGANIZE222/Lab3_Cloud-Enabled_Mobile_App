@@ -111,6 +111,11 @@ class Device:
             node = again
         self.shell("input", "tap", str(node.x), str(node.y))
 
+    def scroll_to_top(self, swipes: int = 4) -> None:
+        """Scrolls the current list back to its top (the agent may have scrolled down)."""
+        for _ in range(swipes):
+            self.shell("input", "swipe", "540", "700", "540", "1900", "150")
+
     def screen_text(self) -> str:
         """Every id and label on screen, one per line (for assertions and evidence)."""
         return "\n".join(f"[{n.id}] {n.text}".strip() for n in self.nodes() if n.id or n.text)
