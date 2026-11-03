@@ -46,6 +46,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
             AppSearchField(
               controller: _search,
               onSubmitted: vm.search,
+              onChanged: vm.queryChanged,
               onClear: () {
                 _search.clear();
                 vm.search('');

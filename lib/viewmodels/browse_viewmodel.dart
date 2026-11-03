@@ -37,8 +37,19 @@ class BrowseViewModel extends ChangeNotifier {
   bool get hasCriteria => query.isNotEmpty || filters.length != 1 || !filters.contains(TeamFilter.openSlots);
 
   Future<void> search([String? newQuery]) {
+    _debounce?.cancel();
     if (newQuery != null) query = newQuery.trim();
     return _run(silent: false);
+  }
+
+  Timer? _debounce;
+
+  /// Search as the student types (400 ms after the last key), so the list
+  /// always matches the text in the box, also when a filter chip is tapped
+  /// before pressing Enter (TC-03 found the two disagreeing).
+  void queryChanged(String text) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () => search(text));
   }
 
   /// [silent] keeps the current list on screen while refreshing.
@@ -78,6 +89,7 @@ class BrowseViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _teamsSub.cancel();
     _configSub.cancel();
     super.dispose();

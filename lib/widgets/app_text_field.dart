@@ -68,12 +68,14 @@ class AppSearchField extends StatelessWidget {
     required this.controller,
     required this.onSubmitted,
     required this.onClear,
+    this.onChanged,
     this.hint = 'Team name, topic or skill',
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onSubmitted;
   final VoidCallback onClear;
+  final ValueChanged<String>? onChanged;
   final String hint;
 
   @override
@@ -89,6 +91,7 @@ class AppSearchField extends StatelessWidget {
           controller: controller,
           textInputAction: TextInputAction.search,
           onSubmitted: onSubmitted,
+          onChanged: onChanged,
           // Figma: grey filled search bar without an outline; focus keeps the
           // 2 dp primary ring from the theme so the field is still findable.
           decoration: InputDecoration(
