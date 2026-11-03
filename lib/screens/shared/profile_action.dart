@@ -21,13 +21,18 @@ class ProfileAction extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
-          tooltip: 'Alerts',
-          onPressed: () => context.push('/alerts'),
-          icon: Badge(
-            isLabelVisible: unread > 0,
-            label: Text('$unread'),
-            child: const Icon(Icons.notifications_outlined, size: 22),
+        Semantics(
+          identifier: 'btn_open_alerts',
+          button: true,
+          label: 'Alerts',
+          child: IconButton(
+            tooltip: 'Alerts',
+            onPressed: () => context.push('/alerts'),
+            icon: Badge(
+              isLabelVisible: unread > 0,
+              label: Text('$unread'),
+              child: const Icon(Icons.notifications_outlined, size: 22),
+            ),
           ),
         ),
         Semantics(

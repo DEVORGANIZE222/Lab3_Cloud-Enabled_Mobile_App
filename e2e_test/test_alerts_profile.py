@@ -11,7 +11,7 @@ async def test_tc12_decline_invite_then_undo(device, backend, me, artemis):
     device.sign_in(ACCOUNT)
 
     run = await artemis(
-        "Open the Alerts tab and switch to the Invites filter. Decline the invite from FinTech Guard, "
+        "Tap the notification bell icon at the top right to open Alerts and switch to the Invites filter. Decline the invite from FinTech Guard, "
         "then use Undo in the message at the bottom of the screen. Report how many invites are listed "
         "right after declining and after undoing.",
         'Return JSON: {"invites_after_decline": int, "invites_after_undo": int, "invite_team": string}',
