@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tool"))
-from seed_firestore_lab3 import PROJECT_ID, build_seed_writes  # noqa: E402
+from seed_firestore_lab3 import POOL_IDS, PROJECT_ID, build_seed_writes  # noqa: E402
 
 DOCS = f"projects/{PROJECT_ID}/databases/(default)/documents"
 API = f"https://firestore.googleapis.com/v1/{DOCS}"
@@ -174,18 +174,22 @@ class Backend:
         writes = build_seed_writes()
         writes.append(self.set(f"allowedEmails/{me.email}", {"enabled": True}))
 
-        # Other teams the account joined during earlier manual testing.
+        # Other teams the account joined or created during earlier manual testing,
+        # and pool students invited into them (the seed puts those back in the pool).
+        gone = {me.uid, *POOL_IDS}
         for team_id, data in self.list("teams").items():
-            if team_id not in SEEDED_TEAMS and me.uid in data.get("memberIds", []):
-                members = [m for m in data.get("members", []) if m.get("studentId") != me.uid]
+            if team_id not in SEEDED_TEAMS and not set(data.get("memberIds", [])) - gone:
+                writes.append(self.delete(f"teams/{team_id}"))  # nobody would be left in it
+            elif team_id not in SEEDED_TEAMS and gone & set(data.get("memberIds", [])):
+                members = [m for m in data.get("members", []) if m.get("studentId") not in gone]
                 writes.append(
                     self.patch(
                         f"teams/{team_id}",
                         {
-                            "memberIds": [m for m in data["memberIds"] if m != me.uid],
+                            "memberIds": [m for m in data["memberIds"] if m not in gone],
                             "members": members,
-                            "leaderId": None if data.get("leaderId") == me.uid else data.get("leaderId"),
-                            "votes": {k: v for k, v in (data.get("votes") or {}).items() if me.uid not in (k, v)},
+                            "leaderId": None if data.get("leaderId") in gone else data.get("leaderId"),
+                            "votes": {k: v for k, v in (data.get("votes") or {}).items() if not gone & {k, v}},
                         },
                     )
                 )
