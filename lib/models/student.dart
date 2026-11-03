@@ -7,6 +7,7 @@ class Student {
     required this.studentCode,
     required this.major,
     required this.cohort,
+    this.avatarUrl,
     this.skills = const [],
     this.preferredRoles = const [],
   });
@@ -17,6 +18,7 @@ class Student {
   final String studentCode;
   final String major;
   final String cohort;
+  final String? avatarUrl;
   final List<String> skills;
   final List<String> preferredRoles;
 
@@ -35,6 +37,7 @@ class Student {
     studentCode: j['studentCode'] as String,
     major: j['major'] as String,
     cohort: j['cohort'] as String,
+    avatarUrl: j['avatarUrl'] as String?,
     skills: List<String>.from(j['skills'] as List? ?? const []),
     preferredRoles: List<String>.from(j['preferredRoles'] as List? ?? const []),
   );

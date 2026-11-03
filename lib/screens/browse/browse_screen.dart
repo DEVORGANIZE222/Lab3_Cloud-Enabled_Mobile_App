@@ -109,13 +109,35 @@ class _BrowseScreenState extends State<BrowseScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            const InfoBanner(
-              tone: Tone.neutral,
-              icon: Icons.lightbulb_outline,
-              title: "Can't find a good fit?",
-              message:
-                  'Students without a team at the deadline go to the Random Pool, '
-                  'which matches them by role and skills.',
+            AppCard(
+              color: context.colors.surfaceContainerHigh,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: context.appColors.warningContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.groups, color: context.appColors.warning, size: 24),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Can't find the right fit?", style: context.text.titleSmall),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Create your own group or join the Random Pool before the deadline.',
+                          style: context.text.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -165,7 +187,13 @@ class _TeamCard extends StatelessWidget {
                 ),
                 if (team.category.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xs),
-                  StatusBadge(label: team.category, tone: Tone.warning, icon: Icons.school),
+                  Row(
+                    children: [
+                      StatusBadge(label: team.category, tone: Tone.warning, icon: Icons.school),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text('• Senior Capstone', style: context.text.bodySmall),
+                    ],
+                  ),
                 ],
                 const SizedBox(height: AppSpacing.sm),
                 Text(team.topic, style: context.text.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -186,6 +214,7 @@ class _TeamCard extends StatelessWidget {
                       Expanded(
                         child: SlotRow(
                           memberInitials: [for (final m in team.members) m.initials],
+                          avatarUrls: [for (final m in team.members) m.avatarUrl],
                           capacity: team.capacity,
                         ),
                       ),

@@ -36,6 +36,7 @@ class FirestoreTeamRepository implements TeamRepository {
         fullName: map['fullName'] as String,
         studentCode: map['studentCode'] as String,
         role: map['role'] as String,
+        avatarUrl: map['avatarUrl'] as String?,
         skills: List<String>.from(map['skills'] ?? const []),
       );
     }).toList();
@@ -66,6 +67,7 @@ class FirestoreTeamRepository implements TeamRepository {
     'fullName': m.fullName,
     'studentCode': m.studentCode,
     'role': m.role,
+    if (m.avatarUrl != null) 'avatarUrl': m.avatarUrl,
     'skills': m.skills,
   };
   Map<String, dynamic> _teamUpdate(Team team) => {

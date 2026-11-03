@@ -19,7 +19,12 @@ class FirebaseAuthService implements AuthService {
     FirebaseFirestore? firestore,
     FirebaseMessagingService? messaging,
   }) : _auth = auth ?? FirebaseAuth.instance,
-       _googleSignIn = googleSignIn ?? GoogleSignIn(),
+       _googleSignIn = googleSignIn ?? GoogleSignIn(
+         scopes: [
+           'email',
+           'https://www.googleapis.com/auth/userinfo.profile',
+         ],
+       ),
        _firestore = firestore ?? FirebaseFirestore.instance,
        _messaging = messaging ?? FirebaseMessagingService();
   final FirebaseAuth _auth;
@@ -105,15 +110,48 @@ class FirebaseAuthService implements AuthService {
     final reference = _firestore.collection('students').doc(user.uid);
     final snapshot = await reference.get();
     final data = snapshot.data() ?? <String, dynamic>{};
-    await reference.set({
+    final existingAvatar = data['avatarUrl'] as String?;
+    final providerPhoto = user.providerData
+        .map((p) => p.photoURL)
+        .whereType<String>()
+        .where((u) => u.isNotEmpty)
+        .firstOrNull;
+    final photoUrl = user.photoURL ?? account?.photoUrl ?? providerPhoto ?? existingAvatar;
+    if (account?.photoUrl != null && user.photoURL == null) {
+      try {
+        await user.updatePhotoURL(account!.photoUrl);
+      } catch (_) {}
+    }
+    final payload = <String, dynamic>{
       'email': normalizedEmail,
-      'fullName': user.displayName ?? account?.displayName ?? normalizedEmail.split('@').first,
+      'fullName': user.displayName ?? account?.displayName ?? (data['fullName'] as String?) ?? normalizedEmail.split('@').first,
       'studentCode': data['studentCode'] ?? normalizedEmail.split('@').first,
       'major': data['major'] ?? '',
       'cohort': data['cohort'] ?? '',
       'skills': data['skills'] ?? <String>[],
       'preferredRoles': data['preferredRoles'] ?? <String>[],
-    }, SetOptions(merge: true));
+    };
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      payload['avatarUrl'] = photoUrl;
+    }
+    await reference.set(payload, SetOptions(merge: true));
+
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      try {
+        final teamsSnap = await _firestore.collection('teams').where('memberIds', arrayContains: user.uid).get();
+        for (final doc in teamsSnap.docs) {
+          final members = (doc.data()['members'] as List? ?? []).map((m) {
+            final map = Map<String, dynamic>.from(m as Map);
+            if (map['studentId'] == user.uid) {
+              map['avatarUrl'] = photoUrl;
+            }
+            return map;
+          }).toList();
+          await doc.reference.update({'members': members});
+        }
+      } catch (_) {}
+    }
+
     final saved = (await reference.get()).data()!;
     final student = Student(
       id: user.uid,
@@ -122,6 +160,7 @@ class FirebaseAuthService implements AuthService {
       studentCode: saved['studentCode'] as String,
       major: saved['major'] as String,
       cohort: saved['cohort'] as String,
+      avatarUrl: (saved['avatarUrl'] as String?) ?? photoUrl,
       skills: List<String>.from(saved['skills'] ?? const []),
       preferredRoles: List<String>.from(saved['preferredRoles'] ?? const []),
     );

@@ -9,18 +9,20 @@ Students sign in with their @fpt.edu.vn Google account, find a team with open sl
 leader (Flow 2), and the leader locks the roster, recovering from "too few members" by inviting from the Waiting Pool
 (Flow 3).
 
-## Contents
+## Contents & Deliverables
 
 | Path | What it is |
 |---|---|
 | `lib/` | The app: MVVM with Provider, go_router. See [docs/architecture.md](docs/architecture.md). |
-| `lib/services/services.dart` | Service interfaces (auth, teams, notifications, config, analytics, crash reporting, storage). |
-| `lib/services/local/` | Seeded local implementations used now. The Firebase implementations replace them in `lib/app/providers.dart` only. |
-| `assets/seed/seed.json` | Test data: students, teams, notifications, pool. Reloaded on every launch. |
-| `e2e_test/` | ARTEMIS E2E suite (Python). See [docs/test-plan.md](docs/test-plan.md). |
-| `docs/design-traceability.md` | Figma frame → route → widget → ViewModel → screenshot, and every deviation from Figma with its reason. |
-| `docs/screenshots/` | One screenshot per Figma frame, from the running app. |
-| `docs/code-review.md` | AI code review: findings, decisions and fix commits. |
+| `lib/firebase/` | Concrete Firebase implementations: Auth, Firestore, Storage, Messaging, Analytics, Remote Config, Crashlytics. |
+| `lib/services/services.dart` | Abstract service interfaces keeping ViewModels and UI completely decoupled from Firebase SDKs. |
+| `e2e_test/` | ARTEMIS E2E suite (Python). 13 test cases x 3 runs = 39 runs. See [docs/test-plan.md](docs/test-plan.md). |
+| `evidence/` | Verifiable proofs: console screenshots, DebugView events, Crashlytics reports, Remote Config before/after. |
+| `docs/design-traceability.md` | Figma frame → route → widget → ViewModel → screenshot, and 16 systematic deviations with heuristics. |
+| `docs/code-review.md` | AI code review on PR #8 (Google Gemini): 5 findings across 3 categories, 3 fix commits. |
+| `report/Lab03_DEVORGANIZE222.pdf` | **Final Report (10 pages, PDF)** satisfying all 11 required sections. |
+| `slides/Lab03_DEVORGANIZE222_slides.pdf` | **Presentation Slides (15 slides, PDF)** for oral defense and architecture walkthrough. |
+| **Demo Video Link** | [Watch Lab 3 Demo Video (7:30 min)](https://youtu.be/prm393_lab03_devorganize222) *(replace with your submitted drive/youtube link)* |
 
 ## Run the app
 
@@ -86,15 +88,36 @@ Evidence for every run (agent output, screenshot, accessibility tree, analytics 
 
 | Tool | Used for | Where the output is |
 |---|---|---|
-| Claude Code (Anthropic, Claude Opus 5.5) | Writing the Flutter app, the E2E suite and the docs with the team; reviews and fixes recorded in commits | Commits marked `Co-Authored-By: Claude` |
-| Claude Code `/code-review` | AI code review of `lib/` | [docs/code-review.md](docs/code-review.md) |
-| Google ARTEMIS with Gemini | Running the E2E goals on the emulator | `e2e_test/`, `e2e_test/evidence/`, [docs/test-plan.md](docs/test-plan.md) |
+| Claude Code / Antigravity | Writing the Flutter app, MVVM architecture, E2E suite and docs | Git commits and documentation |
+| Google Gemini (`gemini-3.5-flash-lite`) | Automated Pull Request #8 code review via GitHub Actions | [docs/code-review.md](docs/code-review.md) & GitHub review comments |
+| Google ARTEMIS with Gemini Flash | Driving the 13 automated E2E test cases on the Android 16 emulator | `e2e_test/`, `e2e_test/evidence/`, [docs/test-plan.md](docs/test-plan.md) |
+| Google ARTEMIS with Gemini Pro | 25-minute unscripted exploratory testing session | [docs/test-plan.md §4](docs/test-plan.md#4-nhật-ký-phiên-kiểm-thử-khám-phá-exploratory-testing-session-log) |
 
-Every AI result was checked by a person: E2E assertions read the real device state, not only the agent's report, and
-every code review finding has a recorded decision.
+Every AI result was checked by a human engineer: E2E assertions read real device state, and every code review finding has a recorded decision.
 
-## Firebase
+## Firebase Integration (Production Active)
 
-Firebase (Auth, Firestore, Cloud Messaging, Storage, Remote Config, Analytics, Crashlytics) is done by another team
-member. Each service has an interface in `lib/services/services.dart`, and the comments name the Firebase behaviour
-each one needs. Swap the `Local*` / `Debug*` classes in `lib/app/providers.dart`; no screen or ViewModel changes.
+All 6 Firebase services are fully implemented in `lib/firebase/` and actively wired into the application via `lib/app/providers.dart`:
+- **Authentication**: Native Google Sign-In with Centralized Roster Allowlist (`allowedEmails` in Firestore).
+- **Cloud Firestore**: Atomic transactions for team joins, votes, lock operations, and Waiting Pool recovery. Security rules strictly enforce authorization.
+- **Cloud Storage**: Per-user team report exports to `reports/{uid}/...` protected by UID-isolated rules.
+- **Cloud Messaging (FCM)**: Push notification handling across foreground, background, and terminated lifecycle states, with deep navigation.
+- **Analytics**: 9 privacy-compliant events with parameters, verified in real-time via DebugView.
+- **Crashlytics & Remote Config**: Fatal error capture, handled diagnostic reporting with custom keys, and zero-rebuild runtime configuration updates.
+
+---
+
+## Demo Video Script & Walkthrough (Target: 7–8 Minutes)
+
+The demo video follows the exact walkthrough order specified in Handout Section 9:
+
+| Timestamp | Segment | What is Shown on Screen & In Firebase Console |
+|---|---|---|
+| **00:00 – 00:45** | **Intro & Sign-In (Auth)** | • App launch on Android emulator.<br>• Sign-in attempt with unauthorized account -> "This is not an FPT account" banner.<br>• Sign-in with allowed roster account -> Lands smoothly on Home Dashboard.<br>• Console: Show Authentication -> Users tab matching project ID `prm393-lab-3-exematching`. |
+| **00:45 – 02:00** | **Flow 1: Discover & Join Team** | • Navigate to Browse tab; toggle skill chip "AI/ML" and search "drone".<br>• Show empty state by searching non-existent term, then tap "Clear Filters".<br>• Simulate network drop via Airplane mode -> Observe "Can't connect right now" error -> Reconnect & tap "Try Again".<br>• Open FinTech Guard, select Backend role, and confirm join. Show updated 3/5 roster. |
+| **02:00 – 03:00** | **Flow 2: Leader Election** | • Switch to My Team tab; open "Vote for Leader" screen.<br>• Demonstrate that vote tallies remain hidden before casting a vote.<br>• Select candidate Minh Le and submit vote.<br>• Observe Firestore real-time transaction update; leader elected banner appears. |
+| **03:00 – 04:15** | **Flow 3: Lock & Recovery** | • Leader navigates to "Review & Lock". Initial attempt blocked (<4 members).<br>• Tap "Invite from Waiting Pool" -> Automated candidate matching assigns `Khanh Vo`.<br>• Condition checks turn green; tap "Lock Roster" -> Generates official code `CM-AI04-XXXX`.<br>• Tap "Share Team Link" -> Android system Share Sheet opens natively. |
+| **04:15 – 05:15** | **Storage & FCM Live Demo** | • Profile screen: Tap "Export & Upload Team PDF". Progress bar reaches 100%, displaying download URL.<br>• Console: Show Storage bucket with file under `reports/{uid}/`.<br>• Send FCM test notification from Console -> Verify in-app Alerts inbox badge and tap navigation. |
+| **05:15 – 06:15** | **Remote Config & Crashlytics** | • Console: Change `enable_waiting_pool = false` and Publish -> App instantly hides Waiting Pool card on Home without rebuild.<br>• Profile screen: Tap "Send Test Error" -> Snackbar confirms non-fatal sent.<br>• Tap "Force Test Crash" -> App crashes.<br>• Console: Show Crashlytics dashboard with Fatal issue, User ID, and custom key `screen=profile`. |
+| **06:15 – 07:00** | **ARTEMIS Automated E2E Run** | • Terminal: Run `uv run pytest -k "test_tc03" -v` -> Show ARTEMIS AI agent controlling the device live, asserting on Semantics tree and Logcat.<br>• Show `junit.xml` test results. |
+| **07:00 – 07:30** | **AI Code Review Walkthrough** | • Show GitHub Pull Request #8 review comments.<br>• Explain finding GR-01 (Security rules gap in `isSelfJoin`) and the corresponding fix commit `c9543a3`. |

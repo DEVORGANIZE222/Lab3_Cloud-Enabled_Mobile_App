@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../theme/app_colors.dart';
@@ -21,6 +22,7 @@ class ProfileScreen extends StatelessWidget {
       context,
       semanticId: 'dialog_sign_out',
       icon: Icons.logout,
+      destructive: true,
       title: 'Sign out?',
       message: 'Your team and votes stay saved. Sign in again with your @fpt.edu.vn account.',
       confirmLabel: 'Sign Out',
@@ -60,7 +62,7 @@ class ProfileScreen extends StatelessWidget {
               semanticId: 'card_account',
               child: Row(
                 children: [
-                  MemberAvatar(initials: s.initials, size: 56),
+                  MemberAvatar(initials: s.initials, avatarUrl: s.avatarUrl, size: 56),
                   const SizedBox(width: AppSpacing.lg),
                   Expanded(
                     child: Column(
@@ -162,7 +164,7 @@ class ProfileScreen extends StatelessWidget {
               semanticId: 'btn_sign_out',
               label: 'Sign Out',
               icon: Icons.logout,
-              variant: AppButtonVariant.secondary,
+              variant: AppButtonVariant.destructive,
               onPressed: () => _signOut(context),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -207,7 +209,54 @@ class _ExportCard extends StatelessWidget {
               tone: Tone.success,
               title: 'Uploaded $fileName · $sizeKb KB',
               message: 'Saved to your account. Download link:',
-              action: SelectableText(url, style: context.text.bodySmall),
+              action: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Row(
+                  children: [
+                    const Icon(Icons.link, size: 16, color: Color(0xFF047857)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        url,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.text.bodySmall?.copyWith(
+                          color: const Color(0xFF047857),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Material(
+                      color: const Color(0xFF047857),
+                      borderRadius: BorderRadius.circular(6),
+                      child: InkWell(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: url));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Download link copied to clipboard!'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(6),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.copy, size: 14, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text('Copy', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             ExportFailed(:final failure) => InfoBanner(
               semanticId: 'export_failed',
@@ -223,11 +272,6 @@ class _ExportCard extends StatelessWidget {
             icon: Icons.picture_as_pdf,
             loading: busy,
             onPressed: onExport,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Saved as reports/{your ID}/team-{code}-{date}.pdf',
-            style: context.text.bodySmall?.copyWith(color: context.colors.onSurfaceVariant),
           ),
         ],
       ),
