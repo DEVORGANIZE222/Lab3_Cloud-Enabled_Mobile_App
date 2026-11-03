@@ -1,3 +1,0 @@
-set_user_id
-login
-set_user_id

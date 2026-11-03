@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/app_notification.dart';
+import '../../models/view_state.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens.dart';
 import '../../utils/format.dart';
@@ -101,19 +102,25 @@ class _NotificationCard extends StatelessWidget {
   final AppNotification item;
 
   Future<void> _decline(BuildContext context) async {
+    // The Firestore stream removes the declined invite at once, which disposes
+    // this card. Everything after the await therefore goes through the
+    // screen-level messenger, never this card's (by then unmounted) context;
+    // checking context.mounted here used to skip the Undo snackbar entirely.
     final vm = context.read<NotificationsViewModel>();
     final messenger = ScaffoldMessenger.of(context);
+    void report(AppFailure f) => messenger.showSnackBar(SnackBar(content: Text('${f.title}. ${f.cause}')));
     final failure = await vm.decline(item);
-    if (!context.mounted) return;
-    if (failure != null) return showFailure(context, failure);
+    if (failure != null) return report(failure);
     messenger.showSnackBar(
       SnackBar(
         content: const Text('Invite declined'),
+        // Long enough to find and press Undo (WCAG 2.2.1), not the default 4 s.
+        duration: const Duration(seconds: 10),
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () async {
             final undoFailure = await vm.restore(item);
-            if (undoFailure != null && context.mounted) showFailure(context, undoFailure);
+            if (undoFailure != null) report(undoFailure);
           },
         ),
       ),
