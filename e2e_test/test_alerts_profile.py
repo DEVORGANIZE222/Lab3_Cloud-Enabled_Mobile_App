@@ -40,7 +40,7 @@ async def test_tc13_export_and_upload_team_summary(device, backend, me, artemis)
     assert re.fullmatch(r"team-ai-04-\d{8}-\d{4}\.pdf", run.data["file_name"])
     assert run.data["size_kb"] > 0
     # The banner's accessible text is the download URL of reports/{uid}/{file}.
-    assert "[export_done] https://firebasestorage.googleapis.com/" in run.screen
+    assert "[export_done] Uploaded" in run.screen and "https://firebasestorage.googleapis.com/" in run.screen
     assert f"reports%2F{me.uid}%2F{run.data['file_name']}" in run.screen
     assert "export_report" in device.analytics_events()
     # Ground truth: a new object exists in Cloud Storage under the owner's folder.
