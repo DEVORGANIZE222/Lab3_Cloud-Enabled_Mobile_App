@@ -1,43 +1,64 @@
-# Kế hoạch & Báo cáo kiểm thử tự động đầu cuối (ARTEMIS E2E Test Plan) — PRM393 Lab 3
+# Kế hoạch & Báo cáo kiểm thử E2E (ARTEMIS) — PRM393 Lab 3
 
-Hệ thống kiểm thử tự động đầu cuối cho ứng dụng di động kết nối đám mây **EXEMatching**, điều khiển bởi **Google ARTEMIS** trên thiết bị giả lập Android (`Pixel_API_36`). Mã kiểm thử: [`e2e_test/`](../e2e_test).
-
----
-
-## 1. Phương pháp & Nguyên tắc kiểm định
-
-- **Điều khiển bởi AI Agent (ARTEMIS):** Mỗi ca kiểm thử giao cho Agent một mục tiêu phát biểu bằng ngôn ngữ tự nhiên từ góc nhìn sinh viên. Agent tương tác trực tiếp với giao diện ứng dụng.
-- **Đầu ra cấu trúc (Structured JSON Verification):** Agent trả về kết quả dưới dạng đối tượng JSON chuẩn để kiểm thử đối chiếu từng trường giá trị.
-- **Đối chiếu giá trị quan sát thực tế (Ground Truth from Device):** Không chỉ dựa vào cờ trạng thái `SUCCESS` của Agent. Bài kiểm thử trực tiếp đọc cây ngữ cảnh tiếp cận (`Semantics.identifier` ánh xạ sang `resource-id` của Android) và sự kiện `analytics_event` trong Logcat để xác minh giá trị cụ thể.
-- **Tiêu chuẩn 3 lần chạy (3 Runs per Test Case):** Mỗi ca kiểm thử được thực thi tối thiểu 3 lần độc lập (`run1`, `run2`, `run3`) để chứng minh tính ổn định, không phụ thuộc vào trạng thái đệm hay may rủi.
-- **Bao phủ toàn diện:** 13 ca kiểm thử bao phủ toàn bộ 3 luồng chính Lab 2, các nhánh lỗi (mất mạng, nhóm đầy, sai tên miền) và tương tác hệ thống Android gốc (Share Sheet).
+Kiểm thử đầu cuối cho ứng dụng **EXEMatching** trên Firebase thật (Auth, Firestore, Storage, Analytics), điều khiển bởi **ARTEMIS** trên máy ảo Android `Pixel_API_36` (Android 16). Mã kiểm thử: [`e2e_test/`](../e2e_test).
 
 ---
 
-## 2. Đặc tả chi tiết 13 Ca kiểm thử (Test Cases Specification)
+## 1. Phương pháp
 
-| Mã ca (ID) | Phân loại & Luồng | Điều kiện đầu (Precondition) | Các bước thực hiện (Execution Steps) | Kết quả mong đợi & Giá trị quan sát được |
+- **Tài khoản thật:** app dùng Google Sign-In thật, nên bộ test dùng một tài khoản Google đã đăng nhập trên máy ảo (`E2E_ACCOUNT`, mặc định `megalit2578@gmail.com`) và có trong `allowedEmails`.
+- **Điều kiện đầu đặt bằng Firestore:** trước mỗi ca, [`e2e_test/backend.py`](../e2e_test/backend.py) khôi phục dữ liệu seed (`tool/seed_firestore_lab3.py`) rồi đặt tài khoản vào đúng vai: sinh viên chưa có nhóm, thành viên Team AI-04 (thay ghế của Minh Le), hoặc nhóm trưởng.
+- **ARTEMIS thực hiện các bước** theo mục tiêu viết bằng ngôn ngữ tự nhiên và trả về JSON.
+- **Không tin mỗi cờ SUCCESS:** mỗi ca so JSON của agent với (1) cây accessibility thật của màn hình (`Semantics.identifier` → `resource-id`), (2) sự kiện `analytics_event` trong Logcat, và (3) **dữ liệu thật trên Firestore / Cloud Storage** sau thao tác (ví dụ `memberIds` có uid, `lockCode` khớp mã trên màn hình, file PDF có trong `reports/{uid}/`).
+- **3 lần chạy mỗi ca** (`E2E_RUNS=3`), bằng chứng mỗi lần trong `evidence/<ca>/runN/`: `result.json` (trace ARTEMIS, thời gian, output), `screen.txt`, `analytics.txt`, `final.png`; tổng hợp trong `junit.xml`.
+
+## 2. Đặc tả 13 ca kiểm thử
+
+| ID | Luồng · loại | Điều kiện đầu (Firestore) | Bước (ARTEMIS) | Kết quả mong đợi (kiểm trên màn hình + backend) |
 |---|---|---|---|---|
-| **TC-01** | Xác thực · Nhánh lỗi | Ứng dụng mới mở, chưa đăng nhập (`Signed out`) | 1. Bấm nút đăng nhập Google.<br>2. Chọn tài khoản cá nhân Gmail (`@gmail.com`). | Bị từ chối đăng nhập; hiển thị thông báo lỗi "This is not an FPT account"; `signed_in=false`; cờ giao diện `[sign_in_message]` hiển thị. |
-| **TC-02** | Xác thực · Luồng chuẩn | Chưa đăng nhập | 1. Bấm đăng nhập Google.<br>2. Chọn tài khoản FPT `minh.le@fpt.edu.vn`. | Đăng nhập thành công vào Home; hiển thị lời chào "Hi, Minh", thẻ hạn chót `[card_deadline]`, thông tin nhóm `Team AI-04`; ghi nhận sự kiện `login`. |
-| **TC-03** | Flow 1 · Tìm kiếm & Lọc | Đã đăng nhập tài khoản `an.tran@fpt.edu.vn` (chưa có nhóm) | 1. Chuyển sang tab Browse (`/browse`).<br>2. Bật chip lọc `AI/ML` và giữ `Open Slots`.<br>3. Gõ từ khóa tìm kiếm "drone". | Danh sách trả về chính xác 1 kết quả; hiển thị thẻ `[team_card_AI-04]`; dòng thông báo `[browse_result_count]` hiển thị "1 team with open slots"; ghi nhận sự kiện `search_teams`. |
-| **TC-04** | Flow 1 · Trạng thái rỗng | Đã đăng nhập tài khoản An Tran | 1. Tại tab Browse, tìm từ khóa không tồn tại "quantum".<br>2. Quan sát giao diện rỗng.<br>3. Bấm nút "Clear Filters". | Hiển thị màn hình rỗng với tiêu đề "No teams match your search"; sau khi bấm xóa bộ lọc, danh sách khôi phục hiển thị đầy đủ 4 nhóm còn chỗ; `[browse_result_count]` hiển thị "4 teams with open slots". |
-| **TC-05** | Flow 1 · Mất mạng & Thử lại | Đã đăng nhập tài khoản An Tran, ngắt kết nối mạng qua ADB | 1. Mở tab Browse khi đang offline.<br>2. Quan sát thông báo lỗi.<br>3. Bật lại mạng và bấm "Try Again". | Giao diện hiển thị lỗi "Can't connect right now" kèm nút "Try Again"; sau khi bật mạng và bấm thử lại, tải thành công danh sách nhóm, không còn cờ `state_error`. |
-| **TC-06** | Flow 1 · Tham gia nhóm | Đã đăng nhập tài khoản An Tran (chưa có nhóm) | 1. Tìm nhóm `FinTech Guard` (đang có 2/5 thành viên).<br>2. Mở chi tiết nhóm và bấm "Join Team".<br>3. Chọn vị trí "Backend" và xác nhận. | Tham gia thành công; chuyển sang tab My Team hiển thị nhóm `FinTech Guard` với 3/5 thành viên; thẻ thành viên `[member_s_an]` xuất hiện; ghi nhận sự kiện `join_team`. |
-| **TC-07** | Flow 1 · Nhánh lỗi nhóm đầy | Đã đăng nhập tài khoản An Tran | 1. Mở chi tiết nhóm `EduSmart Analytics` (đang có 4/5 thành viên).<br>2. Giả lập một thành viên khác vừa vào nhóm khiến nhóm đầy (5/5).<br>3. Bấm thử tham gia. | Bị từ chối tham gia; hiển thị banner cảnh báo `[banner_team_filled]` với nội dung "EduSmart Analytics just filled up"; nút Join chuyển sang trạng thái Disabled kèm lý do rõ ràng. |
-| **TC-08** | Flow 2 · Giấu kết quả bầu cử | Đã đăng nhập tài khoản `minh.le@fpt.edu.vn` (nhóm chưa bầu cử xong) | 1. Mở tab My Team, bấm "Vote for Leader".<br>2. Quan sát màn hình trước khi bỏ phiếu. | Tỷ lệ phiếu bầu của các thành viên được ẩn kín hoàn toàn; hiển thị dòng hướng dẫn "Results appear after you vote"; nút Submit Vote ở trạng thái Disabled. |
-| **TC-09** | Flow 2 · Bỏ phiếu bầu Leader | Minh Le đang ở màn hình Leader Voting | 1. Chọn ứng viên `Minh Le`.<br>2. Bấm "Submit Vote".<br>3. Quan sát kết quả cập nhật trên Firestore. | Bỏ phiếu thành công; hiển thị banner chiến thắng `[banner_leader_elected]` xác nhận Minh Le đạt đa số (2/3 phiếu); ghi nhận sự kiện `cast_vote`. |
-| **TC-10** | Flow 3 · Lỗi & Phục hồi Waiting Pool | Minh Le là nhóm trưởng Team AI-04 (hiện có 3 thành viên, chưa đủ 4) | 1. Mở "Review & Lock".<br>2. Ghi nhận lỗi bị chặn.<br>3. Bấm "Invite from Waiting Pool" để ghép sinh viên.<br>4. Chờ ứng viên `Khanh Vo` gia nhập.<br>5. Bấm "Lock Roster" và xác nhận. | Ban đầu bị chặn với thông báo "Can't lock yet: needs 1 more member"; sau khi mời từ Pool, sinh viên `Khanh Vo` được gán vào nhóm; điều kiện kích hoạt chuyển màu xanh; khóa thành công với mã xác nhận `CM-AI04-XXXX`; cờ `[state_locked]` xuất hiện; ghi nhận `invite_pool` và `lock_roster`. |
-| **TC-11** | Flow 3 · Tương tác Android gốc | Minh Le là nhóm trưởng Team AI-04 | 1. Tại màn hình Review & Lock, bấm nút "Share Team Link".<br>2. Dừng lại khi hộp thoại chia sẻ hệ thống mở ra. | Hộp thoại chia sẻ gốc của Android (`Android Share Sheet`) xuất hiện trên cùng; Activity đang hoạt động là `com.android.intentresolver`; nội dung chia sẻ chứa tên và mã nhóm. |
-| **TC-12** | Alerts · Từ chối lời mời & Hoàn tác | Đã đăng nhập tài khoản Minh Le | 1. Mở tab Alerts (`/alerts`).<br>2. Bấm từ chối (Decline) lời mời từ nhóm FinTech Guard.<br>3. Bấm nút "Undo" trên thanh thông báo. | Sau khi từ chối, danh sách lời mời giảm về 0; sau khi bấm Undo, lời mời được khôi phục nguyên vẹn về danh sách; badge hiển thị "Invites (1)". |
-| **TC-13** | Profile · Xuất báo cáo & Tải lên Cloud Storage | Đã đăng nhập tài khoản Minh Le | 1. Vào màn hình Profile.<br>2. Bấm "Export & Upload Team PDF".<br>3. Theo dõi tiến trình tải lên Cloud Storage. | Tệp báo cáo PDF dạng `team-ai-04-YYYYMMDD-HHMM.pdf` được tạo và tải lên thư mục bảo mật `reports/{uid}/...`; thanh tiến trình đạt 100%; hiển thị liên kết tải về an toàn; ghi nhận sự kiện `export_report`. |
+| TC-01 | Đăng nhập · nhánh lỗi | Tài khoản bị tắt trong `allowedEmails` | Bấm *Continue with Google*, chọn tài khoản trong trình chọn của Google | Ở lại Sign In; banner `sign_in_message` "This account is not on the class roster" nêu email đã chọn |
+| TC-02 | Đăng nhập · chuẩn | Tài khoản trong Team AI-04 | Đăng nhập, đọc lời chào, hạn đăng ký, tên nhóm | "Hi, \<tên\>", `card_deadline` "… left", Team AI-04; Logcat có `login`; `students/{uid}.email` đúng |
+| TC-03 | Flow 1 · tìm & lọc | Chưa có nhóm | Bật lọc AI/ML + Open Slots, tìm "drone" | `browse_result_count` "1 team with open slots", có AI-04; Logcat `search_teams` |
+| TC-04 | Flow 1 · rỗng | Chưa có nhóm | Tìm "quantum", bấm *Clear Filters* | "No teams match your search"; sau khi xoá lọc, số nhóm = số nhóm còn chỗ đọc từ Firestore |
+| TC-05 | Flow 1 · mất mạng | Chưa có nhóm, tắt Wi-Fi + data qua ADB | Mở Browse; bật mạng; *Try Again* | "Can't connect right now" + `state_error`; sau thử lại hiện đúng số nhóm |
+| TC-06 | Flow 1 · tham gia | Chưa có nhóm, FinTech Guard 2/5 | Mở FinTech Guard, *Join Team*, xác nhận | My Team "3 of 5", có `member_<uid>`; Logcat `join_team`; Firestore `team_fin02.memberIds` có uid |
+| TC-07 | Flow 1 · nhóm vừa đầy | EduSmart 4/5 | Mở hộp thoại join; **backend thêm thành viên thứ 5**; xác nhận | Banner `banner_team_filled`, "This team is full (5/5)"; Firestore không có uid trong `team_edu07` |
+| TC-08 | Flow 2 · ẩn kết quả | Thành viên AI-04, chưa bỏ phiếu | Mở *Vote for Leader*, không bỏ phiếu | Không thấy số phiếu, "Results appear after you vote", *Submit* bị khoá; Firestore chưa có phiếu |
+| TC-09 | Flow 2 · bầu trưởng nhóm | Như TC-08 | Chọn chính mình, *Submit Vote* | `banner_leader_elected` "\<tên\> is your team leader", 2 phiếu; Firestore `votes[uid]` và `leaderId` = uid |
+| TC-10 | Flow 3 · lỗi & phục hồi | Nhóm trưởng AI-04 (3/5), Khanh Vo trong pool | *Review & Lock* → *Invite from Waiting Pool* → khoá | Lỗi đầu "Can't lock yet…"; Khanh Vo vào nhóm; `state_locked` + mã `CM-AI04-XXXX`; Firestore `locked`, `lockCode` khớp, `waitingPool/s_khanh.assigned` |
+| TC-11 | Flow 3 · Android gốc | Nhóm trưởng AI-04 | *Share Team Link* | Activity trên cùng là `intentresolver` (share sheet hệ thống) |
+| TC-12 | Alerts · từ chối & hoàn tác | Có lời mời từ FinTech Guard | Lọc *Invites*, *Decline*, *Undo* | 0 lời mời sau khi từ chối, 1 sau Undo; tài liệu notification còn trên Firestore |
+| TC-13 | Profile · xuất & tải lên | Thành viên AI-04 | *Export & Upload PDF* | `export_done` chứa URL `reports%2F<uid>%2Fteam-ai-04-….pdf`; Logcat `export_report`; object mới trong Cloud Storage |
 
----
+## 3. Kết quả
 
-## 3. Kết quả thực thi (Execution Results)
+### 3.1. Lần chạy 1 — 2026-11-02 05:47–06:49 (bằng chứng gốc: [`e2e_test/evidence-attempt1/`](../e2e_test/evidence-attempt1))
 
-> **Chưa có kết quả hợp lệ.** Bảng "39/39 PASS" trước đây được sinh bởi script `tool/generate_complete_evidence.py` với số liệu ghi sẵn, không phải từ lần chạy thật, nên đã bị gỡ bỏ cùng toàn bộ thư mục `e2e_test/evidence/`. Kết quả sẽ được điền lại từ `e2e_test/evidence/junit.xml` và các thư mục `runN/` do `conftest.py` ghi ra sau khi chạy thật trên thiết bị.
+**6/39 lượt PASS (15 %).** Kết quả được giữ nguyên, không sửa.
 
-## 4. Nhật ký phiên kiểm thử khám phá (Exploratory Testing Session Log)
+| Ca | Run 1 | Run 2 | Run 3 | Nguyên nhân |
+|---|---|---|---|---|
+| TC-01 | PASS | PASS | PASS | — |
+| TC-02 | PASS | PASS | PASS | — |
+| TC-03 | FAIL | FAIL | FAIL | Agent không nhập được từ khoá (ô tìm kiếm trống, báo 2 nhóm); run 3 lỗi đăng nhập (timeout `nav_home`) |
+| TC-04 | FAIL | FAIL | FAIL | Run 1: agent rời app sang một app khác trên máy ảo; run 2: task ARTEMIS timeout 900 s; run 3: lỗi đăng nhập |
+| TC-05 | FAIL | FAIL | FAIL | Run 1 phát hiện **lỗi thật của app** (xem 3.3); run 2–3: Gemini API 429 (giới hạn 15 lượt/phút) |
+| TC-06 | FAIL | FAIL | FAIL | Gemini API 429 → ARTEMIS dừng trước bước đầu tiên |
+| TC-07 … TC-11 | FAIL ×15 | | | **Lỗi bộ test:** token Firestore hết hạn sau 1 giờ, điều kiện đầu không đặt được, ca không chạy |
+| TC-12 | FAIL | FAIL | FAIL | Run 1 lỗi đăng nhập; run 2–3: thanh *Undo* (4 s) biến mất trước khi agent kịp bấm |
+| TC-13 | FAIL | FAIL | FAIL | **Lỗi bộ test:** upload thật thành công (PDF 6 KB trên Storage) nhưng test đọc sai nhãn banner |
 
-> **Chưa thực hiện.** Sẽ ghi lại sau một phiên 15–30 phút thật, kèm ảnh chụp và trace ARTEMIS.
+Các lỗi của bộ test đã sửa ở commit `9652bb4` (làm mới token khi 401, kiểm URL Storage, chờ giữa các task) và `72a8a0a` (mục tiêu TC-01 rõ ràng hơn).
+
+### 3.2. Lần chạy trên bản cuối (UI theo Figma + bản sửa GR-01/03/04) — **chưa hoàn thành**
+
+Hai lần thử sau đó (08:00 và 15:23) bị dừng vì **hết quota miễn phí của Gemini API** mà ARTEMIS dùng: `gemini-3.5-flash-lite` và `gemini-3.1-flash-lite` mỗi model 500 lượt/ngày, cả hai trả `429 GenerateRequestsPerDayPerProject` với thời gian chờ ~23 giờ. Một lần chạy đủ 13×3 cần khoảng 450–600 lượt gọi. Kết quả của các lần bị dừng vì quota không được tính là PASS hay FAIL của app và đã bị xoá; lần chạy cuối sẽ được ghi vào đây khi quota cho phép.
+
+### 3.3. Lỗi thật của app tìm thấy qua kiểm thử
+
+- **Mất mạng hiện sai thông báo (TC-05 run 1):** khi chưa có cache Firestore và không có mạng, Browse hiện *"No teams match your search — Every team is full right now"* thay vì *"Can't connect right now"*. Nguyên nhân: truy vấn Firestore offline trả danh sách rỗng từ cache thay vì báo lỗi. Chưa sửa.
+- **Undo khó dùng (TC-12):** thanh *Undo* tự ẩn sau 4 s, quá ngắn với người dùng chậm hoặc dùng trình đọc màn hình (WCAG 2.2.1). Chưa sửa.
+
+## 4. Phiên kiểm thử khám phá (15–30 phút)
+
+**Chưa thực hiện.** Sẽ làm thủ công trên máy ảo và ghi lại hành vi, ảnh chụp và lỗi tìm được.

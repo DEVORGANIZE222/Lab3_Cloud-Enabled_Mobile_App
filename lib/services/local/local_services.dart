@@ -167,6 +167,12 @@ class DebugAnalyticsService implements AnalyticsService {
   @override
   Future<void> logExportReport({required String teamId, required int fileSizeKb}) =>
       _log('export_report', {'team_id': teamId, 'file_size_kb': fileSizeKb});
+  @override
+  Future<void> logViewMentor({required String mentorId, required String mentorName}) =>
+      _log('view_mentor', {'mentor_id': mentorId, 'mentor_name': mentorName});
+  @override
+  Future<void> logRequestMentor({required String teamId, required String mentorId}) =>
+      _log('request_mentor', {'team_id': teamId, 'mentor_id': mentorId});
 }
 
 class DebugCrashReporter implements CrashReporter {

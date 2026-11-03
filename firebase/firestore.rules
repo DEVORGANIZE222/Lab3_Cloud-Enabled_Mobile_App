@@ -52,8 +52,17 @@ service cloud.firestore {
           isSelfLeave(uid, before, after) ||
           isSelfVote(uid, before, after) ||
           isLeaderLock(uid, before, after) ||
-          isLeaderPoolInvite(uid, before, after)
+          isLeaderPoolInvite(uid, before, after) ||
+          isLeaderResign(uid, before, after)
         );
+      }
+
+      function isLeaderResign(uid, before, after) {
+        return before.leaderId == uid
+            && after.leaderId == null
+            && after.members == before.members
+            && after.memberIds == before.memberIds
+            && after.locked == false;
       }
 
       function isSelfJoin(uid, before, after) {
@@ -123,6 +132,21 @@ service cloud.firestore {
     match /configuration/{document} {
       allow read: if isRosterMember();
       allow write: if false;
+    }
+
+    match /mentors/{mentorId} {
+      allow read: if isRosterMember();
+      allow write: if false;
+    }
+
+    match /mentor_requests/{requestId} {
+      allow read: if isRosterMember();
+      allow create: if isRosterMember()
+                    && request.resource.data.senderId == request.auth.uid
+                    && request.resource.data.status == 'pending';
+      allow delete: if isRosterMember()
+                    && resource.data.senderId == request.auth.uid;
+      allow update: if false;
     }
   }
 }

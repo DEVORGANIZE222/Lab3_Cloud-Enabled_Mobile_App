@@ -72,4 +72,15 @@ class FirebaseAnalyticsService implements AnalyticsService {
   Future<void> logExportReport({required String teamId, required int fileSizeKb}) async {
     await _event('export_report', {'team_id': teamId, 'file_size_kb': fileSizeKb});
   }
+
+  @override
+  Future<void> logViewMentor({required String mentorId, required String mentorName}) async {
+    await _event('view_mentor', {'mentor_id': mentorId, 'mentor_name': mentorName});
+  }
+
+  @override
+  Future<void> logRequestMentor({required String teamId, required String mentorId}) async {
+    debugPrint('analytics_event request_mentor {team_id: , mentor_id: }');
+    await _event('request_mentor', {'team_id': teamId, 'mentor_id': mentorId});
+  }
 }

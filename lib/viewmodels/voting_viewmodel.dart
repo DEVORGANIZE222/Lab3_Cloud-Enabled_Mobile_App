@@ -71,4 +71,23 @@ class VotingViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Resigns as leader of the team.
+  Future<({Team? team, AppFailure? failure})> resignLeader() async {
+    final current = state;
+    if (current is! Data<Team>) return (team: null, failure: null);
+    submitting = true;
+    notifyListeners();
+    try {
+      final team = await _teams.resignLeader(current.value.id, _student.id);
+      state = Data(team);
+      selected = team.votes[_student.id];
+      return (team: team, failure: null);
+    } catch (e, st) {
+      return (team: null, failure: await toFailure(e, st, crash: _crash, reason: 'resign_leader'));
+    } finally {
+      submitting = false;
+      notifyListeners();
+    }
+  }
 }

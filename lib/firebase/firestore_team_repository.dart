@@ -198,6 +198,28 @@ class FirestoreTeamRepository implements TeamRepository {
   }
 
   @override
+  Future<Team> resignLeader(String teamId, String leaderId) async {
+    final ref = _teams.doc(teamId);
+    return _db.runTransaction((tx) async {
+      var team = _team(await tx.get(ref));
+      if (team.locked) {
+        throw const AppFailure('Team is locked', 'Voting is closed.', retryable: false, code: 'locked');
+      }
+      if (team.leaderId != leaderId) {
+        throw const AppFailure('Not the leader', 'Only the current leader can resign.', retryable: false);
+      }
+      final votes = Map<String, String>.from(team.votes)
+        ..removeWhere((_, candidate) => candidate == leaderId);
+      final updated = team.copyWith(
+        clearLeader: true,
+        votes: votes,
+      );
+      tx.update(ref, _teamUpdate(updated));
+      return updated;
+    });
+  }
+
+  @override
   Future<Team> lockTeam(String teamId, String leaderId) async {
     final ref = _teams.doc(teamId);
     return _db.runTransaction((tx) async {

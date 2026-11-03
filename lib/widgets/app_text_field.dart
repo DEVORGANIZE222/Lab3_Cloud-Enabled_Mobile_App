@@ -20,6 +20,7 @@ class AppTextField extends StatelessWidget {
     this.textInputAction,
     this.keyboardType,
     this.semanticId,
+    this.maxLines = 1,
   });
 
   final String label;
@@ -34,6 +35,7 @@ class AppTextField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final TextInputType? keyboardType;
   final String? semanticId;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +45,7 @@ class AppTextField extends StatelessWidget {
       child: TextField(
         controller: controller,
         enabled: enabled,
+        maxLines: maxLines,
         onChanged: onChanged,
         onSubmitted: onSubmitted,
         textInputAction: textInputAction,

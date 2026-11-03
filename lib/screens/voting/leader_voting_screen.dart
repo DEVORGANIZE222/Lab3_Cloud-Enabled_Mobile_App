@@ -51,6 +51,27 @@ class LeaderVotingScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _resign(BuildContext context, Team team) async {
+    final ok = await showAppDialog(
+      context,
+      semanticId: 'dialog_resign_leader',
+      destructive: true,
+      icon: Icons.person_remove_outlined,
+      title: 'Resign as Leader?',
+      message:
+          'You will step down as team leader. Your team will need to vote for a new leader before locking the roster.',
+      confirmLabel: 'Resign Leadership',
+    );
+    if (!ok || !context.mounted) return;
+    final vm = context.read<VotingViewModel>();
+    final result = await vm.resignLeader();
+    if (!context.mounted) return;
+    if (result.failure != null) return showFailure(context, result.failure!);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('You have stepped down as team leader.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<VotingViewModel>();
@@ -65,7 +86,7 @@ class LeaderVotingScreen extends StatelessWidget {
             state: state,
             onRetry: vm.load,
             empty: const NoTeamState(message: 'Join a team first. Then you can vote for its leader.'),
-            builder: (context, t) => _Body(team: t),
+            builder: (context, t) => _Body(team: t, onResign: () => _resign(context, t)),
           ),
         ],
       ),
@@ -110,14 +131,16 @@ class LeaderVotingScreen extends StatelessWidget {
 }
 
 class _Body extends StatelessWidget {
-  const _Body({required this.team});
+  const _Body({required this.team, required this.onResign});
 
   final Team team;
+  final VoidCallback onResign;
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<VotingViewModel>();
     final showTally = vm.showTally(team);
+    final isMeLeader = team.leaderId == vm.myId;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -188,17 +211,43 @@ class _Body extends StatelessWidget {
             semanticId: 'banner_leader_elected',
             tone: Tone.success,
             icon: Icons.star,
-            title: '${team.leader!.fullName} is your team leader',
+            title: isMeLeader
+                ? 'You are the team leader'
+                : '${team.leader!.fullName} is your team leader',
             message: team.locked
                 ? 'Voting closed when the roster was locked.'
-                : 'Elected with ${Fmt.count(team.votesFor(team.leaderId!), 'vote')}. Votes can still change until the roster is locked.',
-            action: AppButton(
-              semanticId: 'btn_back_to_team',
-              label: 'Back to My Team',
-              variant: AppButtonVariant.secondary,
-              expand: false,
-              onPressed: () => context.pop(),
-            ),
+                : (isMeLeader
+                    ? 'As leader, you can review and lock the roster, or resign leadership to allow a new vote.'
+                    : 'Elected with ${Fmt.count(team.votesFor(team.leaderId!), 'vote')}. Votes can still change until the roster is locked.'),
+            action: !team.locked && isMeLeader
+                ? Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.xs,
+                    children: [
+                      AppButton(
+                        semanticId: 'btn_resign_leader',
+                        label: 'Resign as Leader',
+                        icon: Icons.person_remove_outlined,
+                        variant: AppButtonVariant.destructive,
+                        expand: false,
+                        onPressed: onResign,
+                      ),
+                      AppButton(
+                        semanticId: 'btn_back_to_team',
+                        label: 'Back to My Team',
+                        variant: AppButtonVariant.secondary,
+                        expand: false,
+                        onPressed: () => context.pop(),
+                      ),
+                    ],
+                  )
+                : AppButton(
+                    semanticId: 'btn_back_to_team',
+                    label: 'Back to My Team',
+                    variant: AppButtonVariant.secondary,
+                    expand: false,
+                    onPressed: () => context.pop(),
+                  ),
           )
         else
           InfoBanner(

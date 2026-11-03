@@ -21,6 +21,7 @@ class MyTeamViewModel extends ChangeNotifier {
 
   ViewState<Team> state = const Loading();
   bool leaving = false;
+  bool resigning = false;
 
   String get myId => _student.id;
 
@@ -62,6 +63,21 @@ class MyTeamViewModel extends ChangeNotifier {
       return toFailure(e, st, crash: _crash, reason: 'leave_team');
     } finally {
       leaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<AppFailure?> resignLeader(Team team) async {
+    resigning = true;
+    notifyListeners();
+    try {
+      final updated = await _teams.resignLeader(team.id, _student.id);
+      state = Data(updated);
+      return null;
+    } catch (e, st) {
+      return toFailure(e, st, crash: _crash, reason: 'resign_leader');
+    } finally {
+      resigning = false;
       notifyListeners();
     }
   }

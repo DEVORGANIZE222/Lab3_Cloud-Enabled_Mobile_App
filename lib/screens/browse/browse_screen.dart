@@ -68,6 +68,11 @@ class _BrowseScreenState extends State<BrowseScreen> {
                       ),
                       const SizedBox(width: AppSpacing.sm),
                     ],
+                    AppChip(
+                      label: 'Mentors 🎓',
+                      selected: false,
+                      onSelected: (_) => context.push('/mentors'),
+                    ),
                   ],
                 ),
               ),

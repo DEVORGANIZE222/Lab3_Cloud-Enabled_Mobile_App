@@ -40,12 +40,33 @@ class MyTeamScreen extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('You left ${team.name}')));
   }
 
+  Future<void> _resignLeader(BuildContext context, Team team) async {
+    final vm = context.read<MyTeamViewModel>();
+    final ok = await showAppDialog(
+      context,
+      semanticId: 'dialog_resign_leader',
+      destructive: true,
+      icon: Icons.person_remove_outlined,
+      title: 'Resign as Leader?',
+      message:
+          'You will step down as team leader. Your team will need to vote for a new leader before locking the roster.',
+      confirmLabel: 'Resign Leadership',
+    );
+    if (!ok || !context.mounted) return;
+    final failure = await vm.resignLeader(team);
+    if (!context.mounted) return;
+    if (failure != null) return showFailure(context, failure);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('You have stepped down as team leader.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<MyTeamViewModel>();
     return BlockingOverlay(
-      visible: vm.leaving,
-      message: 'Leaving team…',
+      visible: vm.leaving || vm.resigning,
+      message: vm.resigning ? 'Resigning leadership…' : 'Leaving team…',
       child: Scaffold(
         appBar: const AppTopBar(title: 'My Team', showBack: false, actions: [ProfileAction()]),
         body: RefreshIndicator(
@@ -57,7 +78,11 @@ class MyTeamScreen extends StatelessWidget {
                 state: vm.state,
                 onRetry: vm.load,
                 empty: const NoTeamState(),
-                builder: (context, team) => _Body(team: team, onLeave: () => _leave(context, team)),
+                builder: (context, team) => _Body(
+                  team: team,
+                  onLeave: () => _leave(context, team),
+                  onResignLeader: () => _resignLeader(context, team),
+                ),
               ),
             ],
           ),
@@ -68,10 +93,11 @@ class MyTeamScreen extends StatelessWidget {
 }
 
 class _Body extends StatelessWidget {
-  const _Body({required this.team, required this.onLeave});
+  const _Body({required this.team, required this.onLeave, required this.onResignLeader});
 
   final Team team;
   final VoidCallback onLeave;
+  final VoidCallback onResignLeader;
 
   @override
   Widget build(BuildContext context) {
@@ -163,6 +189,16 @@ class _Body extends StatelessWidget {
               variant: leader ? AppButtonVariant.primary : AppButtonVariant.secondary,
               onPressed: () => context.push('/team/lock'),
             ),
+            if (leader && !team.locked) ...[
+              const SizedBox(height: AppSpacing.xs),
+              AppButton(
+                semanticId: 'btn_resign_leader',
+                label: 'Resign as Leader',
+                icon: Icons.person_remove_outlined,
+                variant: AppButtonVariant.text,
+                onPressed: onResignLeader,
+              ),
+            ],
           ],
         ],
         const SizedBox(height: AppSpacing.xl),
@@ -186,6 +222,40 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
+        const SizedBox(height: AppSpacing.lg),
+        const SectionHeader(title: 'Mentor & Supervisor'),
+        const SizedBox(height: AppSpacing.sm),
+        AppCard(
+          semanticId: 'card_team_mentor',
+          onTap: () => context.push('/mentors'),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: context.colors.primaryContainer,
+                child: Icon(Icons.school, color: context.colors.onPrimaryContainer, size: 20),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      team.supervisor.isNotEmpty ? team.supervisor : 'No supervisor assigned yet',
+                      style: context.text.titleSmall,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Tap to view mentors directory & requests',
+                      style: context.text.bodySmall?.copyWith(color: context.colors.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
         const SizedBox(height: AppSpacing.lg),
         if (phase != TeamPhase.locked) ...[
           const SizedBox(height: AppSpacing.md),

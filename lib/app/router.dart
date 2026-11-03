@@ -4,6 +4,12 @@ import 'package:provider/provider.dart';
 
 import '../models/student.dart';
 import '../screens/browse/browse_screen.dart';
+import '../screens/mentor/mentor_detail_screen.dart';
+import '../screens/mentor/mentor_list_screen.dart';
+import '../screens/mentor/mentor_portal_screen.dart';
+import '../viewmodels/mentor_detail_viewmodel.dart';
+import '../viewmodels/mentor_list_viewmodel.dart';
+import '../viewmodels/mentor_portal_viewmodel.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/lock_review/lock_review_screen.dart';
 import '../screens/my_team/my_team_screen.dart';
@@ -45,7 +51,13 @@ GoRouter buildRouter(SessionViewModel session) {
       // until the first auth event (a restored session arrives async).
       if (!session.ready) return at == '/splash' ? null : '/splash';
       if (!session.isSignedIn) return at == '/sign-in' ? null : '/sign-in';
-      if (at == '/sign-in' || at == '/splash') return '/home';
+      if (at == '/sign-in' || at == '/splash') {
+        if (session.isMentor) return '/mentor-portal';
+        return '/home';
+      }
+      if (session.isMentor && !at.startsWith('/mentor-portal')) {
+        return '/mentor-portal';
+      }
       return null;
     },
     routes: [
@@ -59,6 +71,48 @@ GoRouter buildRouter(SessionViewModel session) {
           create: (c) => SignInViewModel(c.read<AuthService>(), c.read<AnalyticsService>()),
           child: const SignInScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/mentor-portal',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, _) => ChangeNotifierProvider(
+          create: (c) => MentorPortalViewModel(
+            me(c),
+            c.read<MentorRepository>(),
+            c.read<CrashReporter>(),
+            c.read<AnalyticsService>(),
+          )..load(),
+          child: const MentorPortalScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/mentors',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, _) => ChangeNotifierProvider(
+          create: (c) => MentorListViewModel(
+            c.read<MentorRepository>(),
+            c.read<AnalyticsService>(),
+            c.read<CrashReporter>(),
+          )..load(),
+          child: const MentorListScreen(),
+        ),
+        routes: [
+          GoRoute(
+            path: ':mentorId',
+            parentNavigatorKey: rootNavigatorKey,
+            builder: (context, state) => ChangeNotifierProvider(
+              create: (c) => MentorDetailViewModel(
+                state.pathParameters['mentorId']!,
+                me(c),
+                c.read<MentorRepository>(),
+                c.read<TeamRepository>(),
+                c.read<AnalyticsService>(),
+                c.read<CrashReporter>(),
+              )..load(),
+              child: const MentorDetailScreen(),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/profile',

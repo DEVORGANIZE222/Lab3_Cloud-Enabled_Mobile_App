@@ -150,6 +150,32 @@ class LocalTeamRepository implements TeamRepository {
   }
 
   @override
+  Future<Team> resignLeader(String teamId, String leaderId) async {
+    await _db.roundTrip();
+    var team = _team(teamId);
+    if (team.locked) {
+      throw const AppFailure(
+        "Can't resign from locked team",
+        'The roster was already locked and submitted to the Academic Office.',
+        retryable: false,
+        code: 'locked',
+      );
+    }
+    if (team.leaderId != leaderId) {
+      throw const AppFailure(
+        'Not the team leader',
+        'You are not currently the leader of this team.',
+        retryable: false,
+      );
+    }
+    final votes = Map<String, String>.from(team.votes)
+      ..removeWhere((_, candidate) => candidate == leaderId);
+    team = team.copyWith(clearLeader: true, votes: votes);
+    _db.putTeam(team);
+    return team;
+  }
+
+  @override
   Future<Team> lockTeam(String teamId, String leaderId) async {
     await _db.roundTrip();
     var team = _team(teamId);

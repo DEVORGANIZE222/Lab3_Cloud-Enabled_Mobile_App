@@ -7,6 +7,7 @@ library;
 import 'dart:io';
 
 import '../models/app_notification.dart';
+import '../models/mentor.dart';
 import '../models/registration.dart';
 import '../models/student.dart';
 import '../models/team.dart';
@@ -81,6 +82,9 @@ abstract interface class TeamRepository {
   /// Records or replaces the student's vote and elects a leader on majority.
   Future<Team> castVote(String teamId, String voterId, String candidateId);
 
+  /// Resigns from being team leader (clears leader and votes for this leader).
+  Future<Team> resignLeader(String teamId, String leaderId);
+
   /// Locks the roster (leader only, 4–5 members). Returns the locked team with its code.
   Future<Team> lockTeam(String teamId, String leaderId);
 
@@ -98,6 +102,28 @@ abstract interface class NotificationRepository {
 
 abstract interface class RegistrationService {
   Future<RegistrationWindow> currentWindow();
+}
+
+
+abstract interface class MentorRepository {
+  Future<List<Mentor>> searchMentors({String query = '', String? department, String? expertise, bool availableOnly = false});
+  Future<Mentor> getMentor(String mentorId);
+  Stream<List<Mentor>> watchMentors();
+  Future<List<MentorRequest>> getRequestsForTeam(String teamId);
+  Stream<List<MentorRequest>> watchRequestsForTeam(String teamId);
+  Future<List<MentorRequest>> getRequestsForMentor(String mentorId);
+  Stream<List<MentorRequest>> watchRequestsForMentor(String mentorId);
+  Future<void> respondToRequest({required String requestId, required bool accept, String? reason});
+  Future<List<Team>> getTeamsForMentor(String mentorId, [String? mentorName]);
+  Future<MentorRequest> requestMentor({
+    required String teamId,
+    required String teamName,
+    required String mentorId,
+    required String mentorName,
+    required Student sender,
+    required String message,
+  });
+  Future<void> cancelRequest(String requestId);
 }
 
 abstract interface class PoolRepository {
@@ -155,6 +181,8 @@ abstract interface class AnalyticsService {
   Future<void> logInviteFromPool({required String teamId, required int invited});
   Future<void> logLockRoster({required String teamId, required int memberCount});
   Future<void> logExportReport({required String teamId, required int fileSizeKb});
+  Future<void> logViewMentor({required String mentorId, required String mentorName});
+  Future<void> logRequestMentor({required String teamId, required String mentorId});
 }
 
 abstract interface class CrashReporter {
