@@ -22,7 +22,7 @@ leader (Flow 2), and the leader locks the roster, recovering from "too few membe
 | `docs/code-review.md` | AI code review on PR #8 (Google Gemini): 5 findings across 3 categories, 3 fix commits. |
 | `report/Lab03_DEVORGANIZE222.pdf` | **Final Report (10 pages, PDF)** satisfying all 11 required sections. |
 | `slides/Lab03_DEVORGANIZE222_slides.pdf` | **Presentation Slides (15 slides, PDF)** for oral defense and architecture walkthrough. |
-| **Demo Video Link** | [Watch Lab 3 Demo Video (7:30 min)](https://youtu.be/prm393_lab03_devorganize222) *(replace with your submitted drive/youtube link)* |
+| **Demo Video Link** | _Not uploaded yet: add the Drive/YouTube link here after recording._ |
 
 ## Run the app
 
@@ -33,21 +33,18 @@ flutter pub get
 flutter run
 ```
 
-Sign in from the account picker with a seeded test account (no password; the picker simulates Google Sign-In):
+The app talks to the live Firebase project `prm393-lab-3-exematching` (`android/app/google-services.json`).
+Before the first run:
 
-| Account | Starting state | Good for |
-|---|---|---|
-| `minh.le@fpt.edu.vn` | Team AI-04, 3 of 5 members, no leader | Flows 2 and 3, Alerts, Profile |
-| `an.tran@fpt.edu.vn` | No team | Flow 1 (join FinTech Guard; EduSmart Analytics fills up just before you join) |
-| `minh.personal@gmail.com` | Not an FPT account | The wrong-account error on Sign In |
+1. Register your debug keystore SHA-1 for the Android app in the Firebase Console (Google Sign-In needs it).
+2. Seed Firestore (registration window, roster, 5 teams, Waiting Pool, students):
+   `python tool/seed_firestore_lab3.py --token "$(gcloud auth print-access-token)"` (or `--key serviceAccount.json`).
+3. Add the Google account you sign in with to `allowedEmails/{email}` with `enabled: true`; any other account is
+   rejected with "This account is not on the class roster".
+4. Deploy the rules in `firebase/firestore.rules` and `firebase/storage.rules`.
 
-Data resets every time the app starts; the signed-in account is remembered.
-
-Config values (Remote Config keys) can be overridden at build time, for example to show the Random Pool screen:
-
-```bash
-flutter run --dart-define=CONFIG_OVERRIDES=registration_closed=true,browse_max_results=3
-```
+For the Remote Config demo, publish `enable_waiting_pool` / `registration_closed` in the console; the app activates
+updates in real time (`onConfigUpdated`). For DebugView: `adb shell setprop debug.firebase.analytics.app com.devorganize222.exematching`.
 
 ## Run the E2E tests
 
@@ -91,7 +88,7 @@ Evidence for every run (agent output, screenshot, accessibility tree, analytics 
 | Claude Code / Antigravity | Writing the Flutter app, MVVM architecture, E2E suite and docs | Git commits and documentation |
 | Google Gemini (`gemini-3.5-flash-lite`) | Automated Pull Request #8 code review via GitHub Actions | [docs/code-review.md](docs/code-review.md) & GitHub review comments |
 | Google ARTEMIS with Gemini Flash | Driving the 13 automated E2E test cases on the Android 16 emulator | `e2e_test/`, `e2e_test/evidence/`, [docs/test-plan.md](docs/test-plan.md) |
-| Google ARTEMIS with Gemini Pro | 25-minute unscripted exploratory testing session | [docs/test-plan.md §4](docs/test-plan.md#4-nhật-ký-phiên-kiểm-thử-khám-phá-exploratory-testing-session-log) |
+| Google ARTEMIS with Gemini Pro | Unscripted exploratory testing session | [docs/test-plan.md §4](docs/test-plan.md) |
 
 Every AI result was checked by a human engineer: E2E assertions read real device state, and every code review finding has a recorded decision.
 
@@ -113,11 +110,11 @@ The demo video follows the exact walkthrough order specified in Handout Section 
 
 | Timestamp | Segment | What is Shown on Screen & In Firebase Console |
 |---|---|---|
-| **00:00 – 00:45** | **Intro & Sign-In (Auth)** | • App launch on Android emulator.<br>• Sign-in attempt with unauthorized account -> "This is not an FPT account" banner.<br>• Sign-in with allowed roster account -> Lands smoothly on Home Dashboard.<br>• Console: Show Authentication -> Users tab matching project ID `prm393-lab-3-exematching`. |
-| **00:45 – 02:00** | **Flow 1: Discover & Join Team** | • Navigate to Browse tab; toggle skill chip "AI/ML" and search "drone".<br>• Show empty state by searching non-existent term, then tap "Clear Filters".<br>• Simulate network drop via Airplane mode -> Observe "Can't connect right now" error -> Reconnect & tap "Try Again".<br>• Open FinTech Guard, select Backend role, and confirm join. Show updated 3/5 roster. |
-| **02:00 – 03:00** | **Flow 2: Leader Election** | • Switch to My Team tab; open "Vote for Leader" screen.<br>• Demonstrate that vote tallies remain hidden before casting a vote.<br>• Select candidate Minh Le and submit vote.<br>• Observe Firestore real-time transaction update; leader elected banner appears. |
+| **00:00 – 00:45** | **Intro & Sign-In (Auth)** | • App launch on Android emulator.<br>• Sign-in attempt with unauthorized account -> "This account is not on the class roster" banner.<br>• Sign-in with allowed roster account -> Lands smoothly on Home Dashboard.<br>• Console: Show Authentication -> Users tab matching project ID `prm393-lab-3-exematching`. |
+| **00:45 – 02:00** | **Flow 1: Discover & Join Team** | • Navigate to Browse tab; toggle skill chip "AI/ML" and search "drone".<br>• Show empty state by searching non-existent term, then tap "Clear Filters".<br>• Simulate network drop via Airplane mode -> Observe "Can't connect right now" error -> Reconnect & tap "Try Again".<br>• Open FinTech Guard, tap Join Team and confirm. My Team shows 3 of 5 members. |
+| **02:00 – 03:00** | **Flow 2: Leader Election** | • Switch to My Team tab; open "Vote for Leader" screen.<br>• Demonstrate that vote tallies remain hidden before casting a vote.<br>• Select yourself as candidate and submit the vote.<br>• Observe Firestore real-time transaction update; leader elected banner appears. |
 | **03:00 – 04:15** | **Flow 3: Lock & Recovery** | • Leader navigates to "Review & Lock". Initial attempt blocked (<4 members).<br>• Tap "Invite from Waiting Pool" -> Automated candidate matching assigns `Khanh Vo`.<br>• Condition checks turn green; tap "Lock Roster" -> Generates official code `CM-AI04-XXXX`.<br>• Tap "Share Team Link" -> Android system Share Sheet opens natively. |
-| **04:15 – 05:15** | **Storage & FCM Live Demo** | • Profile screen: Tap "Export & Upload Team PDF". Progress bar reaches 100%, displaying download URL.<br>• Console: Show Storage bucket with file under `reports/{uid}/`.<br>• Send FCM test notification from Console -> Verify in-app Alerts inbox badge and tap navigation. |
+| **04:15 – 05:15** | **Storage & FCM Live Demo** | • Profile screen: Tap "Export & Upload PDF". Progress bar reaches 100%, displaying download URL.<br>• Console: Show Storage bucket with file under `reports/{uid}/`.<br>• Send FCM test notification from Console -> Verify in-app Alerts inbox badge and tap navigation. |
 | **05:15 – 06:15** | **Remote Config & Crashlytics** | • Console: Change `enable_waiting_pool = false` and Publish -> App instantly hides Waiting Pool card on Home without rebuild.<br>• Profile screen: Tap "Send Test Error" -> Snackbar confirms non-fatal sent.<br>• Tap "Force Test Crash" -> App crashes.<br>• Console: Show Crashlytics dashboard with Fatal issue, User ID, and custom key `screen=profile`. |
 | **06:15 – 07:00** | **ARTEMIS Automated E2E Run** | • Terminal: Run `uv run pytest -k "test_tc03" -v` -> Show ARTEMIS AI agent controlling the device live, asserting on Semantics tree and Logcat.<br>• Show `junit.xml` test results. |
-| **07:00 – 07:30** | **AI Code Review Walkthrough** | • Show GitHub Pull Request #8 review comments.<br>• Explain finding GR-01 (Security rules gap in `isSelfJoin`) and the corresponding fix commit `c9543a3`. |
+| **07:00 – 07:30** | **AI Code Review Walkthrough** | • Show GitHub Pull Request #8 review comments.<br>• Explain finding GR-01 (team updates were not limited to roster fields) and the corresponding fix commit `c9543a3`. |

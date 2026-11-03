@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -7,6 +8,39 @@ void main() async {
     title: 'PRM393 Lab 3 Final Report - EXEMatching',
     author: 'DEVORGANIZE222',
   );
+
+  // E2E results of the last full run (e2e_test/evidence): pass/fail per run from junit.xml,
+  // ARTEMIS time per run from each run's result.json. Nothing here is typed in by hand.
+  final runOk = <String, Map<int, bool>>{};
+  final agentSeconds = <String, List<double>>{};
+  final junit = File('e2e_test/evidence/junit.xml');
+  if (junit.existsSync()) {
+    final xml = junit.readAsStringSync();
+    for (final m in RegExp(r'<testcase [^>]*name="(test_(tc\d+)_\w+)\[run(\d)\]"[^>]*?(/>|>([\s\S]*?)</testcase>)').allMatches(xml)) {
+      final id = m.group(2)!.toUpperCase().replaceFirst('TC', 'TC-');
+      final run = int.parse(m.group(3)!);
+      final failed = (m.group(5) ?? '').contains('<failure') || (m.group(5) ?? '').contains('<error');
+      final runs = runOk.putIfAbsent(id, () => {});
+      runs[run] = (runs[run] ?? true) && !failed;
+      final result = File('e2e_test/evidence/${m.group(1)}/run$run/result.json');
+      if (result.existsSync()) {
+        final seconds = (jsonDecode(result.readAsStringSync()) as Map<String, dynamic>)['seconds'];
+        if (seconds is num) agentSeconds.putIfAbsent(id, () => []).add(seconds.toDouble());
+      }
+    }
+  }
+  String passCell(String id) {
+    final runs = runOk[id]?.values.toList() ?? [];
+    if (runs.isEmpty) return 'not run';
+    final ok = runs.where((r) => r).length;
+    return '$ok/${runs.length} (${(100 * ok / runs.length).round()}%)';
+  }
+  String timeCell(String id) {
+    final s = agentSeconds[id] ?? [];
+    return s.isEmpty ? '-' : '${(s.reduce((a, b) => a + b) / s.length).toStringAsFixed(1)}s';
+  }
+  final passedRuns = runOk.values.expand((r) => r.values).where((ok) => ok).length;
+  final totalRuns = runOk.values.expand((r) => r.values).length;
 
   final primaryColor = PdfColor.fromHex('#1E3A8A'); // Navy
   final accentColor = PdfColor.fromHex('#0D9488');  // Teal
@@ -323,7 +357,7 @@ void main() async {
         children: [
           buildHeader('5. CLOUD BACKEND DESIGN — FIREBASE SERVICES (PART 1)', 'Authentication, Cloud Firestore & Cloud Storage Architecture'),
           pw.Text('5.1. Firebase Authentication & Roster Authorization', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: primaryColor)),
-          pw.Text('• Implementation: FirebaseAuthService utilizes Google Sign-In and creates Firebase credentials via GoogleAuthProvider.credential().\n• Session Stream: Listens to FirebaseAuth.instance.authStateChanges() and maps users to domain Student objects.\n• Centralized Roster Allowlist: To accommodate real university scenarios where students (K19+) use individual email accounts, authentication is validated against Firestore allowedEmails/{email}. Any authenticated Google account not present with enabled: true is rejected with EmailNotAllowed ("This is not an FPT account").\n• Failure Handling: Graceful handling for cancelled sign-in, wrong domain, and offline network state.', style: const pw.TextStyle(fontSize: 7.5)),
+          pw.Text('• Implementation: FirebaseAuthService utilizes Google Sign-In and creates Firebase credentials via GoogleAuthProvider.credential().\n• Session Stream: Listens to FirebaseAuth.instance.authStateChanges() and maps users to domain Student objects.\n• Centralized Roster Allowlist: To accommodate real university scenarios where students (K19+) use individual email accounts, authentication is validated against Firestore allowedEmails/{email}. Any authenticated Google account not present with enabled: true is rejected with "This account is not on the class roster".\n• Failure Handling: Graceful handling for cancelled sign-in, wrong domain, and offline network state.', style: const pw.TextStyle(fontSize: 7.5)),
           pw.SizedBox(height: 8),
           pw.Text('5.2. Cloud Firestore & Concurrency Safeguards', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: primaryColor)),
           pw.Text('• Implementation: FirestoreTeamRepository manages collections teams, waitingPool, and configuration.\n• Transaction Safety: Roster joins, leaves, votes, and lock operations execute in runTransaction. If another user fills a team or casts a vote concurrently, the transaction aborts and retries safely.\n• Waiting Pool Recovery: In Flow 3, inviteFromPool queries candidate documents, verifies assigned == false within the transaction, appends the member, and atomically marks assigned: true.\n• Security Rules (firebase/firestore.rules): Strictly enforces isRosterMember() and limits updates to 8 whitelisted roster fields (GR-01 fix). No student can modify team metadata (supervisor, capacity, topic).', style: const pw.TextStyle(fontSize: 7.5)),
@@ -349,7 +383,7 @@ void main() async {
           pw.Text('• Permission: Automatically requests POST_NOTIFICATIONS consent on Android 13+ devices.\n• Three Lifecycle States:\n  1. Foreground: onMessage captures notifications and persists them directly into the Alerts inbox.\n  2. Background: onBackgroundMessage runs isolated handler in main.dart writing directly to Firestore students/{uid}/notifications.\n  3. Terminated: getInitialMessage launches the app and onMessageOpenedApp navigates to /browse/team/{teamId}.\n• Deep Linking: Tapping a notification with teamId payload navigates directly to the relevant Team Detail screen.', style: const pw.TextStyle(fontSize: 7.5)),
           pw.SizedBox(height: 8),
           pw.Text('6.2. Firebase Crashlytics & Diagnostic Telemetry', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: primaryColor)),
-          pw.Text('• Fatal Errors: FlutterError.onError and PlatformDispatcher.instance.onError forward unhandled engine errors to Crashlytics.\n• Handled Non-Fatal: ProfileViewModel.sendNonFatal simulates failed network lookups, attaching custom keys (screen=profile, cohort=FA26, team_id) and authenticating User ID.\n• Test Crash Action: Dedicated Profile button invokes FirebaseCrashlytics.instance.crash() for live verification.', style: const pw.TextStyle(fontSize: 7.5)),
+          pw.Text('• Fatal Errors: FlutterError.onError and PlatformDispatcher.instance.onError forward unhandled engine errors to Crashlytics.\n• Handled Non-Fatal: ProfileViewModel.sendNonFatal simulates failed network lookups, with custom keys screen=profile and student_cohort (set at sign-in, with the user ID); team_id is set on team screens.\n• Test Crash Action: Dedicated Profile button invokes FirebaseCrashlytics.instance.crash() for live verification.', style: const pw.TextStyle(fontSize: 7.5)),
           pw.SizedBox(height: 8),
           pw.Text('6.3. Firebase Remote Config & Zero-Rebuild Realtime Updates', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: primaryColor)),
           pw.Text('• In-App Defaults: ConfigKeys.defaults defines max_team_members=5, enable_waiting_pool=true, registration_closed=false.\n• Real-Time Synchronization: onConfigUpdated automatically activates published values and emits through changes stream.\n• Zero-Rebuild Verification: Toggling enable_waiting_pool on Firebase Console instantly shows/hides the pool card on Home.', style: const pw.TextStyle(fontSize: 7.5)),
@@ -374,21 +408,21 @@ void main() async {
           pw.Text('Google ARTEMIS is an open-source AI agent that navigates the real Android app using multimodal models. The suite in e2e_test/ uses pytest-asyncio and asserts on the Semantics accessibility tree and Logcat rather than status=="SUCCESS".', style: const pw.TextStyle(fontSize: 8)),
           pw.SizedBox(height: 8),
           pw.TableHelper.fromTextArray(
-            headers: ['Case ID', 'Flow Tested', 'Goal & Natural-Language Instruction', '3-Run Pass', 'Avg Time'],
+            headers: ['Case ID', 'Flow Tested', 'Goal & Natural-Language Instruction', '3-Run Pass', 'Avg ARTEMIS time'],
             data: [
-              ['TC-01', 'Auth / Error', 'Sign in with unauthorized account -> Verify error banner', '3/3 (100%)', '18.2s'],
-              ['TC-02', 'Auth / Success', 'Sign in with roster account -> Verify Home greetings & deadline', '3/3 (100%)', '22.4s'],
-              ['TC-03', 'Flow 1 / Search', 'Browse tab -> Filter AI/ML & Open Slots -> Search "drone"', '3/3 (100%)', '19.5s'],
-              ['TC-04', 'Flow 1 / Empty', 'Search non-existent term -> Verify empty state -> Clear filters', '3/3 (100%)', '24.1s'],
-              ['TC-05', 'Flow 1 / Offline', 'Disable network via ADB -> Observe error -> Reconnect & retry', '3/3 (100%)', '26.8s'],
-              ['TC-06', 'Flow 1 / Join', 'Open FinTech Guard -> Select Backend role -> Join team', '3/3 (100%)', '31.0s'],
-              ['TC-07', 'Flow 1 / Filled', 'Open team -> Concurrently fill team -> Verify filled banner', '3/3 (100%)', '28.3s'],
-              ['TC-08', 'Flow 2 / Voting', 'Leader voting -> Verify tallies hidden before casting vote', '3/3 (100%)', '16.7s'],
-              ['TC-09', 'Flow 2 / Elect', 'Select Minh Le -> Submit vote -> Verify elected banner', '3/3 (100%)', '25.2s'],
-              ['TC-10', 'Flow 3 / Lock', 'Lock blocked (<4) -> Invite from pool -> Recover & lock', '3/3 (100%)', '34.6s'],
-              ['TC-11', 'Flow 3 / Native', 'Tap Share Team Link -> Verify Android Share Sheet intent', '3/3 (100%)', '15.8s'],
-              ['TC-12', 'Alerts / Undo', 'Decline team invite -> Click Undo in snackbar -> Restore card', '3/3 (100%)', '21.9s'],
-              ['TC-13', 'Profile / Export', 'Export & Upload Team PDF -> Verify progress & Storage URL', '3/3 (100%)', '27.5s'],
+              ['TC-01', 'Auth / Error', 'Sign in with unauthorized account -> Verify error banner', passCell('TC-01'), timeCell('TC-01')],
+              ['TC-02', 'Auth / Success', 'Sign in with roster account -> Verify Home greetings & deadline', passCell('TC-02'), timeCell('TC-02')],
+              ['TC-03', 'Flow 1 / Search', 'Browse tab -> Filter AI/ML & Open Slots -> Search "drone"', passCell('TC-03'), timeCell('TC-03')],
+              ['TC-04', 'Flow 1 / Empty', 'Search non-existent term -> Verify empty state -> Clear filters', passCell('TC-04'), timeCell('TC-04')],
+              ['TC-05', 'Flow 1 / Offline', 'Disable network via ADB -> Observe error -> Reconnect & retry', passCell('TC-05'), timeCell('TC-05')],
+              ['TC-06', 'Flow 1 / Join', 'Find FinTech Guard -> Join Team -> confirm -> My Team shows 3 of 5', passCell('TC-06'), timeCell('TC-06')],
+              ['TC-07', 'Flow 1 / Filled', 'Open team -> Concurrently fill team -> Verify filled banner', passCell('TC-07'), timeCell('TC-07')],
+              ['TC-08', 'Flow 2 / Voting', 'Leader voting -> Verify tallies hidden before casting vote', passCell('TC-08'), timeCell('TC-08')],
+              ['TC-09', 'Flow 2 / Elect', 'Vote for yourself -> Submit -> Verify elected banner & Firestore', passCell('TC-09'), timeCell('TC-09')],
+              ['TC-10', 'Flow 3 / Lock', 'Lock blocked (<4) -> Invite from pool -> Recover & lock', passCell('TC-10'), timeCell('TC-10')],
+              ['TC-11', 'Flow 3 / Native', 'Tap Share Team Link -> Verify Android Share Sheet intent', passCell('TC-11'), timeCell('TC-11')],
+              ['TC-12', 'Alerts / Undo', 'Decline team invite -> Click Undo in snackbar -> Restore card', passCell('TC-12'), timeCell('TC-12')],
+              ['TC-13', 'Profile / Export', 'Export & Upload Team PDF -> Verify progress & Storage URL', passCell('TC-13'), timeCell('TC-13')],
             ],
             headerStyle: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
             headerDecoration: pw.BoxDecoration(color: primaryColor),
