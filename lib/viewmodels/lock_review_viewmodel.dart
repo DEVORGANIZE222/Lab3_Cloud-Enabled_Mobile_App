@@ -76,12 +76,20 @@ class LockReviewViewModel extends ChangeNotifier {
         await _crash.setKey('team_id', team.id);
         state = Data(team);
         await _watch?.cancel();
-        _watch = _teams.watchTeam(team.id).listen((t) {
-          final before = state is Data<Team> ? (state as Data<Team>).value.memberCount : t.memberCount;
-          if (t.memberCount > before) lastJoinedName = t.members.last.fullName;
-          state = Data(t);
-          notifyListeners();
-        });
+        _watch = _teams.watchTeam(team.id).listen(
+          (t) {
+            final before = state is Data<Team> ? (state as Data<Team>).value.memberCount : t.memberCount;
+            if (t.memberCount > before) lastJoinedName = t.members.last.fullName;
+            state = Data(t);
+            notifyListeners();
+          },
+          // e.g. the team was deleted or access was revoked: show the error
+          // state with Retry instead of an uncaught zone error.
+          onError: (Object e, StackTrace st) async {
+            state = Failure(await toFailure(e, st, crash: _crash, reason: 'lock_review_watch'));
+            notifyListeners();
+          },
+        );
       }
     } catch (e, st) {
       state = Failure(await toFailure(e, st, crash: _crash, reason: 'lock_review_load'));
@@ -125,8 +133,17 @@ class LockReviewViewModel extends ChangeNotifier {
     }
   }
 
+  bool _disposed = false;
+
+  // Async error handlers can finish after the screen closed.
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     _watch?.cancel();
     super.dispose();
   }

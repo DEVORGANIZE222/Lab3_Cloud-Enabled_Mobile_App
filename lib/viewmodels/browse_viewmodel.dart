@@ -13,7 +13,12 @@ class BrowseViewModel extends ChangeNotifier {
     _configSub = _config.changes.listen((_) => search());
     // Slot counts change while the list is open (joins, pool members, locks):
     // refresh in place instead of patching each navigation path (CR-10).
-    _teamsSub = _teams.teamsChanged().listen((_) => _run(silent: true));
+    // A failed live update keeps the list on screen; it is recorded, not thrown
+    // into the zone where Crashlytics would count it as a crash.
+    _teamsSub = _teams.teamsChanged().listen(
+      (_) => _run(silent: true),
+      onError: (Object e, StackTrace st) => toFailure(e, st, crash: _crash, reason: 'browse_live_updates'),
+    );
   }
 
   final TeamRepository _teams;

@@ -41,10 +41,16 @@ class MyTeamViewModel extends ChangeNotifier {
       final team = await _teams.teamOf(_student.id);
       state = team == null ? const Empty() : Data(team);
       await _watch?.cancel();
-      _watch = _teams.watchTeamOf(_student.id).listen((t) {
-        state = t == null ? const Empty() : Data(t);
-        notifyListeners();
-      });
+      _watch = _teams.watchTeamOf(_student.id).listen(
+        (t) {
+          state = t == null ? const Empty() : Data(t);
+          notifyListeners();
+        },
+        onError: (Object e, StackTrace st) async {
+          state = Failure(await toFailure(e, st, crash: _crash, reason: 'my_team_watch'));
+          notifyListeners();
+        },
+      );
     } catch (e, st) {
       state = Failure(await toFailure(e, st, crash: _crash, reason: 'my_team_load'));
     }
@@ -66,8 +72,17 @@ class MyTeamViewModel extends ChangeNotifier {
     }
   }
 
+  bool _disposed = false;
+
+  // Async error handlers can finish after the screen closed.
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     _watch?.cancel();
     super.dispose();
   }
