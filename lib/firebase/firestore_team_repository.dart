@@ -288,4 +288,55 @@ class FirestoreTeamRepository implements TeamRepository {
       return 1;
     });
   }
+
+  @override
+  Future<Team> createTeam({
+    required Student student,
+    required String name,
+    required String topic,
+    required String category,
+    String? description,
+    List<String> tags = const [],
+    List<String> openRoles = const [],
+    int capacity = 5,
+  }) async {
+    final existing = await _teams.where('memberIds', arrayContains: student.id).limit(1).get();
+    if (existing.docs.isNotEmpty) throw AlreadyInTeamException(_team(existing.docs.first).code);
+
+    final codePrefix = switch (category.toLowerCase()) {
+      'ai/ml' || 'ai' => 'AI',
+      'mobile' => 'MOB',
+      'web/cloud' || 'web' => 'WEB',
+      'iot' => 'IOT',
+      _ => 'EXE',
+    };
+    final randomSuffix = (Random().nextInt(90) + 10).toString();
+    final teamCode = '$codePrefix-$randomSuffix';
+    final docRef = _teams.doc();
+
+    final creator = TeamMember.fromStudent(student, 'Team Lead');
+    final teamData = <String, dynamic>{
+      'code': teamCode,
+      'name': name.trim(),
+      'topic': topic.trim(),
+      'description': (description != null && description.isNotEmpty ? description : topic).trim(),
+      'category': category,
+      'tags': tags,
+      'members': [_member(creator)],
+      'memberIds': [student.id],
+      'openRoles': openRoles.isEmpty ? ['Developer', 'Designer'] : openRoles,
+      'supervisor': 'Assigned by Academic Office',
+      'capacity': capacity.clamp(TeamRules.minMembers, TeamRules.maxMembers),
+      'leaderId': student.id,
+      'votes': <String, String>{student.id: student.id},
+      'locked': false,
+      'lockCode': null,
+      'lockedAt': null,
+      'invitesSent': 0,
+      'createdAt': FieldValue.serverTimestamp(),
+    };
+
+    await docRef.set(teamData);
+    return _team(await docRef.get());
+  }
 }

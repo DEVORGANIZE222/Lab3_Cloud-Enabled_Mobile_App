@@ -112,32 +112,51 @@ class _BrowseScreenState extends State<BrowseScreen> {
             AppCard(
               color: context.colors.surfaceContainerHigh,
               padding: const EdgeInsets.all(AppSpacing.md),
-              child: Row(
+              child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
-                    decoration: BoxDecoration(color: context.appColors.warningContainer, shape: BoxShape.circle),
-                    child: Icon(Icons.groups, color: context.appColors.warning, size: 24),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Can't find the right fit?", style: context.text.titleSmall),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Create your own group or join the Random Pool before the deadline.',
-                          style: context.text.bodySmall,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        decoration: BoxDecoration(color: context.appColors.warningContainer, shape: BoxShape.circle),
+                        child: Icon(Icons.groups, color: context.appColors.warning, size: 24),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Can't find the right fit?", style: context.text.titleSmall),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Create your own startup team or join the Random Pool before the deadline.',
+                              style: context.text.bodySmall,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppButton(
+                    semanticId: 'btn_create_team_browse',
+                    label: 'Create a Team',
+                    icon: Icons.group_add,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () => context.push('/create-team'),
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.group_add),
+        label: const Text('Create Team'),
+        backgroundColor: context.colors.primary,
+        foregroundColor: Colors.white,
+        onPressed: () => context.push('/create-team'),
       ),
     );
   }

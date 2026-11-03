@@ -13,7 +13,6 @@ import '../../widgets/app_top_bar.dart';
 import '../../widgets/states.dart';
 import '../../widgets/status.dart';
 import '../shared/feedback.dart';
-import '../shared/profile_action.dart';
 import '../shared/team_status.dart';
 
 /// SCR_09 Alerts (Figma `SCR_09: Notifications & Invites`).
@@ -28,7 +27,7 @@ class NotificationsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppTopBar(
         title: 'Alerts',
-        showBack: false,
+        showBack: true,
         actions: [
           if (vm.unread > 0)
             Semantics(
@@ -41,7 +40,6 @@ class NotificationsScreen extends StatelessWidget {
                 child: const Text('Mark All Read'),
               ),
             ),
-          const ProfileAction(),
         ],
       ),
       body: ListView(

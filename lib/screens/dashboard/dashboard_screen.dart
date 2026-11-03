@@ -194,13 +194,22 @@ class _DashboardBody extends StatelessWidget {
         ],
         const SizedBox(height: AppSpacing.lg),
         if (!data.registrationClosed) ...[
-          if (team == null)
+          if (team == null) ...[
             AppButton(
               semanticId: 'btn_browse_teams',
               label: 'Browse Available Teams',
               icon: Icons.search,
               onPressed: () => context.go('/browse'),
-            )
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            AppButton(
+              semanticId: 'btn_create_team_home',
+              label: 'Create a New Team',
+              icon: Icons.group_add,
+              variant: AppButtonVariant.secondary,
+              onPressed: () => context.push('/create-team'),
+            ),
+          ]
           else ...[
             AppButton(
               semanticId: 'btn_manage_team',
