@@ -25,7 +25,7 @@ class SignInScreen extends StatelessWidget {
               children: [
                 const Center(
                   child: StatusBadge(
-                    label: 'FPT University · Capstone 2026',
+                    label: 'FPT University · Experiential Entrepreneurship 2026',
                     tone: Tone.warning,
                     icon: Icons.school,
                   ),
@@ -55,7 +55,7 @@ class SignInScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Capstone Team Matching',
+                  'Experiential Entrepreneurship · Team Matching',
                   textAlign: TextAlign.center,
                   style: context.text.bodyMedium?.copyWith(color: context.colors.onSurfaceVariant),
                 ),

@@ -8,16 +8,21 @@ abstract final class Fmt {
   static String date(DateTime d) => _date.format(d);
   static String dateTime(DateTime d) => _dateTime.format(d);
 
-  /// "2 days 14 hours left" (Lab 2 decision: relative countdown, never a raw date alone).
+  /// Real-time relative countdown: "29 days 01:14:38 left" or "01:14:38 left".
   static String countdown(Duration left) {
     if (left.isNegative || left == Duration.zero) return 'Closed';
     final days = left.inDays;
     final hours = left.inHours % 24;
     final minutes = left.inMinutes % 60;
+    final seconds = left.inSeconds % 60;
     String unit(int n, String one) => '$n $one${n == 1 ? '' : 's'}';
-    if (days > 0) return '${unit(days, 'day')} ${unit(hours, 'hour')} left';
-    if (hours > 0) return '${unit(hours, 'hour')} ${unit(minutes, 'minute')} left';
-    return '${unit(minutes, 'minute')} left';
+    final hh = hours.toString().padLeft(2, '0');
+    final mm = minutes.toString().padLeft(2, '0');
+    final ss = seconds.toString().padLeft(2, '0');
+    if (days > 0) {
+      return '${unit(days, 'day')} $hh:$mm:$ss left';
+    }
+    return '$hh:$mm:$ss left';
   }
 
   /// "Just now", "12 min ago", "3 h ago", "Yesterday", or a date.

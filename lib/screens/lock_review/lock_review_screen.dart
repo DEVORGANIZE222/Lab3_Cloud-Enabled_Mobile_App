@@ -111,7 +111,7 @@ class _Review extends StatelessWidget {
         // Figma SCR_07 header.
         const Align(
           alignment: Alignment.centerLeft,
-          child: StatusBadge(label: 'Capstone Spring 2026', icon: Icons.school_outlined),
+          child: StatusBadge(label: 'Experiential Entrepreneurship Spring 2026', icon: Icons.school_outlined),
         ),
         const SizedBox(height: AppSpacing.sm),
         Semantics(header: true, child: Text('Review & lock team', style: context.text.headlineMedium)),
@@ -137,7 +137,7 @@ class _Review extends StatelessWidget {
             tone: Tone.error,
             title: "Can't lock yet: needs ${Fmt.count(TeamRules.minMembers - team.memberCount, 'more member')}",
             message:
-                'Your team has ${team.memberCount} of ${team.capacity} members and FPT Capstone rules need at least '
+                'Your team has ${team.memberCount} of ${team.capacity} members and FPT rules need at least '
                 '${TeamRules.minMembers}. Invite students from the Waiting Pool or share your team link.',
           ),
           const SizedBox(height: AppSpacing.lg),

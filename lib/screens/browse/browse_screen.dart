@@ -116,10 +116,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: context.appColors.warningContainer,
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: BoxDecoration(color: context.appColors.warningContainer, shape: BoxShape.circle),
                     child: Icon(Icons.groups, color: context.appColors.warning, size: 24),
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -177,9 +174,7 @@ class _TeamCard extends StatelessWidget {
                     Expanded(child: Text(team.name, style: context.text.titleLarge)),
                     const SizedBox(width: AppSpacing.sm),
                     StatusBadge(
-                      label: open == 0
-                          ? 'Full'
-                          : '${team.memberCount}/${team.capacity} · $open open',
+                      label: open == 0 ? 'Full' : '${team.memberCount}/${team.capacity} · $open open',
                       tone: open == 0 ? Tone.neutral : Tone.primary,
                       icon: open == 0 ? Icons.block : Icons.person_add_alt_1,
                     ),
@@ -191,7 +186,7 @@ class _TeamCard extends StatelessWidget {
                     children: [
                       StatusBadge(label: team.category, tone: Tone.warning, icon: Icons.school),
                       const SizedBox(width: AppSpacing.xs),
-                      Text('• Senior Capstone', style: context.text.bodySmall),
+                      Text('• Experiential Entrepreneurship', style: context.text.bodySmall),
                     ],
                   ),
                 ],

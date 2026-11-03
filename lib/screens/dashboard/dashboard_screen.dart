@@ -85,7 +85,11 @@ class _DashboardBody extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.schedule, size: 20, color: isUrgent ? context.colors.error : context.appColors.warning),
+                        Icon(
+                          Icons.schedule,
+                          size: 20,
+                          color: isUrgent ? context.colors.error : context.appColors.warning,
+                        ),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
@@ -102,29 +106,55 @@ class _DashboardBody extends StatelessWidget {
                     const SizedBox(height: AppSpacing.md),
                     Text(
                       Fmt.countdown(data.timeLeft),
-                      style: context.text.headlineLarge?.copyWith(
-                        color: accentColor,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: context.text.headlineLarge?.copyWith(color: accentColor, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text('System locks on ${Fmt.dateTime(data.window.closesAt)}', style: context.text.bodyMedium),
                     const SizedBox(height: AppSpacing.lg),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: Text('${data.window.semester} registration period', style: context.text.labelMedium),
-                        ),
                         Text(
-                          '${(remainingFraction * 100).round()}% time remaining',
+                          '${data.window.semester} Timeline',
                           style: context.text.labelMedium?.copyWith(
-                            color: isUrgent ? context.colors.error : context.appColors.warning,
-                            fontWeight: FontWeight.w600,
+                            color: context.colors.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isUrgent ? const Color(0xFFFEE2E2) : const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isUrgent ? const Color(0xFFFCA5A5) : const Color(0xFF86EFAC),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isUrgent ? Icons.warning_amber_rounded : Icons.hourglass_bottom,
+                                size: 12,
+                                color: isUrgent ? const Color(0xFFDC2626) : const Color(0xFF15803D),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${(remainingFraction * 100).round()}% time left',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: isUrgent ? const Color(0xFFDC2626) : const Color(0xFF15803D),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: AppSpacing.sm),
                     Semantics(
                       label: 'Registration period',
                       value: '${(remainingFraction * 100).round()} percent remaining',
