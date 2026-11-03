@@ -186,7 +186,9 @@ class _TeamCard extends StatelessWidget {
                     children: [
                       StatusBadge(label: team.category, tone: Tone.warning, icon: Icons.school),
                       const SizedBox(width: AppSpacing.xs),
-                      Text('• Experiential Entrepreneurship', style: context.text.bodySmall),
+                      Expanded(
+                        child: Text('', style: context.text.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
                     ],
                   ),
                 ],
@@ -204,29 +206,61 @@ class _TeamCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(color: context.colors.surfaceContainerHigh, borderRadius: AppRadius.smAll),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: SlotRow(
-                          memberInitials: [for (final m in team.members) m.initials],
-                          avatarUrls: [for (final m in team.members) m.avatarUrl],
-                          capacity: team.capacity,
-                        ),
-                      ),
-                      if (team.openRoles.isNotEmpty)
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text('Looking for:', style: context.text.bodySmall),
-                              Text(
-                                team.openRoles.join(', '),
-                                textAlign: TextAlign.end,
-                                style: context.text.labelLarge?.copyWith(color: context.colors.primary),
-                              ),
-                            ],
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                for (var i = 0; i < team.members.length; i++) ...[
+                                  MemberAvatar(
+                                    initials: team.members[i].initials,
+                                    avatarUrl: team.members[i].avatarUrl,
+                                    size: AppSize.avatarSmall,
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                ],
+                                for (var k = 0; k < open; k++) ...[
+                                  const MemberAvatar(size: AppSize.avatarSmall),
+                                  if (k < open - 1) const SizedBox(width: AppSpacing.xs),
+                                ],
+                              ],
+                            ),
                           ),
+                          Text(
+                            open == 0 ? 'Full' : '$open open',
+                            style: context.text.bodySmall?.copyWith(
+                              color: open == 0 ? context.colors.outline : context.colors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (team.openRoles.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        const Divider(height: 1, thickness: 0.5),
+                        const SizedBox(height: AppSpacing.sm),
+                        Row(
+                          children: [
+                            Icon(Icons.person_search, size: 16, color: context.colors.secondary),
+                            const SizedBox(width: 6),
+                            Text('Looking for: ', style: context.text.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+                            Expanded(
+                              child: Text(
+                                team.openRoles.join(' · '),
+                                style: context.text.bodySmall?.copyWith(
+                                  color: context.colors.secondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
+                      ],
                     ],
                   ),
                 ),
