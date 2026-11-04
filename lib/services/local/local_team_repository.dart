@@ -301,7 +301,31 @@ class LocalTeamRepository implements TeamRepository {
     ];
     final existingIds = team.members.map((m) => m.studentId).toSet();
     final toAdd = candidates.where((c) => !existingIds.contains(c.studentId)).take(count).toList();
-    if (toAdd.isEmpty) return;
-    _db.putTeam(team.copyWith(members: [...team.members, ...toAdd]));
+    if (team.members.isEmpty) return;
+    final firstId = team.members.first.studentId;
+
+    final votes = Map<String, String>.from(team.votes);
+    if (!votes.containsKey(firstId)) {
+      votes[firstId] = firstId;
+    }
+    for (final m in toAdd) {
+      votes[m.studentId] = firstId;
+    }
+    for (final m in team.members) {
+      if (candidates.any((c) => c.studentId == m.studentId)) {
+        votes[m.studentId] = firstId;
+      }
+    }
+
+    final nextMembers = [...team.members, ...toAdd];
+    final votesForFirst = votes.values.where((id) => id == firstId).length;
+    final votesNeeded = nextMembers.length ~/ 2 + 1;
+    final winner = votesForFirst >= votesNeeded ? firstId : team.leaderId;
+
+    _db.putTeam(team.copyWith(
+      members: nextMembers,
+      votes: votes,
+      leaderId: winner,
+    ));
   }
 }

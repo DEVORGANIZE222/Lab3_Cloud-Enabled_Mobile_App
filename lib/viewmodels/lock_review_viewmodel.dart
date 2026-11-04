@@ -38,7 +38,7 @@ class LockReviewViewModel extends ChangeNotifier {
 
   String get myId => _student.id;
 
-  bool isLeader(Team t) => t.leaderId == _student.id;
+  bool isLeader(Team t) => t.hasLeader && t.leaderId == _student.id;
 
   List<LockCheck> checks(Team t) => [
     LockCheck(

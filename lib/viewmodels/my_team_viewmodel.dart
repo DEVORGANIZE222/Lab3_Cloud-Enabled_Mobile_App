@@ -24,7 +24,7 @@ class MyTeamViewModel extends ChangeNotifier {
 
   String get myId => _student.id;
 
-  bool isLeader(Team t) => t.leaderId == _student.id;
+  bool isLeader(Team t) => t.hasLeader && t.leaderId == _student.id;
   bool hasVoted(Team t) => t.votes.containsKey(_student.id);
 
   TeamPhase phaseOf(Team t) {

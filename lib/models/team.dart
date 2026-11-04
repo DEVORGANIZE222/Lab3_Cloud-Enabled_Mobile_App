@@ -147,7 +147,8 @@ class Team {
   int get openSlots => (capacity - memberCount).clamp(0, capacity);
   bool get isFull => openSlots == 0;
   bool get meetsSizeRule => memberCount >= TeamRules.minMembers && memberCount <= TeamRules.maxMembers;
-  bool get hasLeader => leaderId != null;
+  bool get hasLeader =>
+      leaderId != null && (locked || (memberCount >= 3 && votesFor(leaderId!) >= votesNeeded));
   bool isMember(String studentId) => members.any((m) => m.studentId == studentId);
 
   TeamMember? get leader => members.where((m) => m.studentId == leaderId).firstOrNull;

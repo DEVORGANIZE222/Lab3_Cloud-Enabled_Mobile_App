@@ -247,10 +247,10 @@ class _Body extends StatelessWidget {
         for (final m in team.members) ...[
           MemberTile(
             member: m,
-            isLeader: m.studentId == team.leaderId,
+            isLeader: team.hasLeader && m.studentId == team.leaderId,
             isMe: m.studentId == context.read<TeamDetailViewModel>().applicant.id,
             badges: [
-              if (m.studentId == team.leaderId)
+              if (team.hasLeader && m.studentId == team.leaderId)
                 const StatusBadge(label: 'Leader', tone: Tone.primary, icon: Icons.star)
               else
                 const StatusBadge(label: 'Confirmed', tone: Tone.primary),

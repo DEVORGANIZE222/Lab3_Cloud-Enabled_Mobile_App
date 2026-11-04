@@ -198,9 +198,7 @@ class MemberTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveLeader = isLeader ||
-        member.role.toLowerCase().contains('lead') ||
-        badges.any((b) => b is StatusBadge && b.label.toLowerCase().contains('lead'));
+    final effectiveLeader = isLeader;
     final effectiveIsMe = isMe ||
         badges.any((b) => b is StatusBadge && b.label.toLowerCase() == 'you');
 
@@ -286,7 +284,9 @@ class MemberTile extends StatelessWidget {
                           ],
                         ),
                       )
-                    else if (member.role.isNotEmpty && member.role.toLowerCase() != 'member')
+                    else if (member.role.isNotEmpty &&
+                        member.role.toLowerCase() != 'member' &&
+                        !member.role.toLowerCase().contains('lead'))
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(

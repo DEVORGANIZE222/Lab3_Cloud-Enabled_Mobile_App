@@ -192,7 +192,23 @@ class FirestoreTeamRepository implements TeamRepository {
 
     final existingIds = team.members.map((m) => m.studentId).toSet();
     final toAdd = candidates.where((c) => !existingIds.contains(c.studentId)).take(count).toList();
-    if (toAdd.isEmpty) return;
+    final firstMemberId = team.members.first.studentId;
+
+    if (toAdd.isEmpty) {
+      // All candidates already present: ensure their votes are cast for the first member
+      final snap = await docRef.get();
+      final current = _team(snap);
+      final nextVotes = Map<String, String>.from(current.votes);
+      for (final m in current.members) {
+        nextVotes[m.studentId] = firstMemberId;
+      }
+      await docRef.update({
+        'votes': nextVotes,
+        'leaderId': firstMemberId,
+      });
+      debugPrint('Firestore seedMembersToTeam: Updated all existing members to vote for $firstMemberId');
+      return;
+    }
 
     // Must update one member at a time to comply with isLeaderPoolInvite security rule:
     // after.invitesSent == before.invitesSent + 1 && after.members.size() == before.members.size() + 1
@@ -203,12 +219,25 @@ class FirestoreTeamRepository implements TeamRepository {
       final nextMemberIds = nextMembers.map((m) => m.studentId).toList();
       final nextInvites = current.invitesSent + 1;
 
+      // Seeded member votes for the first person in the team
+      final nextVotes = Map<String, String>.from(current.votes);
+      nextVotes[member.studentId] = firstMemberId;
+      if (!nextVotes.containsKey(firstMemberId)) {
+        nextVotes[firstMemberId] = firstMemberId;
+      }
+
+      final votesForFirst = nextVotes.values.where((v) => v == firstMemberId).length;
+      final votesNeeded = nextMembers.length ~/ 2 + 1;
+      final electedLeaderId = votesForFirst >= votesNeeded ? firstMemberId : current.leaderId;
+
       await docRef.update({
         'members': nextMembers.map(_member).toList(),
         'memberIds': nextMemberIds,
         'invitesSent': nextInvites,
+        'votes': nextVotes,
+        'leaderId': electedLeaderId,
       });
-      debugPrint('Firestore seedMembersToTeam success: Added ${member.fullName}');
+      debugPrint('Firestore seedMembersToTeam success: Added ${member.fullName}, voted for $firstMemberId ($votesForFirst/$votesNeeded votes)');
     }
   }
 
