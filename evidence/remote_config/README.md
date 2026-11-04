@@ -1,18 +1,24 @@
-# Firebase Remote Config Evidence
+# Firebase Remote Config evidence
 
-This directory documents the dynamic configuration verification without rebuilding the Flutter application (`prm393-lab-3-exematching`).
+Live demo on 2026-11-04, project `prm393-lab-3-exematching`, app running on the `Pixel_API_36` emulator.
+The app was not restarted or reinstalled between the screenshots.
 
-## 1. Parameters Configured
-Defined in `firebase/remote-config-defaults.json` and mirrored on Firebase Console:
-- `enable_waiting_pool` (boolean, default: `true`): Controls visibility of Waiting Pool shortcut on Home Dashboard.
-- `max_team_members` (integer, default: `5`): Maximum student capacity per team.
-- `registration_closed` (boolean, default: `false`): Feature flag to simulate registration deadline expiry.
+In-app defaults (`ConfigKeys.defaults` in `lib/services/services.dart`): `max_team_members = 5`,
+`enable_waiting_pool = true`, `registration_closed = false`, `urgent_deadline_days = 3`,
+`banner_announcement`. `FirebaseRemoteConfigService` listens to `onConfigUpdated`, activates the new values and
+notifies `DashboardViewModel` and `ProfileViewModel` through its `changes` stream.
 
-## 2. Dynamic Update Verification (Zero-Rebuild)
-- **Mechanism:** `FirebaseRemoteConfigService` listens to `onConfigUpdated` stream and automatically invokes `activate()`.
-- **In Debug Mode:** `minimumFetchInterval` is set to `Duration.zero` to enable instant live demonstration for the lecturer.
-- **Console Demonstration:**
-  1. Default State: `enable_waiting_pool = true` -> Dashboard renders Waiting Pool navigation card.
-  2. Modified State: Change `enable_waiting_pool = false` on Firebase Console -> Click **Publish changes**.
-  3. App Reaction: App receives update event; Waiting Pool card dynamically hides without restarting or reinstalling the APK.
+| Time | File | What it shows |
+|---|---|---|
+| before | `console_before.jpg` | Console, Config Version 5: only `enable_waiting_pool = true` and `max_team_members = 5` are published, so `registration_closed` uses the in-app default `false`. |
+| 06:42 | `app_before.png` | App, Settings tab → App settings: `registration_closed  false`. |
+| 06:44 | `console_published.jpg` | Console, Config Version 6: `registration_closed = true` published ("Just now"); "1 since last publish" under fetches. |
+| 06:44 | `app_after.png` | The same Settings screen, with no tap or restart in between: `registration_closed  true`. |
+| 06:45 | `app_after_home.png` | Home after switching tabs: "Registration is closed" banner and "View Matching Status". The Waiting Pool entry needs `enable_waiting_pool = true` and a student without a team. |
 
+The Matching Status screen (`docs/screenshots/scr08_random_pool.png`) needs a `waitingPool/{uid}` record. The app
+does not create one; in the Lab 2 design the Academic Office places students left without a team. For the
+screenshot, `Backend.place_in_pool` (`e2e_test/backend.py`) wrote that record, and `Backend.reset` removes it again.
+
+**Revert:** the parameter was deleted and published again (Config Version 7, back to the two original parameters).
+The running app showed registration open again about 90 seconds later.
