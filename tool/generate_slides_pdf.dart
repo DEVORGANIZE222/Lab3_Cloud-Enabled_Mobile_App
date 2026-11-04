@@ -119,6 +119,17 @@ void main() async {
   final passedRuns = runs.values.expand((r) => r).where((ok) => ok).length;
   final totalRuns = runs.values.expand((r) => r).length;
 
+  // Claims about console proof are printed only when the screenshots are in the repository.
+  bool captured(List<String> files) => files.every((f) => File(f).existsSync());
+  final fcmProof = captured(['evidence/fcm/foreground_alerts.png', 'evidence/fcm/background_opened.png', 'evidence/fcm/terminated_opened.png']);
+  final crashProof = captured(['evidence/crashlytics/crashlytics_nonfatal_keys.jpg', 'evidence/crashlytics/crashlytics_crash_keys.jpg', 'evidence/crashlytics/crashlytics_crash_user.jpg']);
+  final configProof = captured(['evidence/remote_config/app_before.png', 'evidence/remote_config/console_published.jpg', 'evidence/remote_config/app_after.png', 'evidence/remote_config/app_after_home.png']);
+  // One finding per line, written by hand from docs/test-plan.md section 4 after the session has really been run.
+  final exploratory = File('e2e_test/exploratory/summary.txt');
+  final exploratoryLines = exploratory.existsSync()
+      ? exploratory.readAsLinesSync().map((l) => l.replaceFirst(RegExp(r'^[-•]\s*'), '').trim()).where((l) => l.isNotEmpty).toList()
+      : <String>[];
+
   // ==================== SLIDE 1: TITLE SLIDE ====================
   pdf.addPage(
     pw.Page(
@@ -417,8 +428,8 @@ void main() async {
             children: [
               pw.Expanded(
                 child: buildCard('LIFECYCLE COVERAGE & PERMISSIONS', [
-                  'Android 13+ Consent: Requests POST_NOTIFICATIONS permission at runtime; handles denial with non-blocking toast.',
-                  'Foreground State: onMessage captures notifications, updates badge count, and appends to Alerts inbox.',
+                  'Android 13+ Consent: Requests POST_NOTIFICATIONS permission at runtime; a denial shows a non-blocking snackbar.',
+                  'Foreground State: onMessage saves the message to the Alerts inbox; the bell badge counts it as unread.',
                   'Background State: onBackgroundMessage runs isolated top-level handler saving record to Firestore inbox.',
                   'Terminated State: getInitialMessage launches app from cold start; onMessageOpenedApp triggers deep link.',
                 ]),
@@ -426,10 +437,12 @@ void main() async {
               pw.SizedBox(width: 14),
               pw.Expanded(
                 child: buildCard('INTERACTIVE INBOX & DEEP LINKING', [
-                  'In-App Notification Center: Alerts tab displays live history of received system updates and team invites.',
+                  'In-App Notification Center: the bell opens Alerts, a live list of team invites and system updates.',
                   'Interactive Actions: Decline invite includes non-blocking Undo snackbar that restores state immediately.',
                   'Targeted Navigation: Tapping a notification with teamId payload navigates directly to Team Detail screen.',
-                  'Console Proof: Test messages sent from Firebase Console received across all 3 lifecycle states.',
+                  fcmProof
+                      ? 'Proof: an FCM test message reached the app in all 3 states; tapping it opened the team (evidence/fcm/).'
+                      : 'Console Proof: not captured yet.',
                 ]),
               ),
             ],
@@ -455,7 +468,7 @@ void main() async {
                   'Zero PII Policy: Absolutely no student email, full name, or raw student code passed as parameters.',
                   'User Identity: Authenticated User ID set once via setUserId(uid) following Google Sign-In.',
                   'Standard Recommended Names: login, logout, search_teams, view_team.',
-                  'Custom Domain Events: join_team, cast_vote, invite_pool, lock_roster, export_report.',
+                  'Custom Domain Events: create_team, join_team, cast_vote, invite_pool, lock_roster, export_report.',
                   'Typed Parameters: query_length (int), result_count (int), team_id (string), file_size_kb (int).',
                 ]),
               ),
@@ -463,7 +476,8 @@ void main() async {
               pw.Expanded(
                 child: buildCard('DEBUGVIEW REAL-TIME VERIFICATION', [
                   'ADB Debug Flag: adb shell setprop debug.firebase.analytics.app com.devorganize222.exematching',
-                  'Live Stream: All 9 events observed in real-time on Firebase Console -> Analytics -> DebugView.',
+                  'Shown in DebugView: login with the user ID, search_teams and cast_vote with their parameters.',
+                  'Every E2E run also saves the events it caused from Logcat (analytics.txt next to result.json).',
                   'Product Answers: Analytics answer key questions (e.g. Which topics are searched most? What % of teams lock?).',
                   'Evidence Saved: Detailed parameter inspector screenshots preserved in evidence/debugview/.',
                 ]),
@@ -490,7 +504,9 @@ void main() async {
                 child: buildCard('FIREBASE CRASHLYTICS (firebase_crash_reporter.dart)', [
                   'Fatal Crash Capture: FlutterError.onError and PlatformDispatcher record uncaught engine exceptions.',
                   'Handled Non-Fatal: Profile button triggers diagnostic recordError with custom keys (screen=profile; student_cohort set at sign-in).',
-                  'Test Crash Action: Dedicated Profile button invokes .crash() -> verified on Console with User ID.',
+                  crashProof
+                      ? 'Test Crash Action: Profile button invokes .crash(); the issue and the non-fatal with its keys are on the Console (evidence/crashlytics/).'
+                      : 'Test Crash Action: Profile button invokes .crash(); Console screenshot not captured yet.',
                   'User Feedback: Non-fatal errors always display user-facing explanations, never crashing the UI.',
                 ]),
               ),
@@ -498,9 +514,11 @@ void main() async {
               pw.Expanded(
                 child: buildCard('FIREBASE REMOTE CONFIG (ZERO-REBUILD UPDATES)', [
                   'In-App Fallback: ConfigKeys.defaults provides safe defaults when offline (enable_waiting_pool=true).',
-                  'Instant Activation: onConfigUpdated automatically activates published parameters in real time.',
-                  'Observable Behavior: Changing enable_waiting_pool on Console instantly hides Waiting Pool card on Home.',
-                  'Zero Rebuild: Verified live without stopping the app, reinstalling the APK, or modifying code.',
+                  'Real-Time Activation: onConfigUpdated activates published values; the open app showed the change within a minute (the revert in about 90 s).',
+                  'Observable Behavior: publishing registration_closed=true shows the closed banner and the Waiting Pool entry on Home.',
+                  configProof
+                      ? 'No Rebuild: before/after screenshots of the same running app in evidence/remote_config/.'
+                      : 'No Rebuild: before/after screenshots not captured yet.',
                 ]),
               ),
             ],
@@ -584,21 +602,15 @@ void main() async {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Expanded(
-                child: buildCard('25-MINUTE UNSCRIPTED PRO SESSION', [
-                  'Autonomous Agent: Driven by Gemini Pro Profile with zero pre-scripted steps.',
-                  'Goal: Identify potential layout overflows, state synchronization bugs, and network edge cases.',
-                  'Stress Scenarios Tested: Rapid filter chip toggling, long topic text truncation, network cut during voting.',
-                  'Zero Fatal Crashes: Application handled all chaotic inputs without unexpected crashes or freeze.',
+                child: buildCard('UNSCRIPTED SESSION (ARTEMIS PRO PROFILE)', [
+                  'Goal given to the agent: explore the app freely and report crashes, layout overflows, stale state and confusing flows.',
+                  'Flutter Logcat is recorded for the whole session, so layout errors are counted from the log, not from the agent.',
+                  'Trace IDs, duration and every finding are listed in docs/test-plan.md section 4.',
                 ]),
               ),
               pw.SizedBox(width: 14),
               pw.Expanded(
-                child: buildCard('OBSERVATIONS & REFINEMENTS MADE', [
-                  'Layout Resilience: Text wrapping and ellipsis prevented overflow errors at both 360dp and 412dp viewports.',
-                  'Firestore Resilience: Disconnecting network during vote triggered clean retry UI without data loss.',
-                  'Usability Improvement Identified: Added percentage progress label to PDF upload bar based on session feedback.',
-                  'Trust Assessment: Multi-run verification proved that AI agents are highly effective for mobile exploratory QA.',
-                ]),
+                child: buildCard('FINDINGS', exploratoryLines.isEmpty ? ['Session not run yet.'] : exploratoryLines),
               ),
             ],
           ),

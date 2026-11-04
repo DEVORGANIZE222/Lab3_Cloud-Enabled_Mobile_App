@@ -43,7 +43,7 @@ Before the first run:
    rejected with "This account is not on the class roster".
 4. Deploy the rules in `firebase/firestore.rules` and `firebase/storage.rules`.
 
-For the Remote Config demo, publish `enable_waiting_pool` / `registration_closed` in the console; the app activates
+For the Remote Config demo, publish `registration_closed = true` in the console (the Waiting Pool entry on Home also needs `enable_waiting_pool = true`, the default); the app activates
 updates in real time (`onConfigUpdated`). For DebugView: `adb shell setprop debug.firebase.analytics.app com.devorganize222.exematching`.
 
 ## Run the E2E tests
@@ -99,7 +99,7 @@ All 6 Firebase services are fully implemented in `lib/firebase/` and actively wi
 - **Cloud Firestore**: Atomic transactions for team joins, votes, lock operations, and Waiting Pool recovery. Security rules strictly enforce authorization.
 - **Cloud Storage**: Per-user team report exports to `reports/{uid}/...` protected by UID-isolated rules.
 - **Cloud Messaging (FCM)**: Push notification handling across foreground, background, and terminated lifecycle states, with deep navigation.
-- **Analytics**: 9 privacy-compliant events with parameters, verified in real-time via DebugView.
+- **Analytics**: 10 events with ID/count parameters only (no email, name or search text); `login` with the user ID, `search_teams` and `cast_vote` shown in DebugView ([evidence/debugview](evidence/debugview)).
 - **Crashlytics & Remote Config**: Fatal error capture, handled diagnostic reporting with custom keys, and zero-rebuild runtime configuration updates.
 
 ---
@@ -115,6 +115,6 @@ The demo video follows the exact walkthrough order specified in Handout Section 
 | **02:00 – 03:00** | **Flow 2: Leader Election** | • Switch to My Team tab; open "Vote for Leader" screen.<br>• Demonstrate that vote tallies remain hidden before casting a vote.<br>• Select yourself as candidate and submit the vote.<br>• Observe Firestore real-time transaction update; leader elected banner appears. |
 | **03:00 – 04:15** | **Flow 3: Lock & Recovery** | • Leader navigates to "Review & Lock". Initial attempt blocked (<4 members).<br>• Tap "Invite from Waiting Pool" -> Automated candidate matching assigns `Khanh Vo`.<br>• Condition checks turn green; tap "Lock Roster" -> Generates official code `CM-AI04-XXXX`.<br>• Tap "Share Team Link" -> Android system Share Sheet opens natively. |
 | **04:15 – 05:15** | **Storage & FCM Live Demo** | • Profile screen: Tap "Export & Upload PDF". Progress bar reaches 100%, displaying download URL.<br>• Console: Show Storage bucket with file under `reports/{uid}/`.<br>• Send FCM test notification from Console -> Verify in-app Alerts inbox badge and tap navigation. |
-| **05:15 – 06:15** | **Remote Config & Crashlytics** | • Console: Change `enable_waiting_pool = false` and Publish -> App instantly hides Waiting Pool card on Home without rebuild.<br>• Profile screen: Tap "Send Test Error" -> Snackbar confirms non-fatal sent.<br>• Tap "Force Test Crash" -> App crashes.<br>• Console: Show Crashlytics dashboard with Fatal issue, User ID, and custom key `screen=profile`. |
+| **05:15 – 06:15** | **Remote Config & Crashlytics** | • Console: add `registration_closed = true` and Publish -> while the app stays open, Home switches to the "Registration closed" banner and shows "View matching status" (Waiting Pool). Delete the parameter and Publish again to reopen registration.<br>• Profile screen: Tap "Send Test Error" -> Snackbar confirms non-fatal sent.<br>• Tap "Force Test Crash" -> App crashes.<br>• Console: Show Crashlytics dashboard with Fatal issue, User ID, and custom key `screen=profile`. |
 | **06:15 – 07:00** | **ARTEMIS Automated E2E Run** | • Terminal: Run `uv run pytest -k "test_tc03" -v` -> Show ARTEMIS AI agent controlling the device live, asserting on Semantics tree and Logcat.<br>• Show `junit.xml` test results. |
 | **07:00 – 07:30** | **AI Code Review Walkthrough** | • Show GitHub Pull Request #8 review comments.<br>• Explain finding GR-01 (team updates were not limited to roster fields) and the corresponding fix commit `c9543a3`. |

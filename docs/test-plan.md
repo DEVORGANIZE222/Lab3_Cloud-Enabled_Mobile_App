@@ -118,7 +118,9 @@ Cả 15 lần chạy thất bại (từ 19:17) đều có cùng nguyên nhân h�
 Trong suốt phiên 1, Logcat của Flutter (590 dòng) không có `EXCEPTION CAUGHT`, `RenderFlex overflowed` hay lỗi layout nào trên build `81695c7`.
 
 <!-- SESSION2 -->
-**Phiên 2** — chạy lại TC-07…TC-11 (3 lần mỗi ca) khi hạn mức đã có lại: _đang chạy_.
+**Lần thử phiên 2 bị hủy (2026-11-03 22:04):** lúc 22:03 một lệnh gọi thử `gemini-3.5-flash-lite` vẫn trả lời, nên TC-07…TC-11 được chạy lại. Lần chạy đầu tiên (TC-07 run1, trace `c800b1b5`) lại nhận `429 RESOURCE_EXHAUSTED`: hạn mức ngày của flash-lite (`limit: 500`) và flash (`limit: 20`) đều đã hết. Sau đó emulator-5556 treo hẳn: `adb shell echo` cũng không trả lời, nên pytest đứng chờ cả đêm. Sáng 2026-11-04 tiến trình được dừng và emulator được khởi động lại (cold boot). Bản ghi của lần thử này nằm ở `e2e_test/evidence-session2-aborted/`; nó không được tính vào kết quả.
+
+**Phiên 2** — chạy lại TC-07…TC-11 (3 lần mỗi ca) sau khi hạn mức ngày được đặt lại (0:00 giờ Thái Bình Dương = 15:00 giờ Việt Nam): _chưa chạy_.
 
 ---
 
