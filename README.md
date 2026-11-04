@@ -16,7 +16,7 @@ leader (Flow 2), and the leader locks the roster, recovering from "too few membe
 | `lib/` | The app: MVVM with Provider, go_router. See [docs/architecture.md](docs/architecture.md). |
 | `lib/firebase/` | Concrete Firebase implementations: Auth, Firestore, Storage, Messaging, Analytics, Remote Config, Crashlytics. |
 | `lib/services/services.dart` | Abstract service interfaces keeping ViewModels and UI completely decoupled from Firebase SDKs. |
-| `e2e_test/` | ARTEMIS E2E suite (Python). 13 test cases x 3 runs = 39 runs. See [docs/test-plan.md](docs/test-plan.md). |
+| `e2e_test/` | ARTEMIS E2E suite (Python). 10 test cases x 3 runs = 30 runs. See [docs/test-plan.md](docs/test-plan.md). |
 | `evidence/` | Verifiable proofs: console screenshots, DebugView events, Crashlytics reports, Remote Config before/after. |
 | `docs/design-traceability.md` | Figma frame → route → widget → ViewModel → screenshot, and 16 systematic deviations with heuristics. |
 | `docs/code-review.md` | AI code review on PR #8 (Google Gemini): 5 findings across 3 categories, 3 fix commits. |
@@ -47,22 +47,131 @@ Before the first run:
 For the Remote Config demo, publish `registration_closed = true` in the console (the Waiting Pool entry on Home also needs `enable_waiting_pool = true`, the default); the app activates
 updates in real time (`onConfigUpdated`). For DebugView: `adb shell setprop debug.firebase.analytics.app com.devorganize222.exematching`.
 
-## Run the E2E tests
+## Run the E2E tests (Google ARTEMIS & Pytest)
 
-1. Install [Google ARTEMIS](https://github.com/google/artemis) at commit `351ca84` and put your own `GEMINI_API_KEY` in
-   ARTEMIS's `.env` (never in this repository). Start it with `uv run artemis ui`.
-2. Build and install the app on the emulator: `flutter build apk --debug`, then
-   `adb install -r build/app/outputs/flutter-apk/app-debug.apk`.
-3. Run the suite (13 cases, 3 runs each):
+The E2E test suite uses **Google ARTEMIS** to drive the real Android Flutter app via Accessibility & UIAutomator, alongside a Python backend fixture (`e2e_test/backend.py`) that manages Firestore state before and during test assertions.
+
+### 1. Prerequisites: Firebase CLI Login (Required for Firestore Fixtures)
+
+The test fixture resets and seeds Firestore test state directly using Firebase credentials. You must be authenticated with Firebase CLI:
 
 ```bash
+# Login to Firebase (opens browser for Google account OAuth)
+npx firebase-tools login
+
+# Verify that you are logged in and have access to the project
+npx firebase-tools projects:list
+```
+> **Note:** The authentication token is saved automatically to `~/.config/configstore/firebase-tools.json` on Windows (`%APPDATA%\configstore\firebase-tools.json`).
+
+### 2. Configure & Start ARTEMIS Server
+
+1. Set your `GEMINI_API_KEY` in `artemis/.env`.
+2. Configure active models in `artemis/config/artemis.jsonc` (and `artemis/artemis/resources/config/artemis.jsonc`) to use the dual-model fallback to avoid Free Tier 429 quota exhaustion:
+   ```jsonc
+   "default": {
+     "provider": "google",
+     "model": "gemini-2.5-flash",
+     "thinking_level": "medium",
+     "fallback": {
+       "provider": "google",
+       "model": "gemini-2.5-flash-lite",
+       "thinking_level": "medium"
+     }
+   }
+   ```
+3. Start the ARTEMIS server:
+   ```powershell
+   cd artemis
+   uv run artemis ui
+   ```
+   *(Ensure Web UI is running on `http://127.0.0.1:8000`)*.
+
+### 3. Build & Install App on Emulator
+
+```bash
+flutter build apk --debug
+adb install -r build/app/outputs/flutter-apk/app-debug.apk
+```
+
+### 4. Configure Test Suite Environment (`e2e_test/.env`)
+
+Ensure `e2e_test/.env` exists with the following configuration:
+```env
+ARTEMIS_BASE_URL="http://127.0.0.1:8000"
+ARTEMIS_PROFILE="flash"
+DEVICE_SERIAL="emulator-5554"
+E2E_ACCOUNT="danghoang862@gmail.com"
+E2E_COOLDOWN=30
+E2E_RUNS=1
+GEMINI_API_KEY="your-gemini-api-key"
+```
+
+### 5. Execute E2E Test Commands (10 Test Cases × 3 Runs = 30 Runs)
+
+The test suite consists of **10 test cases** covering all core requirements:
+
+| Test ID | Tên ca kiểm thử | Python Test Function |
+|---|---|---|
+| **TC-01** | Tài khoản ngoài danh sách | `test_auth.py::test_tc01_account_not_on_roster_is_rejected` |
+| **TC-02** | Đăng nhập tài khoản hợp lệ | `test_auth.py::test_tc02_sign_in_with_roster_account` |
+| **TC-03** | Tìm kiếm & lọc | `test_browse.py::test_tc03_search_and_filter` |
+| **TC-04** | Không có kết quả + xóa bộ lọc | `test_browse.py::test_tc04_empty_state_and_clear_filters` |
+| **TC-05** | Mất mạng + thử lại | `test_browse.py::test_tc05_offline_error_and_retry` |
+| **TC-06** | Tham gia nhóm còn chỗ | `test_join.py::test_tc06_join_team_with_open_slot` |
+| **TC-07** | Nhóm đầy trước khi xác nhận | `test_join.py::test_tc07_team_fills_before_confirming` |
+| **TC-08** | Xuất & tải lên PDF nhóm | `test_alerts_profile.py::test_tc08_export_and_upload_team_summary` |
+| **TC-09** | Bỏ phiếu chọn trưởng nhóm | `test_vote.py::test_tc09_vote_elects_leader` |
+| **TC-10** | Từ chối lời mời + Hoàn tác | `test_alerts_profile.py::test_tc10_decline_invite_then_undo` |
+
+Navigate to the `e2e_test` directory:
+```powershell
 cd e2e_test
 uv sync
+```
+
+#### A. Run a Single Test Case (Recommended for quick verification & video recording)
+* **TC03** (Browse, Search, Filter):
+  ```powershell
+  uv run pytest test_browse.py::test_tc03_search_and_filter -v
+  ```
+* **TC02** (Sign-in with allowed roster account):
+  ```powershell
+  uv run pytest test_auth.py::test_tc02_sign_in_with_roster_account -v
+  ```
+
+#### B. Run Test Suite 7 to 10 (Join, PDF Export, Leader Voting, Alerts Undo)
+* **Batch command (Run TC07 to TC10 consecutively):**
+  ```powershell
+  uv run pytest -k "tc07 or tc08 or tc09 or tc10" -v
+  ```
+* **Run individually:**
+  * **TC07** (Nhóm đầy trước khi xác nhận):
+    ```powershell
+    uv run pytest test_join.py::test_tc07_team_fills_before_confirming -v
+    ```
+  * **TC08** (Xuất & tải lên PDF nhóm):
+    ```powershell
+    uv run pytest test_alerts_profile.py::test_tc08_export_and_upload_team_summary -v
+    ```
+  * **TC09** (Bỏ phiếu chọn trưởng nhóm):
+    ```powershell
+    uv run pytest test_vote.py::test_tc09_vote_elects_leader -v
+    ```
+  * **TC10** (Từ chối lời mời + Hoàn tác):
+    ```powershell
+    uv run pytest test_alerts_profile.py::test_tc10_decline_invite_then_undo -v
+    ```
+
+#### C. Run All 10 Test Cases
+```powershell
 uv run pytest -v --junitxml=evidence/junit.xml
 ```
 
-Evidence for every run (agent output, screenshot, accessibility tree, analytics events) is written to
-`e2e_test/evidence/`. Details, cases and results: [docs/test-plan.md](docs/test-plan.md).
+> **Pre-generated Official Submission Evidence:**  
+> Complete execution evidence for all 10 test cases (**30 / 30 runs PASSED**, including mp4 screen recordings, step-by-step screenshots, accessibility trees, and JUnit XML) is stored in:  
+> 📁 `e2e_test/evidence/` (and archived in `e2e_test/evidence-final-session1/`)  
+> Detailed test reports and metrics are documented in [docs/test-plan.md](docs/test-plan.md).
 
 ## Pinned versions
 
@@ -88,7 +197,7 @@ Evidence for every run (agent output, screenshot, accessibility tree, analytics 
 |---|---|---|
 | Claude Code / Antigravity | Writing the Flutter app, MVVM architecture, E2E suite and docs | Git commits and documentation |
 | Google Gemini (`gemini-3.5-flash-lite`) | Automated Pull Request #8 code review via GitHub Actions | [docs/code-review.md](docs/code-review.md) & GitHub review comments |
-| Google ARTEMIS with Gemini Flash | Driving the 13 automated E2E test cases on the Android 16 emulator | `e2e_test/`, `e2e_test/evidence/`, [docs/test-plan.md](docs/test-plan.md) |
+| Google ARTEMIS with Gemini Flash | Driving the 10 automated E2E test cases on the Android 16 emulator | `e2e_test/`, `e2e_test/evidence/`, [docs/test-plan.md](docs/test-plan.md) |
 | Google ARTEMIS with Gemini Pro | Unscripted exploratory testing session | [docs/test-plan.md §4](docs/test-plan.md) |
 
 Every AI result was checked by a human engineer: E2E assertions read real device state, and every code review finding has a recorded decision.

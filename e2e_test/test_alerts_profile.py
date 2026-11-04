@@ -1,31 +1,11 @@
-"""TC-12, TC-13: Alerts (SCR_09) on Firestore and Profile export to Cloud Storage."""
+"""TC-08, TC-10: Alerts (SCR_09) on Firestore and Profile export to Cloud Storage."""
 
 import re
 
 from conftest import ACCOUNT
 
 
-async def test_tc12_decline_invite_then_undo(device, backend, me, artemis):
-    backend.reset(me)
-    invite = backend.add_invite(me, "team_fin02", "FinTech Guard")
-    device.sign_in(ACCOUNT)
-
-    run = await artemis(
-        "Tap the notification bell icon at the top right to open Alerts and switch to the Invites filter. Decline the invite from FinTech Guard, "
-        "then use Undo in the message at the bottom of the screen. Report how many invites are listed "
-        "right after declining and after undoing.",
-        'Return JSON: {"invites_after_decline": int, "invites_after_undo": int, "invite_team": string}',
-    )
-
-    assert run.data["invites_after_decline"] == 0
-    assert run.data["invites_after_undo"] == 1
-    assert "FinTech Guard" in run.data["invite_team"]
-    assert "Invites (1)" in run.screen
-    # Ground truth: Undo restored the notification document in Firestore.
-    assert backend.get(f"students/{me.uid}/notifications/{invite}") is not None
-
-
-async def test_tc13_export_and_upload_team_summary(device, backend, me, artemis):
+async def test_tc08_export_and_upload_team_summary(device, backend, me, artemis):
     backend.reset(me, team="team_ai04")
     device.sign_in(ACCOUNT)
     before = backend.storage_objects(f"reports/{me.uid}/")
@@ -46,3 +26,24 @@ async def test_tc13_export_and_upload_team_summary(device, backend, me, artemis)
     # Ground truth: a new object exists in Cloud Storage under the owner's folder.
     new = set(backend.storage_objects(f"reports/{me.uid}/")) - set(before)
     assert f"reports/{me.uid}/{run.data['file_name']}" in new
+
+
+async def test_tc10_decline_invite_then_undo(device, backend, me, artemis):
+    backend.reset(me)
+    invite = backend.add_invite(me, "team_fin02", "FinTech Guard")
+    device.sign_in(ACCOUNT)
+
+    run = await artemis(
+        "Tap the notification bell icon at the top right to open Alerts and switch to the Invites filter. Decline the invite from FinTech Guard, "
+        "then use Undo in the message at the bottom of the screen. Report how many invites are listed "
+        "right after declining and after undoing.",
+        'Return JSON: {"invites_after_decline": int, "invites_after_undo": int, "invite_team": string}',
+    )
+
+    assert run.data["invites_after_decline"] == 0
+    assert run.data["invites_after_undo"] == 1
+    assert "FinTech Guard" in run.data["invite_team"]
+    assert "Invites (1)" in run.screen
+    # Ground truth: Undo restored the notification document in Firestore.
+    assert backend.get(f"students/{me.uid}/notifications/{invite}") is not None
+

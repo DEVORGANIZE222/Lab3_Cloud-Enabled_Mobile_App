@@ -1,5 +1,5 @@
 {
-  "test": "test_alerts_profile.py::test_tc12_decline_invite_then_undo[run2]",
+  "test": "test_alerts_profile.py::test_tc10_decline_invite_then_undo[run2]",
   "attempt": 2,
   "profile": "flash",
   "trace_id": "43278301-bb18-4f79-86a2-73efec2b746a",

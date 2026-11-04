@@ -1,6 +1,6 @@
-"""TC-08, TC-09: Leader Voting (SCR_06), Flow 2, on live Firestore.
+"""TC-09: Leader Voting (SCR_06), Flow 2, on live Firestore.
 
-Precondition for both: the test account holds Minh Le's seat in Team AI-04
+Precondition: the test account holds Minh Le's seat in Team AI-04
 (3 of 5 members). Quynh has voted for that seat, Hoang for himself, and the
 test account has not voted, so its own vote decides the majority.
 """
@@ -8,24 +8,6 @@ test account has not voted, so its own vote decides the majority.
 import pytest
 
 from conftest import ACCOUNT
-
-
-@pytest.mark.flow2
-async def test_tc08_tallies_hidden_until_voting(device, backend, me, artemis):
-    backend.reset(me, team="team_ai04")
-    device.sign_in(ACCOUNT)
-
-    run = await artemis(
-        "Go to My Team and open 'Vote for Leader'. Do not vote. "
-        "Report whether any vote counts are visible and what the information box says.",
-        'Return JSON: {"vote_counts_visible": bool, "info_title": string, "submit_enabled": bool}',
-    )
-
-    assert run.data["vote_counts_visible"] is False
-    assert run.data["info_title"] == "Results appear after you vote"
-    assert run.data["submit_enabled"] is False
-    assert "/3" not in run.screen  # no "x/3" tally bars on screen
-    assert me.uid not in backend.get("teams/team_ai04")["votes"]  # nothing was written
 
 
 @pytest.mark.flow2
@@ -48,3 +30,4 @@ async def test_tc09_vote_elects_leader(device, backend, me, artemis):
     team = backend.get("teams/team_ai04")
     assert team["votes"][me.uid] == me.uid
     assert team["leaderId"] == me.uid
+

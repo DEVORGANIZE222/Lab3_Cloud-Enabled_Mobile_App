@@ -60,6 +60,7 @@ class Device:
         self.shell("am", "force-stop", PACKAGE)
         self.adb("logcat", "-c")
         self.shell("am", "start", "-n", ACTIVITY)
+        time.sleep(1.5)
 
     def set_network(self, on: bool) -> None:
         state = "enable" if on else "disable"
@@ -68,20 +69,40 @@ class Device:
 
     # --- UI tree -----------------------------------------------------------
     def nodes(self) -> list[Node]:
-        self.shell("uiautomator", "dump", "/sdcard/ui.xml")
-        xml = self.adb("exec-out", "cat", "/sdcard/ui.xml")
-        result: list[Node] = []
-        for el in ET.fromstring(xml).iter("node"):
-            bounds = [int(v) for v in re.findall(r"\d+", el.get("bounds", "[0,0][0,0]"))]
-            result.append(
-                Node(
-                    id=el.get("resource-id", ""),
-                    text=el.get("text") or el.get("content-desc") or "",
-                    x=(bounds[0] + bounds[2]) // 2,
-                    y=(bounds[1] + bounds[3]) // 2,
-                )
-            )
-        return result
+        paths = ["/data/local/tmp/ui.xml", "/sdcard/window_dump.xml", "/sdcard/ui.xml"]
+        for attempt in range(4):
+            # Try dumping to /data/local/tmp/ui.xml
+            dump_out = self.shell("uiautomator", "dump", paths[0])
+            if "dumped to" not in dump_out and "ui.xml" not in dump_out:
+                # If not idle, retry with --compressed
+                self.shell("uiautomator", "dump", "--compressed", paths[0])
+
+            xml = ""
+            for p in paths:
+                raw = self.adb("exec-out", "cat", p)
+                if "<hierarchy" in raw or "<node" in raw:
+                    xml = raw
+                    break
+
+            if xml:
+                try:
+                    result: list[Node] = []
+                    for el in ET.fromstring(xml).iter("node"):
+                        bounds = [int(v) for v in re.findall(r"\d+", el.get("bounds", "[0,0][0,0]"))]
+                        result.append(
+                            Node(
+                                id=el.get("resource-id", ""),
+                                text=el.get("text") or el.get("content-desc") or "",
+                                x=(bounds[0] + bounds[2]) // 2,
+                                y=(bounds[1] + bounds[3]) // 2,
+                            )
+                        )
+                    if result:
+                        return result
+                except ET.ParseError:
+                    pass
+            time.sleep(0.5)
+        return []
 
     def find(self, *, id: str | None = None, text: str | None = None) -> Node | None:
         for n in self.nodes():
@@ -149,12 +170,17 @@ class Device:
         # A tap during the first frames can be dropped, so retry until the
         # Google Play services account chooser opens.
         for _ in range(3):
+            if self.find(id="nav_home"):
+                return
             self.tap(id="btn_google_sign_in", timeout=40)
             try:
                 self.tap(text=email, timeout=10)
                 break
             except AssertionError:
+                if self.find(id="nav_home"):
+                    return
                 continue
         else:
-            raise AssertionError("The Google account chooser never opened")
+            if not self.find(id="nav_home"):
+                raise AssertionError("The Google account chooser never opened")
         self.wait_for(id="nav_home", timeout=40)
