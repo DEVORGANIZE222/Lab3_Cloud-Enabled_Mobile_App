@@ -62,7 +62,9 @@ class NotificationsScreen extends StatelessWidget {
                       onSelected: (_) => vm.setFilter(f),
                       selectedColor: context.colors.primary,
                       backgroundColor: context.colors.surfaceContainerHigh,
-                      side: BorderSide.none,
+                      side: vm.filter == f
+                          ? BorderSide.none
+                          : const BorderSide(color: Color(0xFFCBD5E1), width: 1.0),
                       labelStyle: context.text.labelLarge?.copyWith(
                         color: vm.filter == f ? context.colors.onPrimary : context.colors.onSurface,
                       ),

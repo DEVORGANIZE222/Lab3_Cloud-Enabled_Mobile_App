@@ -184,7 +184,9 @@ class _Body extends StatelessWidget {
               semanticId: 'btn_vote_leader',
               label: vm.hasVoted(team) ? 'Change Vote' : 'Vote for Leader',
               icon: Icons.how_to_vote,
-              variant: phase == TeamPhase.electLeader ? AppButtonVariant.primary : AppButtonVariant.secondary,
+              variant: (!vm.hasVoted(team) || phase == TeamPhase.electLeader)
+                  ? AppButtonVariant.primary
+                  : AppButtonVariant.secondary,
               onPressed: () => context.push('/team/vote'),
             ),
           if (phase != TeamPhase.electLeader) ...[
@@ -193,7 +195,9 @@ class _Body extends StatelessWidget {
               semanticId: 'btn_review_lock',
               label: 'Review & Lock',
               icon: Icons.fact_check,
-              variant: leader ? AppButtonVariant.primary : AppButtonVariant.secondary,
+              variant: (leader && vm.hasVoted(team))
+                  ? AppButtonVariant.primary
+                  : AppButtonVariant.secondary,
               onPressed: () => context.push('/team/lock'),
             ),
           ],
