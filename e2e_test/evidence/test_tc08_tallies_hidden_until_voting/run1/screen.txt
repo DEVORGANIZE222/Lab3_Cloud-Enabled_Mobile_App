@@ -1,0 +1,21 @@
+[android:id/content]
+[] EXEMatching
+[] My Team
+[btn_open_alerts] Alerts
+[] Alerts
+[btn_open_profile]
+[] Profile
+[] You're not in a team yet
+Browse teams with open slots or create your own startup team before the deadline.
+[empty_action]
+[] Browse Teams
+[btn_create_team_empty]
+[] Create a Team
+[nav_home] Home
+Tab 1 of 4
+[nav_browse] Browse
+Tab 2 of 4
+[nav_team] My Team
+Tab 3 of 4
+[nav_settings] Settings
+Tab 4 of 4

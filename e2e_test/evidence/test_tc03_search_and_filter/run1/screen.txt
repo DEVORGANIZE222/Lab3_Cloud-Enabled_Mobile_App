@@ -11,7 +11,6 @@
 [] Open Slots
 [] AI/ML
 [] Mobile
-[] Web/Cloud
 [] Want to lead a startup?
 Pitch your idea and recruit your dream team.
 [] Create
@@ -32,12 +31,6 @@ Open slot
 2 open
 Looking for: 
 Embedded / IoT · DevOps
-[btn_view_AI-04]
-[] View Details & Join
-[] Can't find the right fit?
-Create your own startup team or join the Random Pool before the deadline.
-[btn_create_team_browse]
-[] Create a Team
 [nav_home] Home
 Tab 1 of 4
 [nav_browse] Browse

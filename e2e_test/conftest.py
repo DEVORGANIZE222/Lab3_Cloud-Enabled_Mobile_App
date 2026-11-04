@@ -25,6 +25,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+# Automatically load .env from e2e_test/.env or project root .env
+for _env_path in [Path(__file__).parent / ".env", Path(__file__).parent.parent / ".env"]:
+    if _env_path.exists():
+        for _line in _env_path.read_text(encoding="utf-8").splitlines():
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                _k, _v = _k.strip(), _v.strip().strip("'\"")
+                if _k and _k not in os.environ:
+                    os.environ[_k] = _v
+
 import pytest
 from artemis_client import ArtemisClient
 
