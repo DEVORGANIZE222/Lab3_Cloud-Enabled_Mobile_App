@@ -87,22 +87,42 @@ class AppSearchField extends StatelessWidget {
       identifier: 'browse_search_field',
       child: ValueListenableBuilder<TextEditingValue>(
         valueListenable: controller,
-        builder: (context, value, _) => TextField(
-          controller: controller,
-          textInputAction: TextInputAction.search,
-          onSubmitted: onSubmitted,
-          onChanged: onChanged,
-          // Figma: grey filled search bar without an outline; focus keeps the
-          // 2 dp primary ring from the theme so the field is still findable.
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
-            enabledBorder: const OutlineInputBorder(borderRadius: AppRadius.cardAll, borderSide: BorderSide.none),
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: value.text.isEmpty
-                ? null
-                : IconButton(tooltip: 'Clear search', icon: const Icon(Icons.close), onPressed: onClear),
+        builder: (context, value, _) => Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: AppRadius.cardAll,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: controller,
+            textInputAction: TextInputAction.search,
+            onSubmitted: onSubmitted,
+            onChanged: onChanged,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey.shade500),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              enabledBorder: const OutlineInputBorder(
+                borderRadius: AppRadius.cardAll,
+                borderSide: BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: AppRadius.cardAll,
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2.0),
+              ),
+              prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.primary),
+              suffixIcon: value.text.isEmpty
+                  ? null
+                  : IconButton(tooltip: 'Clear search', icon: const Icon(Icons.close), onPressed: onClear),
+            ),
           ),
         ),
       ),

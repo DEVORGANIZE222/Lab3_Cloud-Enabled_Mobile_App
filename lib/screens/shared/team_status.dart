@@ -216,7 +216,7 @@ class MemberTile extends StatelessWidget {
       semanticId: 'member_${member.studentId}',
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MemberAvatar(
             initials: member.initials,
@@ -230,6 +230,7 @@ class MemberTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Flexible(
                       child: Text(
@@ -258,14 +259,58 @@ class MemberTile extends StatelessWidget {
                         ),
                       ),
                     ],
+                    const Spacer(),
+                    if (trailing != null)
+                      trailing!
+                    else if (effectiveLeader)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFF59E0B), width: 1),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star_rounded, size: 12, color: Color(0xFFD97706)),
+                            SizedBox(width: 2.5),
+                            Text(
+                              'Leader',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF92400E),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (member.role.isNotEmpty && member.role.toLowerCase() != 'member')
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFCBD5E1), width: 0.8),
+                        ),
+                        child: Text(
+                          member.role,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF475569),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Row(
                   children: [
                     Icon(
                       Icons.mail_outline_rounded,
-                      size: 12,
+                      size: 13,
                       color: context.colors.primary,
                     ),
                     const SizedBox(width: 4),
@@ -273,7 +318,7 @@ class MemberTile extends StatelessWidget {
                       child: Text(
                         member.contactEmail,
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 11.5,
                           fontWeight: FontWeight.w500,
                           color: Color(0xFF64748B),
                         ),
@@ -302,50 +347,6 @@ class MemberTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.xs),
-          if (trailing != null)
-            trailing!
-          else if (effectiveLeader)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFF59E0B), width: 1),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.star_rounded, size: 12, color: Color(0xFFD97706)),
-                  SizedBox(width: 2.5),
-                  Text(
-                    'Leader',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF92400E),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else if (member.role.isNotEmpty && member.role.toLowerCase() != 'member')
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFCBD5E1), width: 0.8),
-              ),
-              child: Text(
-                member.role,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF475569),
-                ),
-              ),
-            ),
         ],
       ),
     );

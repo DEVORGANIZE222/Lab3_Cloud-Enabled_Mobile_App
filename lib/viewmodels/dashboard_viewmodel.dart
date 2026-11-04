@@ -108,6 +108,16 @@ class DashboardViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<AppFailure?> unlockTeam(Team team) async {
+    try {
+      final updated = await _teams.unlockTeam(team.id, _student.id);
+      _onTeam(updated);
+      return null;
+    } catch (e, st) {
+      return toFailure(e, st, crash: _crash, reason: 'dashboard_unlock');
+    }
+  }
+
   void _tick() {
     final s = state;
     if (s is! Data<DashboardData>) return;

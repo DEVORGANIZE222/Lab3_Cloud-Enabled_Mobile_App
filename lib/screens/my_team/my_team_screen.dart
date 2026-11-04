@@ -144,6 +144,39 @@ class _Body extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.lg),
         _PhaseBanner(team: team, phase: phase, isLeader: leader, hasVoted: vm.hasVoted(team)),
+        if (phase == TeamPhase.locked && leader) ...[
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            semanticId: 'btn_unlock_team_my_team',
+            label: 'Unlock Roster (Recovery)',
+            icon: Icons.lock_open_rounded,
+            backgroundColor: const Color(0xFFFEF2F2),
+            foregroundColor: const Color(0xFFDC2626),
+            borderColor: const Color(0xFFFCA5A5),
+            onPressed: () async {
+              final ok = await showAppDialog(
+                context,
+                semanticId: 'dialog_unlock_team',
+                icon: Icons.lock_open_rounded,
+                title: 'Unlock ${team.name}?',
+                message: 'Unlocking allows you to add or modify team members again.',
+                confirmLabel: 'Unlock Team',
+              );
+              if (ok && context.mounted) {
+                final failure = await vm.unlock(team);
+                if (context.mounted) {
+                  if (failure != null) {
+                    showFailure(context, failure);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${team.name} unlocked successfully!')),
+                    );
+                  }
+                }
+              }
+            },
+          ),
+        ],
         if (phase != TeamPhase.locked) ...[
           const SizedBox(height: AppSpacing.lg),
           if (phase == TeamPhase.electLeader || !vm.hasVoted(team))

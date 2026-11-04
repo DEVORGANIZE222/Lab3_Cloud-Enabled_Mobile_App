@@ -82,6 +82,23 @@ class MyTeamViewModel extends ChangeNotifier {
     }
   }
 
+  bool unlocking = false;
+
+  Future<AppFailure?> unlock(Team team) async {
+    unlocking = true;
+    notifyListeners();
+    try {
+      final updated = await _teams.unlockTeam(team.id, _student.id);
+      state = Data(updated);
+      return null;
+    } catch (e, st) {
+      return toFailure(e, st, crash: _crash, reason: 'unlock_team');
+    } finally {
+      unlocking = false;
+      notifyListeners();
+    }
+  }
+
   bool _disposed = false;
 
   // Async error handlers can finish after the screen closed.

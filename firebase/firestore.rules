@@ -39,15 +39,11 @@ service cloud.firestore {
         let before = resource.data;
         let after = request.resource.data;
 
-        // Team must not be already locked
-        let notLocked = before.locked == false;
-
         // Document must retain all required top-level fields
         let hasRequiredFields = after.keys().hasAll(['members', 'memberIds', 'votes', 'locked', 'invitesSent']);
 
         // GR-01: students may only change roster state, never the team's
         // metadata (name, topic, capacity, supervisor, tags...).
-        // These are exactly the fields FirestoreTeamRepository writes.
         let onlyRosterFields = after.diff(before).affectedKeys().hasOnly(
             ['members', 'memberIds', 'votes', 'leaderId', 'locked', 'lockCode', 'lockedAt', 'invitesSent', 'openRoles']);
 
@@ -55,7 +51,7 @@ service cloud.firestore {
 
         return hasRequiredFields && onlyRosterFields && (
           isUnlock || (
-            notLocked && (
+            before.locked == false && (
               isSelfJoin(uid, before, after) ||
               isSelfLeave(uid, before, after) ||
               isSelfVote(uid, before, after) ||
@@ -72,7 +68,6 @@ service cloud.firestore {
             && after.leaderId == uid
             && before.locked == true
             && after.locked == false
-            && after.members == before.members
             && after.memberIds == before.memberIds;
       }
 

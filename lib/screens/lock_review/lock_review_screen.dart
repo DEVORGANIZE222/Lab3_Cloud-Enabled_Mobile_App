@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../models/team.dart';
+import '../../services/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens.dart';
 import '../../utils/format.dart';
@@ -235,18 +236,54 @@ class _Review extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
         ],
         const SizedBox(height: AppSpacing.lg),
-        AppButton(
-          semanticId: 'btn_lock_roster',
-          label: 'Lock Roster',
-          icon: Icons.lock,
-          onPressed: vm.canLock(team) ? onLock : null,
-        ),
-        if (blocked != null) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Semantics(
-            identifier: 'lock_blocked_reason',
-            child: Text(blocked, style: context.text.bodyMedium, textAlign: TextAlign.center),
+        if (team.locked) ...[
+          AppButton(
+            semanticId: 'btn_unlock_roster',
+            label: 'Unlock Roster (Recovery)',
+            icon: Icons.lock_open_rounded,
+            backgroundColor: const Color(0xFFFEF2F2),
+            foregroundColor: const Color(0xFFDC2626),
+            borderColor: const Color(0xFFFCA5A5),
+            onPressed: () async {
+              final ok = await showAppDialog(
+                context,
+                semanticId: 'dialog_unlock_team',
+                icon: Icons.lock_open_rounded,
+                title: 'Unlock ${team.name}?',
+                message: 'Unlocking allows you to add or modify team members again.',
+                confirmLabel: 'Unlock Team',
+              );
+              if (ok && context.mounted) {
+                try {
+                  await context.read<TeamRepository>().unlockTeam(team.id, team.leaderId!);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${team.name} unlocked successfully!')),
+                    );
+                    context.pop();
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                  }
+                }
+              }
+            },
           ),
+        ] else ...[
+          AppButton(
+            semanticId: 'btn_lock_roster',
+            label: 'Lock Roster',
+            icon: Icons.lock,
+            onPressed: vm.canLock(team) ? onLock : null,
+          ),
+          if (blocked != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Semantics(
+              identifier: 'lock_blocked_reason',
+              child: Text(blocked, style: context.text.bodyMedium, textAlign: TextAlign.center),
+            ),
+          ],
         ],
       ],
     );
