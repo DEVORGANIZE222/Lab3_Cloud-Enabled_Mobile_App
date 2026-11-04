@@ -570,7 +570,7 @@ void main() async {
           pw.Bullet(text: '[x] ARTEMIS E2E suite covers 13 test cases x 3 runs: $passedRuns/$totalRuns runs passed.', style: const pw.TextStyle(fontSize: 7.5)),
           pw.Bullet(text: '${exploratory.existsSync() ? '[x]' : '[ ]'} ARTEMIS Pro exploratory session recorded in docs/test-plan.md section 4.', style: const pw.TextStyle(fontSize: 7.5)),
           pw.Bullet(text: '[x] AI Code Review on PR #8 documented with 5 findings and 3 traceable fix commits.', style: const pw.TextStyle(fontSize: 7.5)),
-          pw.Bullet(text: '[x] Final Report PDF (10 pages) and Presentation Slides PDF (15 slides) generated.', style: const pw.TextStyle(fontSize: 7.5)),
+          pw.Bullet(text: '[x] Final Report PDF and presentation slides generated (PDF, plus an editable PPTX for Canva or PowerPoint).', style: const pw.TextStyle(fontSize: 7.5)),
           pw.SizedBox(height: 16),
           pw.Container(
             padding: const pw.EdgeInsets.all(12),

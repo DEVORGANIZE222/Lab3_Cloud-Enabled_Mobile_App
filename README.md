@@ -21,7 +21,8 @@ leader (Flow 2), and the leader locks the roster, recovering from "too few membe
 | `docs/design-traceability.md` | Figma frame → route → widget → ViewModel → screenshot, and 16 systematic deviations with heuristics. |
 | `docs/code-review.md` | AI code review on PR #8 (Google Gemini): 5 findings across 3 categories, 3 fix commits. |
 | `report/Lab03_DEVORGANIZE222.pdf` | **Final Report (10 pages, PDF)** satisfying all 11 required sections. |
-| `slides/Lab03_DEVORGANIZE222_slides.pdf` | **Presentation Slides (15 slides, PDF)** for oral defense and architecture walkthrough. |
+| `slides/Lab03_DEVORGANIZE222_slides.pdf` | **Presentation slides (17 slides, PDF)**, built by `dart run tool/generate_slides_pdf.dart`. |
+| `slides/Lab03_DEVORGANIZE222_slides.pptx` | The same deck as an editable PowerPoint file for Canva or PowerPoint, built by `python tool/generate_slides_pptx.py` (needs `python-pptx` and `pillow`). |
 | **Demo Video Link** | _Not uploaded yet: add the Drive/YouTube link here after recording._ |
 
 ## Run the app
