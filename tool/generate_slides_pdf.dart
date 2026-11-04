@@ -96,9 +96,9 @@ void main() async {
   // ---------------------------------------------------------------- data from the repo
   final finalRuns = readJunit('e2e_test/evidence/junit.xml');
   final attempts = <(String, Map<String, List<bool>>)>[
-    ('Attempt 1', readJunit('e2e_test/evidence-attempt1/junit.xml')),
-    ('Attempt 2', readJunit('e2e_test/evidence-attempt2/junit.xml')),
-    ('Final run', finalRuns),
+    ('Lượt 1', readJunit('e2e_test/evidence-attempt1/junit.xml')),
+    ('Lượt 2', readJunit('e2e_test/evidence-attempt2/junit.xml')),
+    ('Lượt cuối', finalRuns),
   ];
   final passed = passedOf(finalRuns), total = totalOf(finalRuns);
   final firebaseImport = RegExp(r"import 'package:(firebase|cloud_firestore)");
@@ -157,7 +157,7 @@ void main() async {
       );
 
   pw.Widget statusChip(bool ok) =>
-      ok ? chip('VERIFIED', iconCode: iCheck, size: 8) : chip('NOT CAPTURED', bg: line, fg: muted, iconCode: iSchedule, size: 8);
+      ok ? chip('ĐÃ XÁC MINH', iconCode: iCheck, size: 8) : chip('CHƯA CHỤP', bg: line, fg: muted, iconCode: iSchedule, size: 8);
 
   // The pdf package draws a box shadow as a rectangle, which shows behind rounded corners: no shadows.
   const cardShadow = <pw.BoxShadow>[];
@@ -358,15 +358,15 @@ void main() async {
                 pw.Text('EXEMatching', style: t(16, color: PdfColors.white, font: semibold)),
               ]),
               pw.Spacer(),
-              pw.Text('PRM393 · MOBILE PROGRAMMING · LAB 3', style: t(10, color: mint, font: semibold, spacing: 2)),
+              pw.Text('PRM393 · LẬP TRÌNH DI ĐỘNG · LAB 3', style: t(10, color: mint, font: semibold, spacing: 2)),
               pw.SizedBox(height: 10),
-              pw.Text('Find your capstone team.\nElect a leader.\nLock the roster.', style: t(34, color: PdfColors.white, font: bold, height: 2)),
+              pw.Text('Tìm nhóm đồ án.\nBầu trưởng nhóm.\nChốt danh sách.', style: t(34, color: PdfColors.white, font: bold, height: 2)),
               pw.SizedBox(height: 14),
-              pw.Text('A cloud-enabled Flutter app on Firebase, tested end to end\non a real emulator by Google ARTEMIS.',
+              pw.Text('Ứng dụng Flutter chạy trên Firebase, kiểm thử end-to-end\ntrên máy ảo thật bằng Google ARTEMIS.',
                   style: t(13, color: mintText, font: light, height: 3)),
               pw.SizedBox(height: 22),
               pw.Wrap(spacing: 8, runSpacing: 8, children: [
-                for (final s in ['Flutter · MVVM', '7 Firebase services', '13 E2E cases × 3 runs', 'Gemini code review'])
+                for (final s in ['Flutter · MVVM', '7 dịch vụ Firebase', '13 ca E2E × 3 lần chạy', 'Review code bằng Gemini'])
                   pw.Container(
                     padding: const pw.EdgeInsets.symmetric(horizontal: 11, vertical: 5),
                     decoration: pw.BoxDecoration(
@@ -378,7 +378,7 @@ void main() async {
                   ),
               ]),
               pw.Spacer(),
-              pw.Text('Team DEVORGANIZE222  ·  Firebase project prm393-lab-3-exematching', style: t(9, color: PdfColor.fromHex('#A7F3D0'))),
+              pw.Text('Nhóm DEVORGANIZE222  ·  Dự án Firebase prm393-lab-3-exematching', style: t(9, color: PdfColor.fromHex('#A7F3D0'))),
             ]),
           ),
           pw.SizedBox(
@@ -394,7 +394,7 @@ void main() async {
       ));
 
   // ================================================================= 2 · problem & persona
-  content('Lab 2 recap', 'Who we built it for', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+  content('Nhắc lại Lab 2', 'Chúng tôi làm app cho ai', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         pw.SizedBox(
           width: 300,
           child: card(
@@ -410,7 +410,7 @@ void main() async {
                 pw.Expanded(
                   child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
                     pw.Text('Minh Lê', style: t(18, font: bold)),
-                    pw.Text('Final-year Software Engineering student', style: t(10, color: muted)),
+                    pw.Text('Sinh viên Kỹ thuật phần mềm năm cuối', style: t(10, color: muted)),
                     pw.SizedBox(height: 5),
                     chip('Persona · Lab 2', bg: orange100, fg: orange, size: 8),
                   ]),
@@ -419,17 +419,17 @@ void main() async {
               pw.SizedBox(height: 16),
               icon(iQuote, size: 26, color: green),
               pw.Text(
-                'I have two weeks to register a capstone team. I don\'t know who has the skills we need, '
-                'nobody wants to say who should lead, and if one person drops out we can\'t lock.',
+                'Mình chỉ còn hai tuần để đăng ký nhóm đồ án. Mình không biết ai có kỹ năng nhóm cần, '
+                'không ai muốn nhận làm trưởng nhóm, và chỉ cần một người rút là nhóm không chốt được.',
                 style: t(13, font: italic ?? regular, height: 3),
               ),
               pw.Spacer(),
-              pw.Text('GOALS', style: t(9, font: semibold, color: muted, spacing: 1.4)),
+              pw.Text('MỤC TIÊU', style: t(9, font: semibold, color: muted, spacing: 1.4)),
               pw.SizedBox(height: 8),
               pw.Wrap(spacing: 6, runSpacing: 6, children: [
-                chip('Teammates with matching skills', iconCode: iGroups),
-                chip('A fair leader vote', iconCode: iVote, bg: orange100, fg: orange),
-                chip('Locked before the deadline', iconCode: iLock, bg: blue100, fg: blue),
+                chip('Đồng đội đúng kỹ năng', iconCode: iGroups),
+                chip('Bầu trưởng nhóm công bằng', iconCode: iVote, bg: orange100, fg: orange),
+                chip('Chốt nhóm trước hạn', iconCode: iLock, bg: blue100, fg: blue),
               ]),
             ]),
           ),
@@ -437,12 +437,12 @@ void main() async {
         pw.SizedBox(width: 26),
         pw.Expanded(
           child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-            pw.Text('THREE PAINS, THREE FLOWS', style: t(10, font: semibold, color: muted, spacing: 1.4)),
+            pw.Text('BA NỖI LO, BA LUỒNG', style: t(10, font: semibold, color: muted, spacing: 1.4)),
             pw.SizedBox(height: 16),
-            point(iSearch, 'Finding teammates with the right skills', 'Browse open teams by topic, skill and open slot, and join one in two taps.', big: true),
-            point(iVote, 'Choosing a leader without peer pressure', 'Votes stay hidden until you vote; a majority elects the leader.',
+            point(iSearch, 'Tìm đồng đội có đúng kỹ năng', 'Lọc nhóm còn chỗ theo chủ đề, kỹ năng, vị trí trống và tham gia chỉ với hai lần chạm.', big: true),
+            point(iVote, 'Bầu trưởng nhóm không bị áp lực', 'Kết quả bị ẩn đến khi bạn bỏ phiếu; đa số phiếu chọn ra trưởng nhóm.',
                 color: orange, bg: orange100, big: true),
-            point(iGroupAdd, 'Recovering when a member drops out', 'A team below 4 members can invite students from the Waiting Pool, then lock.',
+            point(iGroupAdd, 'Gỡ rối khi có thành viên rút', 'Nhóm dưới 4 người mời sinh viên từ Waiting Pool, rồi chốt danh sách.',
                 color: blue, bg: blue100, big: true),
             pw.Spacer(),
             pw.Container(
@@ -452,7 +452,7 @@ void main() async {
                 icon(iTrophy, size: 22, color: PdfColors.white),
                 pw.SizedBox(width: 10),
                 pw.Expanded(
-                  child: pw.Text('Success = a locked team of 4–5 members with an elected leader, before the deadline.',
+                  child: pw.Text('Thành công = nhóm 4–5 người đã chốt, có trưởng nhóm được bầu, trước hạn chót.',
                       style: t(12, color: PdfColors.white, font: semibold)),
                 ),
               ]),
@@ -490,15 +490,15 @@ void main() async {
           ]),
         ),
       );
-  content('The 3 critical flows', 'From browsing to a locked roster', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-        flow('1', 'Discover & join', 'docs/screenshots/scr04_join_dialog.png', 'Home → Browse → Team detail → Join',
-            'Alt: team fills first · no results · offline', green, green100),
+  content('3 luồng chính', 'Từ tìm nhóm đến chốt danh sách', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+        flow('1', 'Tìm & tham gia', 'docs/screenshots/scr04_join_dialog.png', 'Home → Browse → Chi tiết nhóm → Join',
+            'Nhánh phụ: nhóm vừa đầy · không có kết quả · mất mạng', green, green100),
         pw.SizedBox(width: 16),
-        flow('2', 'Elect a leader', 'docs/screenshots/scr06_voting_elected.png', 'My Team → Vote → majority wins',
-            'Alt: tallies hidden until you vote · change vote', orange, orange100),
+        flow('2', 'Bầu trưởng nhóm', 'docs/screenshots/scr06_voting_elected.png', 'My Team → Vote → đa số thắng',
+            'Nhánh phụ: ẩn kết quả đến khi bỏ phiếu · đổi phiếu', orange, orange100),
         pw.SizedBox(width: 16),
-        flow('3', 'Lock the roster', 'docs/screenshots/scr07_pool_member_joined.png', 'Review & Lock → Waiting Pool → Lock',
-            'Alt: fewer than 4 members blocks the lock', blue, blue100),
+        flow('3', 'Chốt danh sách', 'docs/screenshots/scr07_pool_member_joined.png', 'Review & Lock → Waiting Pool → Lock',
+            'Nhánh phụ: dưới 4 người thì không chốt được', blue, blue100),
       ]));
 
   // ================================================================= 4 · Figma → app
@@ -511,7 +511,7 @@ void main() async {
         pw.SizedBox(height: 6),
         pw.Text(label, style: t(10, font: semibold)),
       ]);
-  content('Design traceability', 'Figma frames, built in Flutter', () => pw.Column(children: [
+  content('Truy vết thiết kế', 'Từ khung Figma đến Flutter', () => pw.Column(children: [
         pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
           pair('assets/figma/SCR_02_ Dashboard.png', 'docs/screenshots/scr02_home.png', 'SCR_02 · Home'),
           pair('assets/figma/SCR_03_ Browse Groups.png', 'docs/screenshots/scr03_browse.png', 'SCR_03 · Browse'),
@@ -519,15 +519,15 @@ void main() async {
         ]),
         pw.Spacer(),
         pw.Row(children: [
-          pw.Text('Deliberate deviations  ', style: t(10, font: semibold, color: muted)),
+          pw.Text('Khác biệt có chủ đích  ', style: t(10, font: semibold, color: muted)),
           pw.Expanded(
             child: pw.Wrap(spacing: 6, runSpacing: 6, children: [
-              chip('DV-01 "Team" everywhere'),
-              chip('DV-04 Direct join'),
-              chip('DV-08 Bell + Settings tab'),
-              chip('DV-09/10 WCAG AA contrast'),
-              chip('DV-14 Icon + label, not colour only'),
-              chip('16 in docs/design-traceability.md', bg: orange100, fg: orange),
+              chip('DV-01 Dùng “Team” thống nhất'),
+              chip('DV-04 Tham gia trực tiếp'),
+              chip('DV-08 Chuông + tab Settings'),
+              chip('DV-09/10 Tương phản WCAG AA'),
+              chip('DV-14 Icon + chữ, không chỉ dùng màu'),
+              chip('16 mục trong docs/design-traceability.md', bg: orange100, fg: orange),
             ]),
           ),
         ]),
@@ -562,17 +562,17 @@ void main() async {
         padding: const pw.EdgeInsets.symmetric(vertical: 2),
         child: pw.Center(child: pw.Transform.rotate(angle: -1.5708, child: icon(iEast, size: 16, color: muted))),
       );
-  content('Architecture', 'MVVM with one-way dependencies', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+  content('Kiến trúc', 'MVVM, phụ thuộc một chiều', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         pw.Expanded(
           flex: 3,
           child: pw.Column(children: [
-            layer(iPalette, 'Screens & widgets', 'lib/screens · lib/widgets', 'Declarative UI only: no Firebase SDK, no business rules', green, green100),
+            layer(iPalette, 'Màn hình & widget', 'lib/screens · lib/widgets', 'Chỉ UI khai báo: không Firebase SDK, không logic nghiệp vụ', green, green100),
             down(),
-            layer(iTune, 'ViewModels', 'lib/viewmodels', 'ChangeNotifier owning ViewState<T>, validation and analytics calls', orange, orange100),
+            layer(iTune, 'ViewModels', 'lib/viewmodels', 'ChangeNotifier giữ ViewState<T>, kiểm tra dữ liệu và gọi analytics', orange, orange100),
             down(),
-            layer(iTree, 'Service interfaces', 'lib/services', 'Contracts the view-models depend on; local fakes for tests', blue, blue100),
+            layer(iTree, 'Interface dịch vụ', 'lib/services', 'Hợp đồng mà view-model phụ thuộc; bản giả lập để test', blue, blue100),
             down(),
-            layer(iCloud, 'Firebase implementations', 'lib/firebase', 'Auth, Firestore, Storage, FCM, Analytics, Crashlytics, Remote Config', green800, green100),
+            layer(iCloud, 'Cài đặt Firebase', 'lib/firebase', 'Auth, Firestore, Storage, FCM, Analytics, Crashlytics, Remote Config', green800, green100),
           ]),
         ),
         pw.SizedBox(width: 24),
@@ -581,27 +581,27 @@ void main() async {
           child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
             card(
               child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-                pw.Text('Every screen renders one ViewState<T>', style: t(12, font: semibold)),
+                pw.Text('Mỗi màn hình hiển thị một ViewState<T>', style: t(12, font: semibold)),
                 pw.SizedBox(height: 8),
                 pw.Wrap(spacing: 6, runSpacing: 6, children: [
                   chip('Loading', bg: blue100, fg: blue),
-                  chip('Empty + action', bg: orange100, fg: orange),
-                  chip('Failure + retry', bg: red100, fg: red),
-                  chip('Data'),
+                  chip('Rỗng + hành động', bg: orange100, fg: orange),
+                  chip('Lỗi + thử lại', bg: red100, fg: red),
+                  chip('Dữ liệu'),
                 ]),
               ]),
             ),
             pw.SizedBox(height: 14),
             card(
               child: pw.Row(children: [
-                stat('$uiFirebaseImports', 'Firebase imports in\nlib/screens + lib/widgets', color: uiFirebaseImports == 0 ? green : red, size: 40),
+                stat('$uiFirebaseImports', 'import Firebase trong\nlib/screens + lib/widgets', color: uiFirebaseImports == 0 ? green : red, size: 40),
                 pw.SizedBox(width: 18),
-                pw.Expanded(child: pw.Text('Counted from the source when this deck is generated.', style: t(9.5, color: muted))),
+                pw.Expanded(child: pw.Text('Đếm từ mã nguồn mỗi khi tạo slide.', style: t(9.5, color: muted))),
               ]),
             ),
             pw.SizedBox(height: 14),
             pw.Expanded(
-              child: card(child: point(iKey, 'One composition root', 'lib/app/providers.dart wires the Firebase services into the view-models with Provider.', big: true)),
+              child: card(child: point(iKey, 'Một điểm khởi tạo duy nhất', 'lib/app/providers.dart nối các dịch vụ Firebase vào view-model bằng Provider.', big: true)),
             ),
           ]),
         ),
@@ -623,26 +623,26 @@ void main() async {
           ]),
         ),
       );
-  content('Cloud backend', '7 Firebase services, each with console proof', () => pw.Column(children: [
+  content('Backend đám mây', '7 dịch vụ Firebase, đều có bằng chứng console', () => pw.Column(children: [
         pw.Expanded(
           child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.stretch, children: [
-            service(iLogin, 'Authentication', 'Google Sign-In, limited to the class roster', 'Users tab · roster rejection (TC-01)'),
+            service(iLogin, 'Authentication', 'Đăng nhập Google, chỉ cho sinh viên trong danh sách lớp', 'Tab Users · chặn ngoài danh sách (TC-01)'),
             pw.SizedBox(width: 12),
-            service(iStorage, 'Firestore', 'Teams, votes and the Waiting Pool in transactions', 'Team documents · deployed rules'),
+            service(iStorage, 'Firestore', 'Nhóm, phiếu bầu và Waiting Pool trong transaction', 'Document nhóm · rules đã deploy'),
             pw.SizedBox(width: 12),
-            service(iUpload, 'Storage', 'Team PDF uploaded to reports/{uid}/', 'Uploaded PDFs · owner-only rules'),
+            service(iUpload, 'Storage', 'PDF của nhóm tải lên reports/{uid}/', 'PDF đã tải · rules chỉ chủ sở hữu'),
             pw.SizedBox(width: 12),
-            service(iBell, 'Cloud Messaging', 'Invites and updates in all 3 app states', 'Foreground · background · terminated'),
+            service(iBell, 'Cloud Messaging', 'Lời mời và cập nhật ở cả 3 trạng thái app', 'Foreground · background · terminated'),
           ]),
         ),
         pw.SizedBox(height: 12),
         pw.Expanded(
           child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.stretch, children: [
-          service(iInsights, 'Analytics', '10 events, IDs and counts only', 'DebugView · Logcat per E2E run'),
+          service(iInsights, 'Analytics', '10 sự kiện, chỉ gửi ID và số đếm', 'DebugView · Logcat mỗi lần chạy E2E'),
           pw.SizedBox(width: 12),
-          service(iBug, 'Crashlytics', 'Crashes and non-fatals with user ID and keys', 'Test crash + non-fatal, Nov 4'),
+          service(iBug, 'Crashlytics', 'Crash và lỗi non-fatal kèm user ID và key', 'Test crash + non-fatal, 04/11'),
           pw.SizedBox(width: 12),
-          service(iTune, 'Remote Config', 'Registration and pool switches, live', 'Published, seen live, reverted'),
+          service(iTune, 'Remote Config', 'Bật/tắt đăng ký và pool tức thì', 'Đã publish, thấy ngay, đã hoàn tác'),
           pw.SizedBox(width: 12),
           pw.Expanded(
             child: pw.Container(
@@ -652,61 +652,61 @@ void main() async {
                 icon(iShield, size: 26, color: PdfColors.white),
                 pw.SizedBox(height: 8),
                 pw.Text('Security rules', style: t(13, color: PdfColors.white, font: bold)),
-                pw.Text('Firestore and Storage rules, deployed and screenshotted from the console.', style: t(10.5, color: green100)),
+                pw.Text('Rules của Firestore và Storage, đã deploy và chụp lại từ console.', style: t(10.5, color: green100)),
               ]),
             ),
           ),
         ]),
         ),
         pw.SizedBox(height: 10),
-        pw.Text('VERIFIED means the console or device screenshots are in evidence/ when this deck is generated.', style: t(9, color: muted)),
+        pw.Text('ĐÃ XÁC MINH nghĩa là ảnh chụp console hoặc thiết bị có trong evidence/ lúc tạo slide.', style: t(9, color: muted)),
       ]));
 
   // ================================================================= 7 · Auth
   final tc01 = finalRuns['TC-01'];
-  content('Cloud service 1 · Authentication', 'Google Sign-In, roster only', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+  content('Dịch vụ 1 · Authentication', 'Đăng nhập Google, chỉ danh sách lớp', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         phone('docs/screenshots/scr01_sign_in.png', h: 330),
         pw.SizedBox(width: 12),
         phone('docs/screenshots/scr01_account_picker.png', h: 330),
         pw.SizedBox(width: 24),
         pw.Expanded(
           child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-            browser('evidence/console/console_auth_users.jpg', w: 380, h: 150, caption: 'Authentication → Users: Google-provider accounts with their UIDs'),
+            browser('evidence/console/console_auth_users.jpg', w: 380, h: 150, caption: 'Authentication → Users: tài khoản Google kèm UID'),
             pw.SizedBox(height: 14),
-            point(iLogin, 'Google credential → FirebaseAuth', 'authStateChanges() drives routing; sign-out clears Google and Firebase.'),
-            point(iShield, 'Roster check in app and rules', 'allowedEmails/{email} must be enabled; rules check isRosterMember().', color: orange, bg: orange100),
-            point(iCancel, 'Not on the roster? Rejected',
-                tc01 == null ? 'Covered by E2E TC-01.' : 'E2E TC-01 passed ${tc01.where((r) => r).length}/${tc01.length} runs.', color: red, bg: red100),
+            point(iLogin, 'Google credential → FirebaseAuth', 'authStateChanges() điều hướng màn hình; đăng xuất xóa cả phiên Google và Firebase.'),
+            point(iShield, 'Kiểm tra danh sách ở app và rules', 'allowedEmails/{email} phải được bật; rules kiểm tra isRosterMember().', color: orange, bg: orange100),
+            point(iCancel, 'Không có trong danh sách? Từ chối',
+                tc01 == null ? 'Được kiểm bởi E2E TC-01.' : 'E2E TC-01 đạt ${tc01.where((r) => r).length}/${tc01.length} lần chạy.', color: red, bg: red100),
           ]),
         ),
       ]));
 
   // ================================================================= 8 · Firestore
-  content('Cloud service 2 · Cloud Firestore', 'Transactions and tight security rules', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-        browser('evidence/console/console_firestore_rules_teams.jpg', w: 470, h: 300, caption: 'Deployed rules: a student may change only roster fields (GR-01)'),
+  content('Dịch vụ 2 · Cloud Firestore', 'Transaction và security rules chặt chẽ', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+        browser('evidence/console/console_firestore_rules_teams.jpg', w: 470, h: 300, caption: 'Rules đã deploy: sinh viên chỉ sửa được các trường danh sách (GR-01)'),
         pw.SizedBox(width: 22),
         pw.Expanded(
           child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
             pw.Row(children: [
-              pw.Expanded(child: card(child: stat('$transactions', 'mutations run in\nrunTransaction'))),
+              pw.Expanded(child: card(child: stat('$transactions', 'thao tác chạy trong\nrunTransaction'))),
               pw.SizedBox(width: 12),
-              pw.Expanded(child: card(child: stat('$writableFields', 'fields a student\nmay change', color: orange))),
+              pw.Expanded(child: card(child: stat('$writableFields', 'trường sinh viên\nđược sửa', color: orange))),
             ]),
             pw.SizedBox(height: 14),
-            point(iGroups, 'Join, leave, vote, lock, invite', 'Each re-reads the team inside the transaction, so two students can\'t take the last slot.'),
-            point(iLock, 'affectedKeys().hasOnly([...])', 'Topic, capacity and supervisor can\'t be edited by a client.', color: orange, bg: orange100),
-            point(iHidden, 'Waiting Pool privacy', 'Leaders read only unassigned candidates; assigned records stay private.', color: blue, bg: blue100),
+            point(iGroups, 'Join, rời nhóm, bầu, chốt, mời', 'Mỗi thao tác đọc lại nhóm trong transaction, nên hai sinh viên không thể cùng lấy chỗ cuối.'),
+            point(iLock, 'affectedKeys().hasOnly([...])', 'Client không thể sửa chủ đề, sĩ số hay giảng viên hướng dẫn.', color: orange, bg: orange100),
+            point(iHidden, 'Quyền riêng tư Waiting Pool', 'Trưởng nhóm chỉ đọc được ứng viên chưa xếp nhóm; hồ sơ đã xếp được giữ riêng tư.', color: blue, bg: blue100),
           ]),
         ),
       ]));
 
   // ================================================================= 9 · Storage
-  content('Cloud service 3 · Cloud Storage', 'Team PDF, private to its owner', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+  content('Dịch vụ 3 · Cloud Storage', 'PDF nhóm, chỉ chủ sở hữu truy cập', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         phone('docs/screenshots/profile_export_done.png', h: 330, label: 'Export & Upload'),
         pw.SizedBox(width: 26),
         pw.Expanded(
           child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-            browser('evidence/console/console_storage_files.jpg', w: 520, h: 170, caption: 'Storage → reports/{uid}/: PDFs uploaded by the app (E2E TC-13)'),
+            browser('evidence/console/console_storage_files.jpg', w: 520, h: 170, caption: 'Storage → reports/{uid}/: PDF do app tải lên (E2E TC-13)'),
             pw.SizedBox(height: 14),
             pw.Container(
               width: 520,
@@ -723,11 +723,11 @@ void main() async {
             ),
             pw.SizedBox(height: 12),
             pw.Row(children: [
-              chip('PDF built on the device', iconCode: iPdf),
+              chip('PDF tạo ngay trên máy', iconCode: iPdf),
               pw.SizedBox(width: 6),
-              chip('Upload progress 0 → 100 %', iconCode: iUpload),
+              chip('Tiến độ tải 0 → 100 %', iconCode: iUpload),
               pw.SizedBox(width: 6),
-              chip('Download link shown', iconCode: iCheck),
+              chip('Hiện link tải về', iconCode: iCheck),
             ]),
           ]),
         ),
@@ -745,55 +745,55 @@ void main() async {
         pw.SizedBox(height: 8),
         pw.SizedBox(width: 200, child: pw.Text(how, textAlign: pw.TextAlign.center, style: t(9.5, color: muted))),
       ]);
-  content('Cloud service 4 · Cloud Messaging', 'One test message, three app states', () => pw.Row(
+  content('Dịch vụ 4 · Cloud Messaging', 'Một tin nhắn thử, ba trạng thái app', () => pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          fcmState('Foreground', 'evidence/fcm/foreground_alerts.png', 'onMessage stores it; it appears in Alerts at once', green),
+          fcmState('Foreground', 'evidence/fcm/foreground_alerts.png', 'onMessage lưu lại; hiện ngay trong Alerts', green),
           pw.Padding(padding: const pw.EdgeInsets.only(top: 160), child: arrow()),
-          fcmState('Background', 'evidence/fcm/background.png', 'Android shows it; a tap runs onMessageOpenedApp', orange),
+          fcmState('Background', 'evidence/fcm/background.png', 'Android hiện thông báo; chạm vào chạy onMessageOpenedApp', orange),
           pw.Padding(padding: const pw.EdgeInsets.only(top: 160), child: arrow()),
-          fcmState('Terminated', 'evidence/fcm/terminated_opened.png', 'Process killed; a tap cold-starts the app into the team', blue),
+          fcmState('Terminated', 'evidence/fcm/terminated_opened.png', 'App đã tắt hẳn; chạm vào mở app thẳng tới nhóm', blue),
         ],
       ));
 
   // ================================================================= 11 · Analytics
-  content('Cloud service 5 · Google Analytics', '10 events, no personal data', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+  content('Dịch vụ 5 · Google Analytics', '10 sự kiện, không có dữ liệu cá nhân', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         pw.Expanded(
           flex: 4,
           child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-            pw.Text('Recommended events', style: t(11, font: semibold, color: muted)),
+            pw.Text('Sự kiện khuyến nghị', style: t(11, font: semibold, color: muted)),
             pw.SizedBox(height: 6),
             pw.Wrap(spacing: 6, runSpacing: 6, children: [for (final e in ['login', 'logout', 'search_teams', 'view_team']) chip(e, iconCode: iInsights)]),
             pw.SizedBox(height: 12),
-            pw.Text('Domain events', style: t(11, font: semibold, color: muted)),
+            pw.Text('Sự kiện nghiệp vụ', style: t(11, font: semibold, color: muted)),
             pw.SizedBox(height: 6),
             pw.Wrap(spacing: 6, runSpacing: 6, children: [
               for (final e in ['create_team', 'join_team', 'cast_vote', 'invite_pool', 'lock_roster', 'export_report'])
                 chip(e, bg: orange100, fg: orange, iconCode: iBolt),
             ]),
             pw.SizedBox(height: 18),
-            point(iHidden, 'IDs and counts only', 'search_teams sends query_length, never the search text; no email or name.'),
-            point(iPerson, 'User ID after sign-in', 'setUserId(uid) links events to the account, not to a name.', color: orange, bg: orange100),
-            point(iFact, 'Checked twice', 'DebugView screenshots, and every E2E run saves the events it caused from Logcat.', color: blue, bg: blue100),
+            point(iHidden, 'Chỉ ID và số đếm', 'search_teams gửi query_length, không gửi từ khóa; không email, không tên.'),
+            point(iPerson, 'User ID sau khi đăng nhập', 'setUserId(uid) gắn sự kiện với tài khoản, không gắn với tên.', color: orange, bg: orange100),
+            point(iFact, 'Kiểm tra hai lần', 'Ảnh DebugView, và mỗi lần chạy E2E lưu lại các sự kiện từ Logcat.', color: blue, bg: blue100),
           ]),
         ),
         pw.SizedBox(width: 22),
         pw.Expanded(
           flex: 5,
-          child: browser('evidence/debugview/debugview_search_teams_params.jpg', w: 470, caption: 'DebugView: search_teams with query_length, result_count and filter_count'),
+          child: browser('evidence/debugview/debugview_search_teams_params.jpg', w: 470, caption: 'DebugView: search_teams với query_length, result_count và filter_count'),
         ),
       ]));
 
   // ================================================================= 12 · Crashlytics
-  content('Cloud service 6 · Crashlytics', 'Crashes and handled errors, with context', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+  content('Dịch vụ 6 · Crashlytics', 'Crash và lỗi đã xử lý, kèm ngữ cảnh', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         phone('docs/screenshots/profile_non_fatal_sent.png', h: 330, label: 'Send Test Error'),
         pw.SizedBox(width: 24),
         pw.Expanded(
           child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-            browser('evidence/crashlytics/crashlytics_crash_keys.jpg', w: 520, h: 150, caption: 'Test crash of Nov 4, 06:51:57 · Keys: screen = profile'),
+            browser('evidence/crashlytics/crashlytics_crash_keys.jpg', w: 520, h: 150, caption: 'Test crash lúc 06:51:57 ngày 04/11 · Keys: screen = profile'),
             pw.SizedBox(height: 10),
-            browser('evidence/crashlytics/crashlytics_crash_user.jpg', w: 520, h: 95, caption: 'Same event · Data: the user ID is the Firebase Auth UID'),
+            browser('evidence/crashlytics/crashlytics_crash_user.jpg', w: 520, h: 95, caption: 'Cùng sự kiện · Data: user ID là UID của Firebase Auth'),
             pw.SizedBox(height: 10),
             pw.Wrap(spacing: 6, runSpacing: 6, children: [
               chip('FlutterError.onError → fatal', iconCode: iBug, bg: red100, fg: red),
@@ -805,14 +805,14 @@ void main() async {
       ]));
 
   // ================================================================= 13 · Remote Config
-  content('Cloud service 7 · Remote Config', 'Close registration without an app update', () => pw.Column(children: [
+  content('Dịch vụ 7 · Remote Config', 'Đóng đăng ký mà không cần cập nhật app', () => pw.Column(children: [
         pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-          phone('evidence/remote_config/app_before.png', h: 290, label: 'Before · false'),
+          phone('evidence/remote_config/app_before.png', h: 290, label: 'Trước · false'),
           arrow(),
-          browser('evidence/remote_config/console_published.jpg', w: 260, h: 185, caption: 'registration_closed = true, published'),
+          browser('evidence/remote_config/console_published.jpg', w: 260, h: 185, caption: 'registration_closed = true, đã publish'),
           arrow(),
-          phone('evidence/remote_config/app_after.png', h: 290, label: 'After · true', labelColor: orange),
-          phone('evidence/remote_config/app_after_home.png', h: 290, label: 'Home: closed', labelColor: orange),
+          phone('evidence/remote_config/app_after.png', h: 290, label: 'Sau · true', labelColor: orange),
+          phone('evidence/remote_config/app_after_home.png', h: 290, label: 'Home: đã đóng', labelColor: orange),
         ]),
         pw.Spacer(),
         pw.Container(
@@ -827,8 +827,8 @@ void main() async {
             pw.SizedBox(width: 10),
             pw.Expanded(
               child: pw.Text(
-                'onConfigUpdated activates the new value and the view-models rebuild: the open app changed within a minute, '
-                'with no restart or reinstall. The parameter was deleted again afterwards.',
+                'onConfigUpdated kích hoạt giá trị mới và view-model dựng lại giao diện: app đang mở đổi trong vòng một phút, '
+                'không cần khởi động lại hay cài lại. Sau đó tham số đã được xóa.',
                 style: t(10.5),
               ),
             ),
@@ -846,21 +846,21 @@ void main() async {
         child: ok == null ? null : icon(ok ? iCheck : iCancel, size: 9, color: PdfColors.white),
       );
   const caseNames = {
-    'TC-01': 'Account not on roster',
-    'TC-02': 'Sign in with roster account',
-    'TC-03': 'Search & filter',
-    'TC-04': 'Empty state + clear filters',
-    'TC-05': 'Offline error + retry',
-    'TC-06': 'Join a team with an open slot',
-    'TC-07': 'Team fills before confirming',
-    'TC-08': 'Tallies hidden until voting',
-    'TC-09': 'Vote elects the leader',
-    'TC-10': 'Lock blocked → pool recovery',
-    'TC-11': 'Share link → Android share sheet',
-    'TC-12': 'Decline invite + Undo',
-    'TC-13': 'Export & upload team PDF',
+    'TC-01': 'Tài khoản ngoài danh sách',
+    'TC-02': 'Đăng nhập tài khoản hợp lệ',
+    'TC-03': 'Tìm kiếm & lọc',
+    'TC-04': 'Không có kết quả + xóa bộ lọc',
+    'TC-05': 'Mất mạng + thử lại',
+    'TC-06': 'Tham gia nhóm còn chỗ',
+    'TC-07': 'Nhóm đầy trước khi xác nhận',
+    'TC-08': 'Ẩn kết quả đến khi bỏ phiếu',
+    'TC-09': 'Bỏ phiếu chọn trưởng nhóm',
+    'TC-10': 'Không chốt được → mời từ pool',
+    'TC-11': 'Chia sẻ link → share sheet Android',
+    'TC-12': 'Từ chối lời mời + Hoàn tác',
+    'TC-13': 'Xuất & tải lên PDF nhóm',
   };
-  content('Quality · Google ARTEMIS', '13 cases × 3 runs on a real emulator', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+  content('Chất lượng · Google ARTEMIS', '13 ca × 3 lần chạy trên máy ảo thật', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         pw.Expanded(
           flex: 4,
           child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
@@ -872,13 +872,13 @@ void main() async {
                 pw.Expanded(
                   child: pw.Padding(
                     padding: const pw.EdgeInsets.only(bottom: 10),
-                    child: pw.Text('runs passed in the final run\n(e2e_test/evidence/junit.xml)', style: t(9.5, color: muted)),
+                    child: pw.Text('lần chạy đạt ở lượt cuối\n(e2e_test/evidence/junit.xml)', style: t(9.5, color: muted)),
                   ),
                 ),
               ]),
             ),
             pw.SizedBox(height: 14),
-            pw.Text('Every attempt, as recorded', style: t(11, font: semibold, color: muted)),
+            pw.Text('Mọi lượt chạy, đúng như đã ghi', style: t(11, font: semibold, color: muted)),
             pw.SizedBox(height: 8),
             for (final (name, runs) in attempts)
               pw.Padding(
@@ -896,7 +896,7 @@ void main() async {
                             width: 220 * passedOf(runs) / totalOf(runs),
                             height: 14,
                             decoration: pw.BoxDecoration(
-                              color: name == 'Final run' ? green : mint,
+                              color: name == 'Lượt cuối' ? green : mint,
                               borderRadius: const pw.BorderRadius.all(pw.Radius.circular(7)),
                             ),
                           ),
@@ -906,8 +906,8 @@ void main() async {
                 ]),
               ),
             pw.SizedBox(height: 8),
-            point(iRobot, 'The agent\'s SUCCESS is not trusted', 'Each run is checked against the accessibility tree, Logcat and Firestore.', color: blue, bg: blue100),
-            point(iWarn, 'Failed runs are explained', 'Bugs found, harness fixes and Gemini free-tier 429s, per trace ID: docs/test-plan.md §3.',
+            point(iRobot, 'Không tin vào SUCCESS của agent', 'Mỗi lần chạy được đối chiếu với cây accessibility, Logcat và Firestore.', color: blue, bg: blue100),
+            point(iWarn, 'Lần chạy lỗi đều được giải thích', 'Bug tìm được, lỗi harness và lỗi 429 của Gemini free tier, theo từng trace ID: docs/test-plan.md §3.',
                 color: orange, bg: orange100),
           ]),
         ),
@@ -918,8 +918,8 @@ void main() async {
             padding: 12,
             child: pw.Column(children: [
               pw.Row(children: [
-                pw.Expanded(child: pw.Text('Test case', style: t(9, font: semibold, color: muted))),
-                pw.Text('Run 1 · 2 · 3', style: t(9, font: semibold, color: muted)),
+                pw.Expanded(child: pw.Text('Ca kiểm thử', style: t(9, font: semibold, color: muted))),
+                pw.Text('Lần 1 · 2 · 3', style: t(9, font: semibold, color: muted)),
               ]),
               pw.Divider(color: line, height: 8),
               for (final id in caseNames.keys)
@@ -953,7 +953,7 @@ void main() async {
           pw.SizedBox(
             width: 190,
             child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
-              accepted ? chip('ACCEPTED', iconCode: iCheck, size: 8) : chip('REJECTED', bg: red100, fg: red, iconCode: iCancel, size: 8),
+              accepted ? chip('CHẤP NHẬN', iconCode: iCheck, size: 8) : chip('BÁC BỎ', bg: red100, fg: red, iconCode: iCancel, size: 8),
               pw.SizedBox(height: 3),
               pw.Text(decision, textAlign: pw.TextAlign.right, style: t(8, color: muted)),
             ]),
@@ -961,42 +961,42 @@ void main() async {
         ]),
       );
   pw.Widget step() => pw.Padding(padding: const pw.EdgeInsets.symmetric(horizontal: 6), child: arrow(size: 14));
-  content('AI-assisted code review', 'Gemini reviews the PR, people decide', () => pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+  content('Review code có AI hỗ trợ', 'Gemini review PR, con người quyết định', () => pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         pw.Row(children: [
           chip('Pull request', iconCode: iCode, bg: blue100, fg: blue),
           step(),
-          chip('gemini_review.py · one API request', iconCode: iSpark, bg: orange100, fg: orange),
+          chip('gemini_review.py · một lần gọi API', iconCode: iSpark, bg: orange100, fg: orange),
           step(),
           chip('gemini-3.5-flash-lite', iconCode: iRobot),
           step(),
-          chip('Inline review comments', iconCode: iFact, bg: blue100, fg: blue),
+          chip('Bình luận review theo dòng', iconCode: iFact, bg: blue100, fg: blue),
         ]),
         pw.SizedBox(height: 12),
-        finding('GR-01', 'Security · High', 'isSelfJoin only checked the roster size, so a client could also rewrite topic, capacity or supervisor.', true,
-            'Fixed for all 5 team mutations · c9543a3'),
+        finding('GR-01', 'Bảo mật · Cao', 'isSelfJoin chỉ kiểm tra số thành viên, nên client có thể sửa luôn chủ đề, sĩ số hoặc giảng viên.', true,
+            'Đã sửa cho cả 5 thao tác trên nhóm · c9543a3'),
         pw.SizedBox(height: 7),
-        finding('GR-02', 'Concurrency · Med', 'Querying the Waiting Pool outside the transaction could let two teams pick the same student.', false,
-            'The client SDK can\'t query in a transaction; the candidate is re-read inside it'),
+        finding('GR-02', 'Đồng thời · TB', 'Truy vấn Waiting Pool ngoài transaction có thể khiến hai nhóm chọn cùng một sinh viên.', false,
+            'SDK client không truy vấn được trong transaction; ứng viên đã được đọc lại bên trong'),
         pw.SizedBox(height: 7),
-        finding('GR-03', 'Reliability · Med', 'A missing Firebase CLI login raised a bare KeyError in the E2E backend.', true, 'Actionable message · ee6ec78'),
+        finding('GR-03', 'Độ tin cậy · TB', 'Thiếu đăng nhập Firebase CLI gây KeyError khó hiểu trong backend E2E.', true, 'Thông báo hướng dẫn rõ ràng · ee6ec78'),
         pw.SizedBox(height: 7),
-        finding('GR-04', 'Reliability · Low', 'The Remote Config start-up catch dropped the error message.', true, 'Logged, defaults kept · d6926d1'),
+        finding('GR-04', 'Độ tin cậy · Thấp', 'Khối catch lúc khởi động Remote Config làm mất thông báo lỗi.', true, 'Ghi log, giữ giá trị mặc định · d6926d1'),
         pw.SizedBox(height: 7),
-        finding('GR-05', 'Reliability · Med', 'Slicing the error body to 2000 chars might split a UTF-8 character.', false, 'False positive: decoded before slicing'),
+        finding('GR-05', 'Độ tin cậy · TB', 'Cắt nội dung lỗi còn 2000 ký tự có thể làm vỡ một ký tự UTF-8.', false, 'Báo nhầm: đã decode trước khi cắt'),
       ]));
 
   // ================================================================= 16 · lessons
-  content('What testing taught us', 'Real bugs, found on a real device', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+  content('Bài học từ kiểm thử', 'Bug thật, tìm thấy trên thiết bị thật', () => pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
         pw.Expanded(
           child: card(
             padding: 16,
             child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-              pw.Row(children: [icon(iBug, size: 18, color: red), pw.SizedBox(width: 6), pw.Text('Bugs the runs exposed, all fixed', style: t(13, font: bold))]),
+              pw.Row(children: [icon(iBug, size: 18, color: red), pw.SizedBox(width: 6), pw.Text('Bug phát hiện khi chạy, đã sửa hết', style: t(13, font: bold))]),
               pw.SizedBox(height: 10),
-              point(iGroupAdd, 'Invite from Waiting Pool always failed', 'Rules hid unassigned pool records from leaders (PERMISSION_DENIED).', color: red, bg: red100, big: true),
-              point(iSearch, 'Typing did nothing for TalkBack and ARTEMIS', 'A Semantics wrapper created a second, non-editable text field.', color: red, bg: red100, big: true),
-              point(iInsights, 'Voting showed a false error', 'cast_vote sent a bool parameter that Analytics rejects.', color: red, bg: red100, big: true),
-              point(iWarn, 'Undo after declining never appeared', 'The card was disposed before the snackbar showed.', color: red, bg: red100, big: true),
+              point(iGroupAdd, 'Mời từ Waiting Pool luôn thất bại', 'Rules chặn trưởng nhóm đọc hồ sơ pool chưa xếp nhóm (PERMISSION_DENIED).', color: red, bg: red100, big: true),
+              point(iSearch, 'TalkBack và ARTEMIS không gõ được chữ', 'Một lớp Semantics tạo ra ô nhập thứ hai không sửa được.', color: red, bg: red100, big: true),
+              point(iInsights, 'Bỏ phiếu báo lỗi sai', 'cast_vote gửi tham số bool mà Analytics từ chối.', color: red, bg: red100, big: true),
+              point(iWarn, 'Nút Hoàn tác sau khi từ chối không hiện', 'Thẻ bị hủy trước khi snackbar kịp hiện.', color: red, bg: red100, big: true),
             ]),
           ),
         ),
@@ -1006,11 +1006,11 @@ void main() async {
             card(
               padding: 16,
               child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-                pw.Row(children: [icon(iBulb, size: 18, color: orange), pw.SizedBox(width: 6), pw.Text('Lessons', style: t(13, font: bold))]),
+                pw.Row(children: [icon(iBulb, size: 18, color: orange), pw.SizedBox(width: 6), pw.Text('Bài học', style: t(13, font: bold))]),
                 pw.SizedBox(height: 10),
-                point(iRobot, 'An agent\'s "success" is not evidence', 'TC-12 reported the invite restored while the screen showed none.', color: orange, bg: orange100, big: true),
-                point(iVerified, 'Only recorded runs count', 'Trace IDs, screenshots and Firestore checks, never a typed-in 39/39.', color: orange, bg: orange100, big: true),
-                point(iShield, 'Test rules with the real flows', 'A correct-looking rule broke Flow 3 until the app ran against it.', color: orange, bg: orange100, big: true),
+                point(iRobot, '“Thành công” của agent chưa phải bằng chứng', 'TC-12 báo đã khôi phục lời mời trong khi màn hình không còn lời mời nào.', color: orange, bg: orange100, big: true),
+                point(iVerified, 'Chỉ tính lần chạy có ghi lại', 'Có trace ID, ảnh chụp và kiểm tra Firestore, không bao giờ gõ tay 39/39.', color: orange, bg: orange100, big: true),
+                point(iShield, 'Test rules bằng luồng thật', 'Một rule trông đúng đã làm hỏng Flow 3, chỉ lộ ra khi chạy app thật.', color: orange, bg: orange100, big: true),
               ]),
             ),
             pw.SizedBox(height: 12),
@@ -1023,8 +1023,8 @@ void main() async {
                 pw.Expanded(
                   child: pw.Text(
                     exploratoryLines.isEmpty
-                        ? 'ARTEMIS Pro exploratory session: not run yet (docs/test-plan.md §4).'
-                        : 'Exploratory session: ${exploratoryLines.join(' · ')}',
+                        ? 'Phiên kiểm thử khám phá ARTEMIS Pro: chưa chạy (docs/test-plan.md §4).'
+                        : 'Phiên khám phá: ${exploratoryLines.join(' · ')}',
                     style: t(9.5),
                   ),
                 ),
@@ -1041,9 +1041,9 @@ void main() async {
           pw.Expanded(
             child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
               pw.Spacer(),
-              pw.Text('THANK YOU', style: t(11, color: mint, font: semibold, spacing: 3)),
+              pw.Text('CẢM ƠN', style: t(11, color: mint, font: semibold, spacing: 3)),
               pw.SizedBox(height: 8),
-              pw.Text('Questions?', style: t(48, color: PdfColors.white, font: bold)),
+              pw.Text('Hỏi & đáp', style: t(48, color: PdfColors.white, font: bold)),
               pw.SizedBox(height: 18),
               for (final (code, text) in [
                 (iCode, 'github.com/DEVORGANIZE222/Lab3_Cloud-Enabled_Mobile_App'),
@@ -1059,7 +1059,7 @@ void main() async {
                   ]),
                 ),
               pw.Spacer(),
-              pw.Text('Team DEVORGANIZE222  ·  PRM393 Mobile Programming  ·  FPT University', style: t(9, color: PdfColor.fromHex('#A7F3D0'))),
+              pw.Text('Nhóm DEVORGANIZE222  ·  PRM393 Lập trình di động  ·  Đại học FPT', style: t(9, color: PdfColor.fromHex('#A7F3D0'))),
             ]),
           ),
           pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
