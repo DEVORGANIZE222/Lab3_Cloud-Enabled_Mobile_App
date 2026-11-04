@@ -106,16 +106,49 @@ def commentable_lines(diff: str) -> dict[str, set[int]]:
     return lines
 
 
-def ask_gemini(diff: str) -> list[dict]:
+# With a schema Gemini must return this exact shape; "application/json" alone still
+# let it emit unescaped quotes inside an explanation (PR #10, JSONDecodeError).
+FINDINGS_SCHEMA = {
+    "type": "ARRAY",
+    "items": {
+        "type": "OBJECT",
+        "properties": {
+            "path": {"type": "STRING"},
+            "line": {"type": "INTEGER"},
+            "category": {
+                "type": "STRING",
+                "enum": ["security", "correctness", "concurrency", "reliability", "performance", "accessibility", "maintainability"],
+            },
+            "severity": {"type": "STRING", "enum": ["high", "medium", "low"]},
+            "title": {"type": "STRING"},
+            "explanation": {"type": "STRING"},
+            "suggestion": {"type": "STRING"},
+        },
+        "required": ["path", "line", "category", "severity", "title", "explanation", "suggestion"],
+    },
+}
+
+
+def ask_gemini(diff: str, attempts: int = 3) -> list[dict]:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
     body = {
         "contents": [{"role": "user", "parts": [{"text": PROMPT + "\n\nDIFF:\n" + diff}]}],
-        "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
+        "generationConfig": {
+            "temperature": 0.2,
+            "responseMimeType": "application/json",
+            "responseSchema": FINDINGS_SCHEMA,
+        },
     }
-    reply = http("POST", url, body, {"x-goog-api-key": os.environ["GEMINI_API_KEY"]})
-    text = reply["candidates"][0]["content"]["parts"][0]["text"]
-    findings = json.loads(text)
-    return findings if isinstance(findings, list) else findings.get("findings", [])
+    for attempt in range(1, attempts + 1):
+        reply = http("POST", url, body, {"x-goog-api-key": os.environ["GEMINI_API_KEY"]})
+        text = reply["candidates"][0]["content"]["parts"][0]["text"]
+        try:
+            findings = json.loads(text)
+        except json.JSONDecodeError as error:
+            print(f"Attempt {attempt}: Gemini returned invalid JSON ({error}); near: {text[max(0, error.pos - 200):error.pos + 50]!r}")
+            continue
+        return findings if isinstance(findings, list) else findings.get("findings", [])
+    sys.exit(f"Gemini returned invalid JSON {attempts} times; no review posted.")
 
 
 def main() -> None:
