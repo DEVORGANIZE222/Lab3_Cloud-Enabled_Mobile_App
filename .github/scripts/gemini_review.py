@@ -65,15 +65,27 @@ def github(method: str, path: str, body: dict | None = None, accept: str = "appl
     return http(method, f"{GITHUB}{path}", body, headers, accept if accept != "application/vnd.github+json" else "application/json")
 
 
-def filtered_diff(diff: str) -> str:
-    """Keeps only the per-file sections whose path matches INCLUDE."""
-    parts = re.split(r"(?m)^(?=diff --git )", diff)
-    keep = []
-    for part in parts:
-        match = re.match(r"diff --git a/(\S+) b/(\S+)", part)
-        if match and any(fnmatch.fnmatch(match.group(2), pattern) for pattern in INCLUDE):
-            keep.append(part)
-    return "".join(keep)[:MAX_DIFF_CHARS]
+def source_diff() -> str:
+    """Unified diff of the files matching INCLUDE.
+
+    Built from the "list pull request files" API, because the .diff media type is
+    refused for pull requests that touch more than 300 files (evidence screenshots
+    easily exceed that); the files API pages through up to 3000.
+    """
+    parts, page = [], 1
+    while True:
+        files = github("GET", f"/pulls/{PR}/files?per_page=100&page={page}")
+        for f in files:
+            path = f["filename"]
+            # GitHub leaves out the patch of binary and very large files.
+            if "patch" not in f or not any(fnmatch.fnmatch(path, pattern) for pattern in INCLUDE):
+                continue
+            old = f.get("previous_filename", path)
+            parts.append(f"diff --git a/{old} b/{path}\n--- a/{old}\n+++ b/{path}\n{f['patch']}\n")
+        if len(files) < 100:
+            break
+        page += 1
+    return "".join(parts)[:MAX_DIFF_CHARS]
 
 
 def commentable_lines(diff: str) -> dict[str, set[int]]:
@@ -112,7 +124,7 @@ def main() -> None:
         if "[gemini-review]" not in message:
             print("Push without [gemini-review] in the head commit message: no review.")
             return
-    diff = filtered_diff(github("GET", f"/pulls/{PR}", accept="application/vnd.github.v3.diff"))
+    diff = source_diff()
     if not diff:
         sys.exit("No reviewable source changes in this pull request.")
     findings = ask_gemini(diff)
