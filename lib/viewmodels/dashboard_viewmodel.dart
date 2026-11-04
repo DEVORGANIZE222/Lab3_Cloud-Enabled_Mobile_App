@@ -57,7 +57,11 @@ class DashboardData {
 class DashboardViewModel extends ChangeNotifier {
   DashboardViewModel(this._student, this._teams, this._registration, this._config, this._crash) {
     _configSub = _config.changes.listen((_) => load());
-    _teamSub = _teams.watchTeamOf(_student.id).listen(_onTeam);
+    _teamSub = _teams.watchTeamOf(_student.id).listen(
+      _onTeam,
+      // Keeps the last loaded dashboard; recorded as a handled error.
+      onError: (Object e, StackTrace st) => toFailure(e, st, crash: _crash, reason: 'dashboard_team_watch'),
+    );
     // The countdown, the Urgent badge and the closed state follow the real-time clock (CR-06).
     _clock = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
@@ -102,6 +106,16 @@ class DashboardViewModel extends ChangeNotifier {
     if (s is! Data<DashboardData>) return;
     state = Data(s.value.withTeam(team));
     notifyListeners();
+  }
+
+  Future<AppFailure?> unlockTeam(Team team) async {
+    try {
+      final updated = await _teams.unlockTeam(team.id, _student.id);
+      _onTeam(updated);
+      return null;
+    } catch (e, st) {
+      return toFailure(e, st, crash: _crash, reason: 'dashboard_unlock');
+    }
   }
 
   void _tick() {

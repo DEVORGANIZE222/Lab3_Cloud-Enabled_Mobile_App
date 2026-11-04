@@ -144,6 +144,39 @@ class _Body extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.lg),
         _PhaseBanner(team: team, phase: phase, isLeader: leader, hasVoted: vm.hasVoted(team)),
+        if (phase == TeamPhase.locked && leader) ...[
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            semanticId: 'btn_unlock_team_my_team',
+            label: 'Unlock Roster (Recovery)',
+            icon: Icons.lock_open_rounded,
+            backgroundColor: const Color(0xFFFEF2F2),
+            foregroundColor: const Color(0xFFDC2626),
+            borderColor: const Color(0xFFFCA5A5),
+            onPressed: () async {
+              final ok = await showAppDialog(
+                context,
+                semanticId: 'dialog_unlock_team',
+                icon: Icons.lock_open_rounded,
+                title: 'Unlock ${team.name}?',
+                message: 'Unlocking allows you to add or modify team members again.',
+                confirmLabel: 'Unlock Team',
+              );
+              if (ok && context.mounted) {
+                final failure = await vm.unlock(team);
+                if (context.mounted) {
+                  if (failure != null) {
+                    showFailure(context, failure);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${team.name} unlocked successfully!')),
+                    );
+                  }
+                }
+              }
+            },
+          ),
+        ],
         if (phase != TeamPhase.locked) ...[
           const SizedBox(height: AppSpacing.lg),
           if (phase == TeamPhase.electLeader || !vm.hasVoted(team))
@@ -151,7 +184,9 @@ class _Body extends StatelessWidget {
               semanticId: 'btn_vote_leader',
               label: vm.hasVoted(team) ? 'Change Vote' : 'Vote for Leader',
               icon: Icons.how_to_vote,
-              variant: phase == TeamPhase.electLeader ? AppButtonVariant.primary : AppButtonVariant.secondary,
+              variant: (!vm.hasVoted(team) || phase == TeamPhase.electLeader)
+                  ? AppButtonVariant.primary
+                  : AppButtonVariant.secondary,
               onPressed: () => context.push('/team/vote'),
             ),
           if (phase != TeamPhase.electLeader) ...[
@@ -160,20 +195,43 @@ class _Body extends StatelessWidget {
               semanticId: 'btn_review_lock',
               label: 'Review & Lock',
               icon: Icons.fact_check,
-              variant: leader ? AppButtonVariant.primary : AppButtonVariant.secondary,
+              variant: (leader && vm.hasVoted(team))
+                  ? AppButtonVariant.primary
+                  : AppButtonVariant.secondary,
               onPressed: () => context.push('/team/lock'),
             ),
           ],
         ],
         const SizedBox(height: AppSpacing.xl),
-        SectionHeader(title: 'Members', trailing: '${team.memberCount} of ${team.capacity}'),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: SectionHeader(title: 'Members', trailing: '${team.memberCount} of ${team.capacity}'),
+            ),
+            if (team.openSlots >= 2) ...[
+              TextButton.icon(
+                onPressed: () async {
+                  final failure = await vm.seedMembers(team, count: 2);
+                  if (context.mounted && failure != null) {
+                    showFailure(context, failure);
+                  }
+                },
+                icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+                label: const Text('Seed 2 Members', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ],
+        ),
         const SizedBox(height: AppSpacing.md),
         for (final m in team.members) ...[
           MemberTile(
             member: m,
+            isLeader: team.hasLeader && m.studentId == team.leaderId,
+            isMe: m.studentId == vm.myId,
             badges: [
               if (m.studentId == vm.myId) const StatusBadge(label: 'You', tone: Tone.info, icon: Icons.person),
-              if (m.studentId == team.leaderId)
+              if (team.hasLeader && m.studentId == team.leaderId)
                 const StatusBadge(label: 'Leader', tone: Tone.primary, icon: Icons.star),
             ],
           ),

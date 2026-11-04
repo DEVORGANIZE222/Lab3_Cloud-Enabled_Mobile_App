@@ -19,12 +19,12 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tool"))
-from seed_firestore_lab3 import PROJECT_ID, build_seed_writes  # noqa: E402
+from seed_firestore_lab3 import POOL_IDS, PROJECT_ID, build_seed_writes  # noqa: E402
 
 DOCS = f"projects/{PROJECT_ID}/databases/(default)/documents"
 API = f"https://firestore.googleapis.com/v1/{DOCS}"
@@ -174,23 +174,29 @@ class Backend:
         writes = build_seed_writes()
         writes.append(self.set(f"allowedEmails/{me.email}", {"enabled": True}))
 
-        # Other teams the account joined during earlier manual testing.
+        # Other teams the account joined or created during earlier manual testing,
+        # and pool students invited into them (the seed puts those back in the pool).
+        gone = {me.uid, *POOL_IDS}
         for team_id, data in self.list("teams").items():
-            if team_id not in SEEDED_TEAMS and me.uid in data.get("memberIds", []):
-                members = [m for m in data.get("members", []) if m.get("studentId") != me.uid]
+            if team_id not in SEEDED_TEAMS and not set(data.get("memberIds", [])) - gone:
+                writes.append(self.delete(f"teams/{team_id}"))  # nobody would be left in it
+            elif team_id not in SEEDED_TEAMS and gone & set(data.get("memberIds", [])):
+                members = [m for m in data.get("members", []) if m.get("studentId") not in gone]
                 writes.append(
                     self.patch(
                         f"teams/{team_id}",
                         {
-                            "memberIds": [m for m in data["memberIds"] if m != me.uid],
+                            "memberIds": [m for m in data["memberIds"] if m not in gone],
                             "members": members,
-                            "leaderId": None if data.get("leaderId") == me.uid else data.get("leaderId"),
-                            "votes": {k: v for k, v in (data.get("votes") or {}).items() if me.uid not in (k, v)},
+                            "leaderId": None if data.get("leaderId") in gone else data.get("leaderId"),
+                            "votes": {k: v for k, v in (data.get("votes") or {}).items() if not gone & {k, v}},
                         },
                     )
                 )
         for notification_id in self.list(f"students/{me.uid}/notifications"):
             writes.append(self.delete(f"students/{me.uid}/notifications/{notification_id}"))
+        # A pool record left by place_in_pool would be the first candidate a leader invites.
+        writes.append(self.delete(f"waitingPool/{me.uid}"))
         self.commit(writes)
 
         if team == "team_ai04":
@@ -235,6 +241,47 @@ class Backend:
             ]
         )
         return notification_id
+
+    def send_push(self, me: Account, title: str, body: str, team_id: str) -> str:
+        """Sends one FCM message to the device token the app saved for `me` (FCM HTTP v1, like the
+        Console's "Send test message"). Returns the message name FCM assigned."""
+        token = (self.get(f"students/{me.uid}") or {}).get("fcmToken")
+        if not token:
+            raise AssertionError("No fcmToken saved: sign in on the device and allow notifications first")
+        message = {
+            "token": token,
+            "notification": {"title": title, "body": body},
+            # recipientId lets the background handler store the message without a signed-in isolate.
+            "data": {"kind": "system", "teamId": team_id, "actionLabel": "View team", "recipientId": me.uid},
+            "android": {"priority": "high"},
+        }
+        url = f"https://fcm.googleapis.com/v1/projects/{PROJECT_ID}/messages:send"
+        return self._call("POST", url, {"message": message})["name"]
+
+    def place_in_pool(self, me: Account) -> None:
+        """Puts `me` in the Waiting Pool, as the Academic Office does for students left without a
+        team at the deadline. The app has no job that does this, so the demo needs it."""
+        self.commit(
+            [
+                self.set(
+                    f"waitingPool/{me.uid}",
+                    {
+                        "fullName": me.full_name,
+                        "studentCode": me.email.split("@")[0],
+                        "role": "Mobile Developer",
+                        "skills": ["Flutter", "Firebase"],
+                        "assigned": False,
+                        "queueId": "RP-2026-0157",
+                        "progress": 0.35,
+                        "stage": "Stage 2 of 4 · Role balancing",
+                        "expectedResult": datetime.now(timezone.utc) + timedelta(days=2),
+                        "preferredRoles": ["Mobile Developer"],
+                        "studentsInPool": 38,
+                        "contactEmail": "academic@fpt.edu.vn",
+                    },
+                )
+            ]
+        )
 
     def fill_team(self, team_id: str) -> None:
         """Another student takes the last open slot (the race TC-07 recovers from)."""

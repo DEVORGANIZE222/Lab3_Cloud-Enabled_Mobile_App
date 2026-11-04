@@ -95,7 +95,11 @@ class InfoBanner extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(color: t.bg, borderRadius: AppRadius.cardAll),
+        decoration: BoxDecoration(
+          color: t.bg,
+          borderRadius: AppRadius.cardAll,
+          border: Border.all(color: t.fg.withValues(alpha: 0.25), width: 1.0),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

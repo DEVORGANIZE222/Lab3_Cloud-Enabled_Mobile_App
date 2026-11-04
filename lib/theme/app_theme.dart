@@ -67,14 +67,16 @@ ThemeData buildAppTheme() {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: minButton,
-        shape: buttonShape,
-        textStyle: t.labelLarge,
-        backgroundColor: AppPalette.tag,
-        foregroundColor: AppPalette.accent,
-        side: BorderSide.none,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.cardAll),
+        textStyle: t.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF0F172A),
+        side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+        elevation: 1,
+        shadowColor: Colors.black.withValues(alpha: 0.04),
         disabledBackgroundColor: AppPalette.disabled,
         disabledForegroundColor: AppPalette.onDisabled,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: 14),
       ),
     ),
     textButtonTheme: TextButtonThemeData(

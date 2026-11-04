@@ -1,8 +1,6 @@
 set_user_id
-set_user_id
 login
-search
-search_teams
+set_user_id
 search
 search_teams
 search

@@ -65,15 +65,27 @@ def github(method: str, path: str, body: dict | None = None, accept: str = "appl
     return http(method, f"{GITHUB}{path}", body, headers, accept if accept != "application/vnd.github+json" else "application/json")
 
 
-def filtered_diff(diff: str) -> str:
-    """Keeps only the per-file sections whose path matches INCLUDE."""
-    parts = re.split(r"(?m)^(?=diff --git )", diff)
-    keep = []
-    for part in parts:
-        match = re.match(r"diff --git a/(\S+) b/(\S+)", part)
-        if match and any(fnmatch.fnmatch(match.group(2), pattern) for pattern in INCLUDE):
-            keep.append(part)
-    return "".join(keep)[:MAX_DIFF_CHARS]
+def source_diff() -> str:
+    """Unified diff of the files matching INCLUDE.
+
+    Built from the "list pull request files" API, because the .diff media type is
+    refused for pull requests that touch more than 300 files (evidence screenshots
+    easily exceed that); the files API pages through up to 3000.
+    """
+    parts, page = [], 1
+    while True:
+        files = github("GET", f"/pulls/{PR}/files?per_page=100&page={page}")
+        for f in files:
+            path = f["filename"]
+            # GitHub leaves out the patch of binary and very large files.
+            if "patch" not in f or not any(fnmatch.fnmatch(path, pattern) for pattern in INCLUDE):
+                continue
+            old = f.get("previous_filename", path)
+            parts.append(f"diff --git a/{old} b/{path}\n--- a/{old}\n+++ b/{path}\n{f['patch']}\n")
+        if len(files) < 100:
+            break
+        page += 1
+    return "".join(parts)[:MAX_DIFF_CHARS]
 
 
 def commentable_lines(diff: str) -> dict[str, set[int]]:
@@ -94,16 +106,49 @@ def commentable_lines(diff: str) -> dict[str, set[int]]:
     return lines
 
 
-def ask_gemini(diff: str) -> list[dict]:
+# With a schema Gemini must return this exact shape; "application/json" alone still
+# let it emit unescaped quotes inside an explanation (PR #10, JSONDecodeError).
+FINDINGS_SCHEMA = {
+    "type": "ARRAY",
+    "items": {
+        "type": "OBJECT",
+        "properties": {
+            "path": {"type": "STRING"},
+            "line": {"type": "INTEGER"},
+            "category": {
+                "type": "STRING",
+                "enum": ["security", "correctness", "concurrency", "reliability", "performance", "accessibility", "maintainability"],
+            },
+            "severity": {"type": "STRING", "enum": ["high", "medium", "low"]},
+            "title": {"type": "STRING"},
+            "explanation": {"type": "STRING"},
+            "suggestion": {"type": "STRING"},
+        },
+        "required": ["path", "line", "category", "severity", "title", "explanation", "suggestion"],
+    },
+}
+
+
+def ask_gemini(diff: str, attempts: int = 3) -> list[dict]:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
     body = {
         "contents": [{"role": "user", "parts": [{"text": PROMPT + "\n\nDIFF:\n" + diff}]}],
-        "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
+        "generationConfig": {
+            "temperature": 0.2,
+            "responseMimeType": "application/json",
+            "responseSchema": FINDINGS_SCHEMA,
+        },
     }
-    reply = http("POST", url, body, {"x-goog-api-key": os.environ["GEMINI_API_KEY"]})
-    text = reply["candidates"][0]["content"]["parts"][0]["text"]
-    findings = json.loads(text)
-    return findings if isinstance(findings, list) else findings.get("findings", [])
+    for attempt in range(1, attempts + 1):
+        reply = http("POST", url, body, {"x-goog-api-key": os.environ["GEMINI_API_KEY"]})
+        text = reply["candidates"][0]["content"]["parts"][0]["text"]
+        try:
+            findings = json.loads(text)
+        except json.JSONDecodeError as error:
+            print(f"Attempt {attempt}: Gemini returned invalid JSON ({error}); near: {text[max(0, error.pos - 200):error.pos + 50]!r}")
+            continue
+        return findings if isinstance(findings, list) else findings.get("findings", [])
+    sys.exit(f"Gemini returned invalid JSON {attempts} times; no review posted.")
 
 
 def main() -> None:
@@ -112,7 +157,7 @@ def main() -> None:
         if "[gemini-review]" not in message:
             print("Push without [gemini-review] in the head commit message: no review.")
             return
-    diff = filtered_diff(github("GET", f"/pulls/{PR}", accept="application/vnd.github.v3.diff"))
+    diff = source_diff()
     if not diff:
         sys.exit("No reviewable source changes in this pull request.")
     findings = ask_gemini(diff)

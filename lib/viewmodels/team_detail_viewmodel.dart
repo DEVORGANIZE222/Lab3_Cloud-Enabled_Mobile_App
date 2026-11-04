@@ -67,6 +67,16 @@ class TeamDetailViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<AppFailure?> seedMembers({int count = 2}) async {
+    try {
+      await _teams.seedMembersToTeam(teamId, count: count);
+      await load();
+      return null;
+    } catch (e, st) {
+      return toFailure(e, st, crash: _crash, reason: 'seed_members');
+    }
+  }
+
   Future<JoinOutcome> join() async {
     joining = true;
     notifyListeners();

@@ -11,7 +11,13 @@ class FirebaseAnalyticsService implements AnalyticsService {
 
   Future<void> _event(String name, Map<String, Object> parameters) async {
     debugPrint('analytics_event $name $parameters');
-    await _analytics.logEvent(name: name, parameters: parameters);
+    try {
+      await _analytics.logEvent(name: name, parameters: parameters);
+    } catch (e) {
+      // Measurement must never turn a saved user action into an error message;
+      // keep the cause visible in the log instead.
+      debugPrint('analytics_event_failed $name: $e');
+    }
   }
 
   @override
@@ -60,7 +66,8 @@ class FirebaseAnalyticsService implements AnalyticsService {
 
   @override
   Future<void> logVote({required String teamId, required bool changed}) async {
-    await _event('cast_vote', {'team_id': teamId, 'changed': changed});
+    // Analytics parameters must be String or num; a bool fails the SDK's check.
+    await _event('cast_vote', {'team_id': teamId, 'changed': changed ? 1 : 0});
   }
 
   @override

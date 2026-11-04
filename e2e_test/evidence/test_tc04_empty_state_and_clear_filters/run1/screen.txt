@@ -1,49 +1,50 @@
 [android:id/content]
-[] Back
-[] Tìm Reader
-[] M
-Mai Thanh Tâm
-Reader mới
-Chưa có đánh giá
-chỉ từ
-80.000 đ
-[] L
-Le Hoai An
-6 năm kinh nghiệm
-Chưa có đánh giá
-chỉ từ
-120.000 đ
-Mình đọc Tarot 6 năm, thiên về các câu hỏi nghề nghiệp và chuyển hướng. Muốn nhận khách ở đây để đồng hành dài hơn với từng người.
-Tarot
-Sự nghiệp
-Chiêm tinh
-[] L
-Lê Thu Lan
-5 năm kinh nghiệm
-5.0
-(1 đánh giá)
-chỉ từ
-200.000 đ
-Chuyên tình cảm, mối quan hệ và định hướng sự nghiệp. Phong cách nhẹ nhàng, nói thẳng nhưng không phán xét.
-Tình cảm
-Sự nghiệp
-Tarot
-[] T
-Trần Hỗ Trợ
-2 năm kinh nghiệm
-Chưa có đánh giá
-chỉ từ
-150.000 đ
-Mình hỗ trợ khách hằng ngày và nhận buổi xem ngắn khi còn lịch trống.
-Hỗ trợ chung
-Tarot cơ bản
-[] P
-Phạm Quang Minh
-7 năm kinh nghiệm
-Chưa có đánh giá
-chỉ từ
-250.000 đ
-Nhìn bài theo hướng thực dụng: tiền bạc, quyết định lớn, timing. Có nền tảng chiêm tinh.
-Tài chính
-Quyết định
-Chiêm tinh
+[] EXEMatching
+[] Browse Teams
+[btn_open_alerts] Alerts
+[] Alerts
+[btn_open_profile]
+[] Profile
+[browse_search_field]
+[browse_filters]
+[] Open Slots
+[] AI/ML
+[] Mobile
+[] Web/Cloud
+[] Want to lead a startup?
+Pitch your idea and recruit your dream team.
+[] Create
+[browse_result_count] 6 teams with open slots
+[team_card_EXE-85] OmO
+1/5 · 4 open
+EdTech
+Ryosukana
+Flutter
+Firebase
+NestJS
+AWS
+Open slot
+Open slot
+Open slot
+Open slot
+4 open
+Looking for: 
+Frontend Dev · Backend Dev · AI/ML Engineer · UI/UX Designer · QA/Tester · DevOps Engineer
+[btn_view_EXE-85]
+[] View Details & Join
+[team_card_DEMO-01] Flutter Demo Team
+2/5 · 3 open
+LH
+LN
+Open slot
+Open slot
+Open slot
+3 open
+[nav_home] Home
+Tab 1 of 4
+[nav_browse] Browse
+Tab 2 of 4
+[nav_team] My Team
+Tab 3 of 4
+[nav_settings] Settings
+Tab 4 of 4

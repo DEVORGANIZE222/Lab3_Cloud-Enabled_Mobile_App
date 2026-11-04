@@ -62,6 +62,14 @@ ALLOWED_EMAILS = [
     "megalit2578@gmail.com",
 ]
 
+POOL_EXTRA = [
+    ("s_pool_linh", "Linh Nguyen", "SE171105", "DevOps", ["Docker", "GitHub Actions"]),
+    ("s_pool_nam", "Nam Tran", "SE171118", "QA Engineer", ["Appium", "Pytest"]),
+    ("s_pool_trang", "Trang Le", "SE171124", "Mobile Developer", ["Flutter", "Kotlin"]),
+]
+POOL_IDS = ["s_khanh", *(p[0] for p in POOL_EXTRA)]
+
+
 def build_seed_writes() -> list[dict]:
     writes = []
     now = datetime.now(timezone.utc)
@@ -126,6 +134,30 @@ def build_seed_writes() -> list[dict]:
             },
         }
     })
+
+    # 3b. More unmatched students, so a newly created team (1 member) can still
+    # reach the 4-member minimum from the pool in the Flow 3 demo. Their ids sort
+    # after s_khanh, so AI-04's pool invite still picks Khanh Vo first.
+    for pool_id, name, code, role, skills in POOL_EXTRA:
+        writes.append({
+            "update": {
+                "name": f"{BASE_URL}/waitingPool/{pool_id}",
+                "fields": {
+                    "fullName": {"stringValue": name},
+                    "studentCode": {"stringValue": code},
+                    "role": {"stringValue": role},
+                    "skills": {"arrayValue": {"values": [{"stringValue": s} for s in skills]}},
+                    "assigned": {"booleanValue": False},
+                    "queueId": {"stringValue": f"RP-2026-{code[-4:]}"},
+                    "progress": {"doubleValue": 0.6},
+                    "stage": {"stringValue": "Stage 2 of 4 · Role balancing"},
+                    "expectedResult": {"timestampValue": expected_result},
+                    "preferredRoles": {"arrayValue": {"values": [{"stringValue": role}]}},
+                    "studentsInPool": {"integerValue": "38"},
+                    "contactEmail": {"stringValue": "academic@fpt.edu.vn"},
+                },
+            }
+        })
 
     # 4. teams
     teams_data = [

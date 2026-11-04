@@ -14,7 +14,8 @@ async def test_tc10_lock_blocked_then_recovered_from_pool(device, backend, me, a
     device.sign_in(ACCOUNT)
 
     run = await artemis(
-        "On My Team, open 'Review & Lock'. Note the error that explains why the roster can't be locked. "
+        "On My Team, open 'Review & Lock'. Note the title of the red error banner near the top of the screen "
+        "(the bold first line of that red box, not the smaller hint under the Lock button). "
         "Recover from it: invite students from the Waiting Pool, then wait until a new member joins "
         "(it takes a few seconds). When every check is done, lock the roster and confirm. "
         "Report the error you saw first, the name of the student who joined, and the confirmation code.",

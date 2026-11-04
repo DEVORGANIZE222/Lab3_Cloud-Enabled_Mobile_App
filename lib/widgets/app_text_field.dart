@@ -37,9 +37,10 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Identifier only: a `textField: true` wrapper adds a second, non-editable
+    // EditText node that swallows text typed by TalkBack or ARTEMIS.
     return Semantics(
       identifier: semanticId,
-      textField: true,
       child: TextField(
         controller: controller,
         enabled: enabled,
@@ -67,37 +68,61 @@ class AppSearchField extends StatelessWidget {
     required this.controller,
     required this.onSubmitted,
     required this.onClear,
+    this.onChanged,
     this.hint = 'Team name, topic or skill',
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onSubmitted;
   final VoidCallback onClear;
+  final ValueChanged<String>? onChanged;
   final String hint;
 
   @override
   Widget build(BuildContext context) {
+    // Only the identifier is added here. Declaring `textField`/`label` on this
+    // wrapper created a second, non-editable EditText node above the real one,
+    // so TalkBack and ARTEMIS typed into a node that dropped the text.
     return Semantics(
       identifier: 'browse_search_field',
-      textField: true,
-      label: 'Search teams',
       child: ValueListenableBuilder<TextEditingValue>(
         valueListenable: controller,
-        builder: (context, value, _) => TextField(
-          controller: controller,
-          textInputAction: TextInputAction.search,
-          onSubmitted: onSubmitted,
-          // Figma: grey filled search bar without an outline; focus keeps the
-          // 2 dp primary ring from the theme so the field is still findable.
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
-            enabledBorder: const OutlineInputBorder(borderRadius: AppRadius.cardAll, borderSide: BorderSide.none),
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: value.text.isEmpty
-                ? null
-                : IconButton(tooltip: 'Clear search', icon: const Icon(Icons.close), onPressed: onClear),
+        builder: (context, value, _) => Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: AppRadius.cardAll,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: controller,
+            textInputAction: TextInputAction.search,
+            onSubmitted: onSubmitted,
+            onChanged: onChanged,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey.shade500),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              enabledBorder: const OutlineInputBorder(
+                borderRadius: AppRadius.cardAll,
+                borderSide: BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: AppRadius.cardAll,
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2.0),
+              ),
+              prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.primary),
+              suffixIcon: value.text.isEmpty
+                  ? null
+                  : IconButton(tooltip: 'Clear search', icon: const Icon(Icons.close), onPressed: onClear),
+            ),
           ),
         ),
       ),

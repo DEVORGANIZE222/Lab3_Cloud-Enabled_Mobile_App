@@ -1,23 +1,40 @@
 [android:id/content]
-[] Home
+[] EXEMatching
+[] My Team
+[btn_open_alerts] Alerts
+[] Alerts
 [btn_open_profile]
-[] ĐD
-[] megalit2578 ·
-[] Hi, Đạt!
-[card_deadline] 19 percent, Registration deadline
-29 days 23 hours left
-Closes Wed, 2 Dec 2026 · 06:38
-Spring 2026 registration · 19% elapsed
-[] My team
-[card_no_team] You're not in a team yet
-Teams with open slots are waiting. Join one before the deadline.
-[btn_browse_teams]
-[] Browse Available Teams
+[] Profile
+[] Members
+3 of 5
+[card_my_team_header] ACTIVE TEAM HUB
+Leader not elected
+FinTech Guard
+FIN-02
+Blockchain Student Credential Verification
+3 of 5 members joined
+60%
+3 of 5 members joined
+Step 1 of 3: Elect leader
+[banner_phase] Vote for your team leader
+0 of 3 members have voted. A leader needs 2 votes.
+[btn_vote_leader]
+[] Vote for Leader
+[member_s_lam] LP
+Lam Pham
+SE170311 · Blockchain Developer
+Solidity
+Go
+[member_s_vy] VD
+Vy Dang
+SE170522 · Frontend Developer
+React
+TypeScript
 [nav_home] Home
 Tab 1 of 4
 [nav_browse] Browse
 Tab 2 of 4
 [nav_team] My Team
 Tab 3 of 4
-[nav_alerts] Alerts
+[nav_settings] Settings
 Tab 4 of 4

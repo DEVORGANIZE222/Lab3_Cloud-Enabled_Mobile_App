@@ -11,9 +11,11 @@ import '../../viewmodels/dashboard_viewmodel.dart';
 import '../../viewmodels/notifications_viewmodel.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/states.dart';
 import '../../widgets/status.dart';
+import '../shared/feedback.dart';
 import '../shared/profile_action.dart';
 import '../shared/team_status.dart';
 
@@ -219,13 +221,39 @@ class _DashboardBody extends StatelessWidget {
               icon: Icons.groups,
               onPressed: () => context.go('/team'),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AppButton(
-              semanticId: 'btn_browse_teams',
-              label: 'Browse Teams',
-              variant: AppButtonVariant.secondary,
-              onPressed: () => context.go('/browse'),
-            ),
+            if (team.locked && team.leaderId == data.student.id) ...[
+              const SizedBox(height: AppSpacing.sm),
+              AppButton(
+                semanticId: 'btn_unlock_team_home',
+                label: 'Unlock ${team.name} (Recovery)',
+                icon: Icons.lock_open_rounded,
+                backgroundColor: const Color(0xFFFEF2F2),
+                foregroundColor: const Color(0xFFDC2626),
+                borderColor: const Color(0xFFFCA5A5),
+                onPressed: () async {
+                  final ok = await showAppDialog(
+                    context,
+                    semanticId: 'dialog_unlock_team',
+                    icon: Icons.lock_open_rounded,
+                    title: 'Unlock ${team.name}?',
+                    message: 'Unlocking allows you to add or modify team members again.',
+                    confirmLabel: 'Unlock Team',
+                  );
+                  if (ok && context.mounted) {
+                    final failure = await context.read<DashboardViewModel>().unlockTeam(team);
+                    if (context.mounted) {
+                      if (failure != null) {
+                        showFailure(context, failure);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${team.name} unlocked successfully!')),
+                        );
+                      }
+                    }
+                  }
+                },
+              ),
+            ],
           ],
         ],
         const SizedBox(height: AppSpacing.xl),

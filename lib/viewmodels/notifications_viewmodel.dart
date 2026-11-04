@@ -103,8 +103,19 @@ class NotificationsViewModel extends ChangeNotifier {
     }
   }
 
+  bool _disposed = false;
+
+  // The stream's error handler awaits Crashlytics; the screen can be closed in
+  // the meantime (Crashlytics: "NotificationsViewModel was used after being
+  // disposed"), so late notifications are dropped.
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     _sub?.cancel();
     super.dispose();
   }

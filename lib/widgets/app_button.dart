@@ -49,9 +49,13 @@ class AppButton extends StatelessWidget {
     final fg = foregroundColor ??
         switch (variant) {
           AppButtonVariant.primary || AppButtonVariant.destructive => colors.onPrimary,
-          AppButtonVariant.secondary => colors.secondary,
+          AppButtonVariant.secondary => const Color(0xFF0F172A),
           AppButtonVariant.text => colors.primary,
         };
+
+    final iconColor = callback == null
+        ? null
+        : (variant == AppButtonVariant.secondary ? colors.primary : fg);
 
     final Widget content = Row(
       mainAxisSize: MainAxisSize.min,
@@ -73,7 +77,7 @@ class AppButton extends StatelessWidget {
         else if (icon != null)
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.sm),
-            child: Icon(icon, size: 20, color: callback == null ? null : fg),
+            child: Icon(icon, size: 20, color: iconColor),
           ),
         Flexible(child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1)),
       ],
@@ -98,7 +102,19 @@ class AppButton extends StatelessWidget {
                 style: FilledButton.styleFrom(backgroundColor: colors.error, foregroundColor: colors.onError),
                 child: content,
               ),
-            AppButtonVariant.secondary => OutlinedButton(onPressed: callback, child: content),
+            AppButtonVariant.secondary => OutlinedButton(
+                onPressed: callback,
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: fg,
+                  side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+                  elevation: 1,
+                  shadowColor: Colors.black.withValues(alpha: 0.04),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: AppSpacing.lg),
+                  shape: RoundedRectangleBorder(borderRadius: AppRadius.cardAll),
+                ),
+                child: content,
+              ),
             AppButtonVariant.text => TextButton(onPressed: callback, child: content),
           };
 
