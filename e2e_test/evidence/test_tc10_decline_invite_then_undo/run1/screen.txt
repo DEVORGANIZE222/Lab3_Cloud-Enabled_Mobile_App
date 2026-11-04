@@ -1,13 +1,16 @@
 [android:id/content]
 [] Back
 [] Alerts
+[btn_mark_all_read]
+[] Mark All Read
 [alert_filters]
 [] All (1)
 [] Invites (1)
 [] Updates (0)
-[alert_invite_team_fin02] Invite from FinTech Guard
+[alert_invite_team_fin02] Unread. Invite from FinTech Guard
 Team invitation
-3 min ago
+New
+1 min ago
 Invite from FinTech Guard
 FinTech Guard invited you to join as Backend developer.
 [btn_accept_invite_team_fin02]
