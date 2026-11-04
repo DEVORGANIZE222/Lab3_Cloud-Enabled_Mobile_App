@@ -90,32 +90,35 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
       message: 'Joining…',
       child: Scaffold(
         appBar: AppTopBar(title: team?.name ?? 'Team Details'),
-        body: ListView(
-          padding: AppSpacing.screen,
-          children: [
-            if (_filledMessage != null) ...[
-              InfoBanner(
-                semanticId: 'banner_team_filled',
-                tone: Tone.error,
-                title: '${team?.name ?? 'This team'} just filled up',
-                message: _filledMessage,
-                action: AppButton(
-                  semanticId: 'btn_back_to_browse',
-                  label: 'Back to Browse',
-                  variant: AppButtonVariant.secondary,
-                  expand: false,
-                  onPressed: () => context.pop(),
+        body: RefreshIndicator(
+          onRefresh: vm.load,
+          child: ListView(
+            padding: AppSpacing.screen,
+            children: [
+              if (_filledMessage != null) ...[
+                InfoBanner(
+                  semanticId: 'banner_team_filled',
+                  tone: Tone.error,
+                  title: '${team?.name ?? 'This team'} just filled up',
+                  message: _filledMessage,
+                  action: AppButton(
+                    semanticId: 'btn_back_to_browse',
+                    label: 'Back to Browse',
+                    variant: AppButtonVariant.secondary,
+                    expand: false,
+                    onPressed: () => context.pop(),
+                  ),
                 ),
+                const SizedBox(height: AppSpacing.lg),
+              ],
+              ViewStateView<Team>(
+                state: state,
+                onRetry: vm.load,
+                loading: const LoadingState(message: 'Loading team…'),
+                builder: (context, t) => _Body(team: t),
               ),
-              const SizedBox(height: AppSpacing.lg),
             ],
-            ViewStateView<Team>(
-              state: state,
-              onRetry: vm.load,
-              loading: const LoadingState(message: 'Loading team…'),
-              builder: (context, t) => _Body(team: t),
-            ),
-          ],
+          ),
         ),
         bottomNavigationBar: team == null
             ? null
@@ -141,6 +144,26 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
                             identifier: 'join_blocked_reason',
                             child: Text(blocked, style: context.text.bodyMedium, textAlign: TextAlign.center),
                           ),
+                          if (team.isMember(vm.applicant.id) && team.leaderId == vm.applicant.id && team.openSlots >= 1) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            AppButton(
+                              semanticId: 'btn_seed_members_detail',
+                              label: 'Seed 2 Members',
+                              icon: Icons.person_add_alt_1_rounded,
+                              variant: AppButtonVariant.secondary,
+                              onPressed: () async {
+                                final failure = await vm.seedMembers(count: 2);
+                                if (!context.mounted) return;
+                                if (failure != null) {
+                                  showFailure(context, failure);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Seeded 2 members to ${team.name}!')),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ],
                       ],
                     ),
@@ -224,6 +247,8 @@ class _Body extends StatelessWidget {
         for (final m in team.members) ...[
           MemberTile(
             member: m,
+            isLeader: m.studentId == team.leaderId,
+            isMe: m.studentId == context.read<TeamDetailViewModel>().applicant.id,
             badges: [
               if (m.studentId == team.leaderId)
                 const StatusBadge(label: 'Leader', tone: Tone.primary, icon: Icons.star)

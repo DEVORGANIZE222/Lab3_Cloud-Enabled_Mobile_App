@@ -166,11 +166,32 @@ class _Body extends StatelessWidget {
           ],
         ],
         const SizedBox(height: AppSpacing.xl),
-        SectionHeader(title: 'Members', trailing: '${team.memberCount} of ${team.capacity}'),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: SectionHeader(title: 'Members', trailing: '${team.memberCount} of ${team.capacity}'),
+            ),
+            if (team.openSlots >= 2) ...[
+              TextButton.icon(
+                onPressed: () async {
+                  final failure = await vm.seedMembers(team, count: 2);
+                  if (context.mounted && failure != null) {
+                    showFailure(context, failure);
+                  }
+                },
+                icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+                label: const Text('Seed 2 Members', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ],
+        ),
         const SizedBox(height: AppSpacing.md),
         for (final m in team.members) ...[
           MemberTile(
             member: m,
+            isLeader: m.studentId == team.leaderId,
+            isMe: m.studentId == vm.myId,
             badges: [
               if (m.studentId == vm.myId) const StatusBadge(label: 'You', tone: Tone.info, icon: Icons.person),
               if (m.studentId == team.leaderId)

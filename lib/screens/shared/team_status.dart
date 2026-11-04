@@ -181,39 +181,112 @@ class _Stat extends StatelessWidget {
 
 /// Roster row (Team Detail, My Team, Lock Review).
 class MemberTile extends StatelessWidget {
-  const MemberTile({super.key, required this.member, this.badges = const [], this.trailing});
+  const MemberTile({
+    super.key,
+    required this.member,
+    this.badges = const [],
+    this.isLeader = false,
+    this.isMe = false,
+    this.trailing,
+  });
 
   final TeamMember member;
   final List<Widget> badges;
+  final bool isLeader;
+  final bool isMe;
   final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveLeader = isLeader ||
+        member.role.toLowerCase().contains('lead') ||
+        badges.any((b) => b is StatusBadge && b.label.toLowerCase().contains('lead'));
+    final effectiveIsMe = isMe ||
+        badges.any((b) => b is StatusBadge && b.label.toLowerCase() == 'you');
+
+    final otherBadges = badges.where((b) {
+      if (b is StatusBadge) {
+        final l = b.label.toLowerCase();
+        if (l.contains('lead') || l == 'you') return false;
+      }
+      return true;
+    }).toList();
+
     return AppCard(
       semanticId: 'member_${member.studentId}',
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           MemberAvatar(
             initials: member.initials,
             avatarUrl: member.avatarUrl,
             verified: true,
           ),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(member.fullName, style: context.text.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
-                  '${member.studentCode} · ${member.role}',
-                  style: context.text.bodyMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        member.fullName,
+                        style: context.text.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (effectiveIsMe) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0F2FE),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFBAE6FD), width: 0.8),
+                        ),
+                        child: const Text(
+                          'You',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0284C7),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                if (badges.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.mail_outline_rounded,
+                      size: 12,
+                      color: context.colors.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        member.contactEmail,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                if (otherBadges.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xs),
-                  Wrap(spacing: AppSpacing.xs, runSpacing: AppSpacing.xs, children: badges),
+                  Wrap(spacing: AppSpacing.xs, runSpacing: AppSpacing.xs, children: otherBadges),
                 ],
                 if (member.skills.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xs),
@@ -229,7 +302,50 @@ class MemberTile extends StatelessWidget {
               ],
             ),
           ),
-          ?trailing,
+          const SizedBox(width: AppSpacing.xs),
+          if (trailing != null)
+            trailing!
+          else if (effectiveLeader)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFF59E0B), width: 1),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.star_rounded, size: 12, color: Color(0xFFD97706)),
+                  SizedBox(width: 2.5),
+                  Text(
+                    'Leader',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF92400E),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (member.role.isNotEmpty && member.role.toLowerCase() != 'member')
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFCBD5E1), width: 0.8),
+              ),
+              child: Text(
+                member.role,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF475569),
+                ),
+              ),
+            ),
         ],
       ),
     );

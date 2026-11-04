@@ -177,6 +177,23 @@ class LocalTeamRepository implements TeamRepository {
   }
 
   @override
+  Future<Team> unlockTeam(String teamId, String leaderId) async {
+    await _db.roundTrip();
+    var team = _team(teamId);
+    if (team.leaderId != leaderId) {
+      throw const AppFailure(
+        'Only the team leader can unlock the roster',
+        'Ask your leader to unlock it.',
+        retryable: false,
+        code: 'not-leader',
+      );
+    }
+    team = team.copyWith(clearLock: true);
+    _db.putTeam(team);
+    return team;
+  }
+
+  @override
   Future<int> inviteFromPool(String teamId) async {
     await _db.roundTrip();
     final team = _team(teamId);
@@ -257,5 +274,34 @@ class LocalTeamRepository implements TeamRepository {
     );
     _db.putTeam(team);
     return team;
+  }
+
+  @override
+  Future<void> seedMembersToTeam(String teamId, {int count = 2}) async {
+    await _db.roundTrip();
+    final team = _db.teams[teamId];
+    if (team == null) return;
+    const candidates = [
+      TeamMember(
+        studentId: 's_an',
+        fullName: 'An Tran',
+        studentCode: 'SE161120',
+        role: 'Backend Dev',
+        email: 'an.tran@fpt.edu.vn',
+        skills: ['Java', 'Spring Boot', 'PostgreSQL'],
+      ),
+      TeamMember(
+        studentId: 's_quynh',
+        fullName: 'Quynh Nguyen',
+        studentCode: 'SE170189',
+        role: 'Frontend Dev',
+        email: 'quynh.nguyen@fpt.edu.vn',
+        skills: ['Flutter', 'React', 'TypeScript'],
+      ),
+    ];
+    final existingIds = team.members.map((m) => m.studentId).toSet();
+    final toAdd = candidates.where((c) => !existingIds.contains(c.studentId)).take(count).toList();
+    if (toAdd.isEmpty) return;
+    _db.putTeam(team.copyWith(members: [...team.members, ...toAdd]));
   }
 }

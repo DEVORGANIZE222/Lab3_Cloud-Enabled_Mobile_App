@@ -84,6 +84,9 @@ abstract interface class TeamRepository {
   /// Locks the roster (leader only, 4–5 members). Returns the locked team with its code.
   Future<Team> lockTeam(String teamId, String leaderId);
 
+  /// Unlocks the roster (leader only, recovery).
+  Future<Team> unlockTeam(String teamId, String leaderId);
+
   /// Invites matching students from the Waiting Pool. Returns how many were invited.
   Future<int> inviteFromPool(String teamId);
 
@@ -98,6 +101,9 @@ abstract interface class TeamRepository {
     List<String> openRoles = const [],
     int capacity = 5,
   });
+
+  /// Seeds mock members into a team (development / demo helper).
+  Future<void> seedMembersToTeam(String teamId, {int count = 2});
 }
 
 abstract interface class NotificationRepository {

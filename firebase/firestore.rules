@@ -46,18 +46,40 @@ service cloud.firestore {
         let hasRequiredFields = after.keys().hasAll(['members', 'memberIds', 'votes', 'locked', 'invitesSent']);
 
         // GR-01: students may only change roster state, never the team's
-        // metadata (name, topic, capacity, supervisor, tags, open roles...).
-        // These are exactly the fields FirestoreTeamRepository._teamUpdate writes.
+        // metadata (name, topic, capacity, supervisor, tags...).
+        // These are exactly the fields FirestoreTeamRepository writes.
         let onlyRosterFields = after.diff(before).affectedKeys().hasOnly(
-            ['members', 'memberIds', 'votes', 'leaderId', 'locked', 'lockCode', 'lockedAt', 'invitesSent']);
+            ['members', 'memberIds', 'votes', 'leaderId', 'locked', 'lockCode', 'lockedAt', 'invitesSent', 'openRoles']);
 
-        return notLocked && hasRequiredFields && onlyRosterFields && (
-          isSelfJoin(uid, before, after) ||
-          isSelfLeave(uid, before, after) ||
-          isSelfVote(uid, before, after) ||
-          isLeaderLock(uid, before, after) ||
-          isLeaderPoolInvite(uid, before, after)
+        let isUnlock = isLeaderUnlock(uid, before, after);
+
+        return hasRequiredFields && onlyRosterFields && (
+          isUnlock || (
+            notLocked && (
+              isSelfJoin(uid, before, after) ||
+              isSelfLeave(uid, before, after) ||
+              isSelfVote(uid, before, after) ||
+              isLeaderLock(uid, before, after) ||
+              isLeaderPoolInvite(uid, before, after) ||
+              isLeaderRosterUpdate(uid, before, after)
+            )
+          )
         );
+      }
+
+      function isLeaderUnlock(uid, before, after) {
+        return before.leaderId == uid
+            && after.leaderId == uid
+            && before.locked == true
+            && after.locked == false
+            && after.members == before.members
+            && after.memberIds == before.memberIds;
+      }
+
+      function isLeaderRosterUpdate(uid, before, after) {
+        return before.leaderId == uid
+            && after.leaderId == uid
+            && after.locked == false;
       }
 
       function isSelfJoin(uid, before, after) {

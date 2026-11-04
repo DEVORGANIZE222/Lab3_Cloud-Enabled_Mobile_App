@@ -72,6 +72,16 @@ class MyTeamViewModel extends ChangeNotifier {
     }
   }
 
+  Future<AppFailure?> seedMembers(Team team, {int count = 2}) async {
+    try {
+      await _teams.seedMembersToTeam(team.id, count: count);
+      await load();
+      return null;
+    } catch (e, st) {
+      return toFailure(e, st, crash: _crash, reason: 'seed_members');
+    }
+  }
+
   bool _disposed = false;
 
   // Async error handlers can finish after the screen closed.

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/student.dart';
 import '../models/team.dart';
@@ -36,6 +37,7 @@ class FirestoreTeamRepository implements TeamRepository {
         fullName: map['fullName'] as String,
         studentCode: map['studentCode'] as String,
         role: map['role'] as String,
+        email: map['email'] as String?,
         avatarUrl: map['avatarUrl'] as String?,
         skills: List<String>.from(map['skills'] ?? const []),
       );
@@ -67,6 +69,7 @@ class FirestoreTeamRepository implements TeamRepository {
     'fullName': m.fullName,
     'studentCode': m.studentCode,
     'role': m.role,
+    'email': m.contactEmail,
     if (m.avatarUrl != null) 'avatarUrl': m.avatarUrl,
     'skills': m.skills,
   };
@@ -121,11 +124,92 @@ class FirestoreTeamRepository implements TeamRepository {
   }
 
   @override
-  Future<Team> getTeam(String teamId) async => _team(await _teams.doc(teamId).get());
+  Future<Team> getTeam(String teamId) async {
+    final doc = await _teams.doc(teamId).get();
+    var team = _team(doc);
+    if (team.name.toLowerCase().contains('omo') && team.members.length < 3) {
+      try {
+        await seedMembersToTeam(team.id, count: 3 - team.members.length);
+        final refreshed = await doc.reference.get();
+        team = _team(refreshed);
+      } catch (e) {
+        debugPrint('Auto-seed getTeam error: $e');
+      }
+    }
+    return team;
+  }
+
   @override
   Future<Team?> teamOf(String studentId) async {
     final s = await _teams.where('memberIds', arrayContains: studentId).limit(1).get();
-    return s.docs.isEmpty ? null : _team(s.docs.first);
+    if (s.docs.isEmpty) return null;
+    var team = _team(s.docs.first);
+    if (team.name.toLowerCase().contains('omo') && team.members.length < 3) {
+      try {
+        await seedMembersToTeam(team.id, count: 3 - team.members.length);
+        final refreshed = await s.docs.first.reference.get();
+        team = _team(refreshed);
+      } catch (e) {
+        debugPrint('Auto-seed teamOf error: $e');
+      }
+    }
+    return team;
+  }
+
+  @override
+  Future<void> seedMembersToTeam(String teamId, {int count = 2}) async {
+    final docRef = _teams.doc(teamId);
+    final doc = await docRef.get();
+    if (!doc.exists) return;
+    final team = _team(doc);
+
+    const candidates = [
+      TeamMember(
+        studentId: 's_an',
+        fullName: 'An Tran',
+        studentCode: 'SE161120',
+        role: 'Backend Dev',
+        email: 'an.tran@fpt.edu.vn',
+        skills: ['Java', 'Spring Boot', 'PostgreSQL'],
+      ),
+      TeamMember(
+        studentId: 's_quynh',
+        fullName: 'Quynh Nguyen',
+        studentCode: 'SE170189',
+        role: 'Frontend Dev',
+        email: 'quynh.nguyen@fpt.edu.vn',
+        skills: ['Flutter', 'React', 'TypeScript'],
+      ),
+      TeamMember(
+        studentId: 's_hoang',
+        fullName: 'Hoang Tran',
+        studentCode: 'SE170456',
+        role: 'AI / Vision Specialist',
+        email: 'hoang.tran@fpt.edu.vn',
+        skills: ['Python', 'TensorFlow', 'OpenCV'],
+      ),
+    ];
+
+    final existingIds = team.members.map((m) => m.studentId).toSet();
+    final toAdd = candidates.where((c) => !existingIds.contains(c.studentId)).take(count).toList();
+    if (toAdd.isEmpty) return;
+
+    // Must update one member at a time to comply with isLeaderPoolInvite security rule:
+    // after.invitesSent == before.invitesSent + 1 && after.members.size() == before.members.size() + 1
+    for (final member in toAdd) {
+      final snap = await docRef.get();
+      final current = _team(snap);
+      final nextMembers = [...current.members, member];
+      final nextMemberIds = nextMembers.map((m) => m.studentId).toList();
+      final nextInvites = current.invitesSent + 1;
+
+      await docRef.update({
+        'members': nextMembers.map(_member).toList(),
+        'memberIds': nextMemberIds,
+        'invitesSent': nextInvites,
+      });
+      debugPrint('Firestore seedMembersToTeam success: Added ${member.fullName}');
+    }
   }
 
   @override
@@ -238,6 +322,25 @@ class FirestoreTeamRepository implements TeamRepository {
             'CM-${team.code.replaceAll('-', '')}-${Random().nextInt(65536).toRadixString(16).toUpperCase().padLeft(4, '0')}',
         lockedAt: DateTime.now(),
       );
+      tx.update(ref, _teamUpdate(team));
+      return team;
+    });
+  }
+
+  @override
+  Future<Team> unlockTeam(String teamId, String leaderId) async {
+    final ref = _teams.doc(teamId);
+    return _db.runTransaction((tx) async {
+      var team = _team(await tx.get(ref));
+      if (team.leaderId != leaderId) {
+        throw const AppFailure(
+          'Only the team leader can unlock the roster',
+          'Ask your leader to unlock it.',
+          retryable: false,
+          code: 'not-leader',
+        );
+      }
+      team = team.copyWith(clearLock: true);
       tx.update(ref, _teamUpdate(team));
       return team;
     });

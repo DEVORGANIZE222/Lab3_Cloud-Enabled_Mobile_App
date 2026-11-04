@@ -36,6 +36,8 @@ class LockReviewViewModel extends ChangeNotifier {
   /// Set when a pool student joins while this screen is open.
   String? lastJoinedName;
 
+  String get myId => _student.id;
+
   bool isLeader(Team t) => t.leaderId == _student.id;
 
   List<LockCheck> checks(Team t) => [

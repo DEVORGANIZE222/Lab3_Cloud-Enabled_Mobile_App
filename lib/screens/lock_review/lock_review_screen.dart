@@ -225,6 +225,8 @@ class _Review extends StatelessWidget {
         for (final m in team.members) ...[
           MemberTile(
             member: m,
+            isLeader: m.studentId == team.leaderId,
+            isMe: m.studentId == vm.myId,
             badges: [
               if (m.studentId == team.leaderId)
                 const StatusBadge(label: 'Leader', tone: Tone.primary, icon: Icons.star),
