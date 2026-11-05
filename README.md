@@ -23,7 +23,7 @@ leader (Flow 2), and the leader locks the roster, recovering from "too few membe
 | `report/Lab03_DEVORGANIZE222.pdf` | **Final Report (10 pages, PDF)** satisfying all 11 required sections. |
 | `slides/Lab03_DEVORGANIZE222_slides.pdf` | **Presentation slides (17 slides, PDF)**, built by `dart run tool/generate_slides_pdf.dart`. |
 | `slides/Lab03_DEVORGANIZE222_slides.pptx` | The same deck as an editable PowerPoint file for Canva or PowerPoint, built by `python tool/generate_slides_pptx.py` (needs `python-pptx` and `pillow`). |
-| **Demo Video Link** | _Not uploaded yet: add the Drive/YouTube link here after recording._ |
+| **Demo Video** | [`evidence/demo/demo_app.mp4`](evidence/demo/demo_app.mp4): the 3 flows on the emulator with the real Firebase backend (5:50, Vietnamese captions). Rebuild it with `python e2e_test/record_demo.py`. |
 
 ## Run the app
 
