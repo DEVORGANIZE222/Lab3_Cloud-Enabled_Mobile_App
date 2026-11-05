@@ -319,7 +319,9 @@ class FirestoreTeamRepository implements TeamRepository {
       team = team.copyWith(votes: votes);
       final winner = team.members.where((m) => team.votesFor(m.studentId) >= team.votesNeeded).firstOrNull;
       team = winner == null ? team.copyWith(clearLeader: true) : team.copyWith(leaderId: winner.studentId);
-      tx.update(ref, _teamUpdate(team));
+      // Only the fields a vote changes: the rules require `members` to stay identical,
+      // and _member() adds fields that seeded members do not have.
+      tx.update(ref, {'votes': team.votes, 'leaderId': team.leaderId});
       return team;
     });
   }
@@ -351,7 +353,8 @@ class FirestoreTeamRepository implements TeamRepository {
             'CM-${team.code.replaceAll('-', '')}-${Random().nextInt(65536).toRadixString(16).toUpperCase().padLeft(4, '0')}',
         lockedAt: DateTime.now(),
       );
-      tx.update(ref, _teamUpdate(team));
+      // As in castVote: the rules require `members` to stay identical.
+      tx.update(ref, {'locked': true, 'lockCode': team.lockCode, 'lockedAt': Timestamp.fromDate(team.lockedAt!)});
       return team;
     });
   }
